@@ -1,0 +1,31 @@
+// ZIMARA Menu Worker. Separate from the zimara-website Worker and its databases.
+// Replace the placeholder database_id values with the real ones (see README "Setup").
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zimara-menu",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-10",
+  "send_metrics": false,
+  "keep_vars": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "not_found_handling": "404-page"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "zimara-menu-db",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+      "preview_database_id": "zimara-menu-db-preview"
+    }
+  ],
+  "triggers": { "crons": ["* * * * *"] },
+  "vars": { "ENVIRONMENT": "production" },
+  // VAPID_PUBLIC_KEY is not secret, but keeping all four together lets .dev.vars and
+  // `wrangler secret put` configure push the same way.
+  "secrets": { "required": ["AUTH_SECRET", "VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY", "VAPID_SUBJECT"] },
+  "observability": { "enabled": true }
+}
