@@ -13,6 +13,7 @@ function fakeProviders() {
   const HTTP_FETCH = async (url, init = {}) => {
     const u = new URL(url);
     if (u.host === 'api.resend.com') { mails.push(JSON.parse(init.body)); return Response.json({ id: 'mail_' + mails.length }); }
+    if (u.host === 'api.simplefatoora.com') return Response.json({ status: true, response: { sandbox_api_key: 'sf_sandbox_test' } });
     assert.equal(init.headers.authorization, 'Basic ' + btoa('sk_test_x:'));
     if (init.method === 'POST' && u.pathname === '/v1/invoices') {
       const b = JSON.parse(init.body); const inv = { id: 'inv_' + ++seq, status: 'initiated', amount: b.amount, currency: b.currency, url: 'https://checkout.moyasar.com/inv_' + seq, metadata: b.metadata };
@@ -22,7 +23,7 @@ function fakeProviders() {
     if (m && invoices.has(m[1])) return Response.json(invoices.get(m[1]));
     return Response.json({ message: 'not found' }, { status: 404 });
   };
-  return { invoices, mails, env: { HTTP_FETCH, MOYASAR_SECRET_KEY: 'sk_test_x', MOYASAR_WEBHOOK_SECRET: 'whsec-test-123', PUBLIC_BASE_URL: 'https://menu.test', SIMPLE_FATOORA_API_KEY: 'sf_sandbox_test', SIMPLE_FATOORA_ENABLED: 'true', SIMPLE_FATOORA_ENV: 'sandbox', RESEND_API_KEY: 're_test', MAIL_FROM: 'ZIMARA <no-reply@zimara.co>' } };
+  return { invoices, mails, env: { HTTP_FETCH, MOYASAR_SECRET_KEY: 'sk_test_x', MOYASAR_WEBHOOK_SECRET: 'whsec-test-123', PUBLIC_BASE_URL: 'https://menu.test', SIMPLE_FATOORA_API_KEY: 'sf_sandbox_test', SIMPLE_FATOORA_ENABLED: 'true', SIMPLE_FATOORA_SELLER_PROFILE_APPROVED: 'true', SIMPLE_FATOORA_ENV: 'sandbox', RESEND_API_KEY: 're_test', MAIL_FROM: 'ZIMARA <no-reply@zimara.co>' } };
 }
 
 test('checkout is refused until the gateway is configured, and browser redirects never activate a plan', async () => {
