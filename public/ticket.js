@@ -146,7 +146,7 @@ function render() {
         ${(!soundOn || (pushAvailable() && !pushOn)) ? `<button class="btn big" id="enable" type="button" style="width:100%">🔔 ${esc(t(pushAvailable() ? 'enable' : 'enableSoundOnly'))}</button>` : ''}
         <p class="small muted">${esc(t(pushAvailable() ? 'pushLockHint' : 'pageOnlyHint'))}</p>
         ${isIOS && !standalone ? `<p class="small">${esc(t('iosHint'))}</p>` : ''}
-        ${notice ? `<p class="msg error small">${esc(notice))}</p>` : ''}
+        ${notice ? `<p class="msg error small">${esc(notice)}</p>` : ''}
       </div>${s === 'preparing' && gameType !== 'none' ? '<section class="card wait-game" id="waiting-game"></section>' : ''}`;
   } else if (s === 'collected') {
     body = `
