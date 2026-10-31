@@ -1,7 +1,7 @@
 import { requireRole, body, audit, rateLimit, PLANS, subscriptionFor } from './context.js';
 import { HttpError, bad, id, notFound, now, hmac } from './util.js';
 import { sendPaymentReceipt } from './notices.js';
-import { simpleFatooraConfigured } from './providers/simple-fatoora.js';
+import { simpleFatooraConfigured, validateSimpleFatooraKey } from './providers/simple-fatoora.js';
 
 // Moyasar hosted invoices (SAMA-licensed gateway). Card data never touches this Worker.
 // Activation rule: a plan is activated only after GET /v1/invoices/:id, authenticated with the
@@ -98,6 +98,7 @@ export function registerBilling(app) {
     if (!org?.billing_legal_name || !org?.billing_address || (price.vat > 0 && !org.billing_vat_number)) {
       throw new HttpError(400, 'billing_profile_incomplete');
     }
+    await validateSimpleFatooraKey(c.env);
     const cid = id(), t = now();
     const base = c.env.PUBLIC_BASE_URL.replace(/\/$/, '');
     await c.env.DB.prepare("INSERT INTO billing_checkouts (id, org_id, plan, cycle, provider, subtotal, vat, total, status, created_by, created_at) VALUES (?, ?, ?, ?, 'moyasar', ?, ?, ?, 'pending', ?, ?)")
