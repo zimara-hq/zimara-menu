@@ -7,7 +7,7 @@
  "keep_vars":true,
  "assets":{"directory":"./public","binding":"ASSETS","run_worker_first":true,"not_found_handling":"404-page"},
  "d1_databases":[{"binding":"DB","database_name":"zimara-menu-review-20261031","database_id":"60a47a0e-e8e7-40d7-92ee-90889e685318","migrations_dir":"migrations"}],
- "vars":{"ENVIRONMENT":"preview","DEMO_ENABLED":"true","SIGNUP_ENABLED":"true","REQUIRE_ADMIN_MFA":"true"},
+ "vars":{"ENVIRONMENT":"preview","DEMO_ENABLED":"true","SIGNUP_ENABLED":"true","REQUIRE_ADMIN_MFA":"true","MAIL_FROM":"ZIMARA <no-reply@zimara.co>","PUBLIC_BASE_URL":"https://zimara-menu-review-20261031.zimara-hq.workers.dev","VAT_RATE_BPS":"0","REWAA_ENABLED":"true"},
  "secrets":{"required":["AUTH_SECRET"]},
  "triggers":{"crons":["* * * * *"]},
  "observability":{"enabled":true}
