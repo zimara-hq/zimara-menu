@@ -3,9 +3,10 @@ import { HttpError, bad, conflict, id, int, notFound, now, randomToken, str } fr
 import { encryptionConfigured, encryptSigningSecret, decryptSigningSecret, verifyBridgeSignature, payloadHash } from './providers/pos-bridge.js';
 import { paymentProvider } from './providers/contracts.js';
 import { pushConfigured } from './push.js';
-import { billingConfigured } from './billing.js';
+import { subscriptionCheckoutConfigured } from './billing.js';
 import { mailConfigured } from './mail.js';
 import { rewaaConfigured } from './providers/rewaa.js';
+import { simpleFatooraConfigured } from './providers/simple-fatoora.js';
 
 const INVOICE_COLS = 'id, provider, provider_reference, number, state, currency, subtotal, vat, total, pdf_url, issued_at, created_at';
 const POS_COLS = 'id, branch_id, provider, label, active, created_at, revoked_at';
@@ -13,12 +14,12 @@ const POS_COLS = 'id, branch_id, provider, label, active, created_at, revoked_at
 export function integrationReadiness(env) {
   const entry = (id, label_ar, label_en, state, implemented, configured, reason_ar, reason_en) => ({ id, label_ar, label_en, state, implemented, configured, verified: false, reason_ar, reason_en });
   return [
-    entry('payments', 'الدفع والاشتراكات (ميسر)', 'Subscription payments (Moyasar)', billingConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, billingConfigured(env),
-      'الدفع عبر صفحة ميسر المستضافة مبني. الاشتراك يتفعّل فقط بعد تأكيد الدفع من واجهة ميسر نفسها. يحتاج مفاتيح الحساب واختبار دفعة حقيقية.', 'Moyasar hosted checkout is built. A plan activates only after Moyasar\'s API confirms the payment. Needs account keys and a real test payment.'),
+    entry('payments', 'الدفع والاشتراكات (ميسر)', 'Subscription payments (Moyasar)', subscriptionCheckoutConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, subscriptionCheckoutConfigured(env),
+      'الدفع عبر صفحة ميسر آمن بعد تأكيد المبلغ، ويُعرض فقط مع جاهزية Simple Fatoora. يحتاج مفاتيح المزودين واختبار Sandbox.', 'Moyasar hosted checkout activates only after a verified payment and is offered only when Simple Fatoora is ready. Provider keys and sandbox verification are required.'),
     entry('email', 'البريد (تأكيد الحساب واستعادة كلمة المرور)', 'Email (verification and password reset)', mailConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, mailConfigured(env),
       'الإرسال عبر Resend مبني. يحتاج مفتاح Resend ونطاق مرسل موثّق.', 'Sending through Resend is built. Needs a Resend key and a verified sender domain.'),
-    entry('simple_fatoora', 'الفوترة الإلكترونية', 'Electronic invoicing', 'needs_api_contract', false, false,
-      'ربط حساب Simple Fatoora بالمحادثة لا يربط خادم المنصة. يلزم عقد API وتفويض تشغيل مستقل.', 'The chat connector does not connect the application server. A runtime API contract and authorization are required.'),
+    entry('simple_fatoora', 'الفوترة الإلكترونية', 'Electronic invoicing', simpleFatooraConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, simpleFatooraConfigured(env),
+      'إصدار فواتير الاشتراكات بعد تأكيد الدفع مبني. يحتاج مفتاح API، وبيانات فوترة مكتملة، واعتماد ملف البائع؛ لم يُثبت إصدار فاتورة حتى الآن.', 'Subscription invoicing after confirmed payment is implemented. It needs an API key, complete billing details, and an approved seller profile; no invoice issuance has been verified.'),
     entry('rewaa', 'رواء', 'Rewaa', rewaaConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, rewaaConfigured(env),
       'الربط المباشر مع رواء مبني: كل فاتورة بيع في فرع مربوط تفتح رقم انتظار تلقائيًا. يحتاج بيانات API من رواء واختبار فاتورة حقيقية.', 'The direct Rewaa link is built: each sale invoice in a linked branch opens a pager ticket. Needs Rewaa API access and a real invoice test.'),
     entry('foodics', 'فودكس', 'Foodics', 'needs_partner_approval', false, false,
@@ -59,7 +60,7 @@ export function registerIntegrations(app, { onTicketReady } = {}) {
     const org = c.get('user').org_id;
     const count = await c.env.DB.prepare('SELECT COUNT(*) AS total FROM subscription_invoices WHERE org_id = ?').bind(org).first();
     const { results } = await c.env.DB.prepare(`SELECT ${INVOICE_COLS} FROM subscription_invoices WHERE org_id = ? ORDER BY created_at DESC, id LIMIT ? OFFSET ?`).bind(org, size, (page - 1) * size).all();
-    return c.json({ invoices: results, total: count.total, page, page_size: size, issuance_enabled: false });
+    return c.json({ invoices: results, total: count.total, page, page_size: size, issuance_enabled: simpleFatooraConfigured(c.env) });
   });
 
   app.get('/api/owner/invoices/:id', requireRole('owner'), async (c) => {

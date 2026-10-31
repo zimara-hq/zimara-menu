@@ -55,6 +55,11 @@ export function registerLegal(app) {
     if (vals.billing_cr_number && !LIMITS.cr_number.test(vals.billing_cr_number)) throw bad('invalid_billing_cr_number');
     await c.env.DB.prepare('UPDATE orgs SET billing_legal_name = ?, billing_vat_number = ?, billing_cr_number = ?, billing_address = ? WHERE id = ?')
       .bind(vals.billing_legal_name, vals.billing_vat_number, vals.billing_cr_number, vals.billing_address, c.get('user').org_id).run();
+    const orgId = c.get('user').org_id, t = now();
+    await c.env.DB.batch([
+      c.env.DB.prepare("UPDATE subscription_invoices SET state = 'pending' WHERE org_id = ? AND state = 'rejected' AND id IN (SELECT invoice_id FROM subscription_invoice_jobs WHERE state IN ('needs_details','rejected'))").bind(orgId),
+      c.env.DB.prepare("UPDATE subscription_invoice_jobs SET state = 'pending', next_attempt_at = ?, locked_at = NULL, last_error = NULL, updated_at = ? WHERE state IN ('needs_details','rejected') AND invoice_id IN (SELECT id FROM subscription_invoices WHERE org_id = ? AND state = 'pending')").bind(t, t, orgId),
+    ]);
     await audit(c.env, c.get('user'), 'org.billing_profile.update', null);
     return c.json({ profile: vals });
   });

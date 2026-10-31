@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { makeEnv, client } from './helpers.js';
 
 const signup = (slug = 'live-cafe') => ({ name_ar: 'مقهى حي', name_en: 'Live Cafe', slug, name: 'Owner', email: `${slug}@example.test`, password: 'owner-pass-123', plan: 'basic', sector: 'cafe', accept_terms: true });
+const completeBillingProfile = (c) => c.put('/api/owner/billing-profile', { billing_legal_name: 'مقهى حي', billing_cr_number: '1010123456', billing_vat_number: '300000000000003', billing_address: 'حائل' });
 
 // A fake Moyasar + Resend. Invoices start "initiated"; tests flip them to "paid".
 function fakeProviders() {
@@ -12,6 +13,7 @@ function fakeProviders() {
   const HTTP_FETCH = async (url, init = {}) => {
     const u = new URL(url);
     if (u.host === 'api.resend.com') { mails.push(JSON.parse(init.body)); return Response.json({ id: 'mail_' + mails.length }); }
+    if (u.host === 'api.simplefatoora.com') return Response.json({ status: true, response: { sandbox_api_key: 'sf_sandbox_test' } });
     assert.equal(init.headers.authorization, 'Basic ' + btoa('sk_test_x:'));
     if (init.method === 'POST' && u.pathname === '/v1/invoices') {
       const b = JSON.parse(init.body); const inv = { id: 'inv_' + ++seq, status: 'initiated', amount: b.amount, currency: b.currency, url: 'https://checkout.moyasar.com/inv_' + seq, metadata: b.metadata };
@@ -21,7 +23,7 @@ function fakeProviders() {
     if (m && invoices.has(m[1])) return Response.json(invoices.get(m[1]));
     return Response.json({ message: 'not found' }, { status: 404 });
   };
-  return { invoices, mails, env: { HTTP_FETCH, MOYASAR_SECRET_KEY: 'sk_test_x', MOYASAR_WEBHOOK_SECRET: 'whsec-test-123', PUBLIC_BASE_URL: 'https://menu.test', RESEND_API_KEY: 're_test', MAIL_FROM: 'ZIMARA <no-reply@zimara.co>' } };
+  return { invoices, mails, env: { HTTP_FETCH, MOYASAR_SECRET_KEY: 'sk_test_x', MOYASAR_WEBHOOK_SECRET: 'whsec-test-123', PUBLIC_BASE_URL: 'https://menu.test', SIMPLE_FATOORA_API_KEY: 'sf_sandbox_test', SIMPLE_FATOORA_ENABLED: 'true', SIMPLE_FATOORA_SELLER_PROFILE_APPROVED: 'true', SIMPLE_FATOORA_ENV: 'sandbox', RESEND_API_KEY: 're_test', MAIL_FROM: 'ZIMARA <no-reply@zimara.co>' } };
 }
 
 test('checkout is refused until the gateway is configured, and browser redirects never activate a plan', async () => {
@@ -34,6 +36,7 @@ test('checkout is refused until the gateway is configured, and browser redirects
 test('paid Moyasar invoice activates the plan once, extends the period, and records a pending e-invoice', async () => {
   const p = fakeProviders(); const env = makeEnv(p.env); const c = client(env);
   await c.post('/api/register', signup());
+  assert.equal((await completeBillingProfile(c)).status, 200);
   assert.equal((await c.post('/api/owner/billing/checkout', { plan: 'chains', cycle: 'monthly' })).status, 400);
   const co = await c.post('/api/owner/billing/checkout', { plan: 'basic', cycle: 'annual' });
   assert.equal(co.status, 201, JSON.stringify(co.json));
@@ -65,6 +68,7 @@ test('paid Moyasar invoice activates the plan once, extends the period, and reco
 test('amount tampering at the provider is refused and VAT is added only when configured', async () => {
   const p = fakeProviders(); const env = makeEnv({ ...p.env, VAT_RATE_BPS: '1500' }); const c = client(env);
   await c.post('/api/register', signup());
+  await completeBillingProfile(c);
   const co = await c.post('/api/owner/billing/checkout', { plan: 'pro', cycle: 'monthly' });
   assert.equal(co.json.vat, 3735);
   assert.equal(co.json.total, 28635);
@@ -78,6 +82,7 @@ test('another business cannot sync someone else\'s checkout', async () => {
   const p = fakeProviders(); const env = makeEnv(p.env);
   const a = client(env, '3.3.3.3'), b = client(env, '4.4.4.4');
   await a.post('/api/register', signup('cafe-a')); await b.post('/api/register', signup('cafe-b'));
+  await completeBillingProfile(a);
   const co = await a.post('/api/owner/billing/checkout', { plan: 'basic', cycle: 'monthly' });
   assert.equal((await b.post('/api/owner/billing/sync', { checkout_id: co.json.checkout_id })).status, 404);
 });

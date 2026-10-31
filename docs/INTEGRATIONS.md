@@ -8,10 +8,10 @@ A configured secret is not a successful integration test.
 
 | Capability | Implemented here | Ready for a customer today |
 | --- | --- | --- |
-| Tenant invoice list/detail | Tenant-filtered, paginated records; empty by default | Only after authoritative provider records exist |
-| Subscription checkout | Explicit provider interface; endpoint fails closed with 503 | No: gateway implementation and merchant setup required |
-| Payment webhook | Fails closed; never activates subscriptions | No: verified provider contract and tests required |
-| Simple Fatoora | Invoice provider interface and record model | No runtime API implementation; the chat connector is separate |
+| Tenant invoice list/detail | Tenant-filtered, paginated records; real provider document and PDF URL only | Needs provider credentials, complete billing profile and sandbox verification |
+| Subscription checkout | Moyasar hosted checkout; server verifies payment before activating plan | Needs Moyasar credentials and Simple Fatoora issuing configuration |
+| Payment webhook | Authenticated signal triggers server-side Moyasar invoice verification; never trusts a browser success URL | Needs merchant configuration and a real sandbox payment |
+| Simple Fatoora | Server-side SDK adapter, durable post-payment outbox and ambiguous-result reconciliation | Needs a runtime API key, explicit environment flags, complete billing profile and sandbox verification |
 | Generic POS bridge | Encrypted connection keys, HMAC-authenticated create/ready events, replay/idempotency checks, tenant-bound mapping, revocation | Locally tested; external vendor deployment not verified |
 | Rewaa | Referenced official docs | Direct adapter is not built |
 | Foodics | Status and provider boundary | OAuth adapter, partner approval and tests are not built |
@@ -32,29 +32,17 @@ integration or use live invoice creation as a smoke test.
 
 ## Payment and invoice rules
 
-- Payment authority comes from a verified provider server result, checked against an
-  immutable local payment intent: expected tenant, plan, period, amount, SAR currency,
-  merchant account and payment ID. A success URL is never payment proof.
-- A real implementation must verify the provider's actual webhook authentication
-  contract. Do not label the generic POS HMAC below as a Moyasar signature.
-- The official Moyasar payment-reference URL requested during implementation returned
-  HTTP 403. No signature scheme or checkout request was guessed from that failure.
-- `POST /api/owner/billing/checkout` returns `503 billing_not_configured`.
-  `POST /api/billing/webhook/:provider` returns `503 billing_webhook_not_implemented`.
-  Neither endpoint alters a subscription, even with `status=paid` supplied by a client.
-- `PaymentProvider` and `InvoiceProvider` in `src/providers/contracts.js` are extension
-  contracts, not working payment/invoice adapters. Implement and test them before
-  enabling money movement or invoice issuance.
-- Only trusted provider processes may insert `subscription_invoices`. There is no
-  public invoice insertion endpoint. No invoice or PDF is fabricated or seeded.
-- `GET /api/owner/invoices` returns only the current organization, with bounded
-  pagination. Detail reads require the same organization; another tenant gets 404.
-- Invoice amounts use integer halalas and enforce `total = subtotal + vat`. Tax status,
-  invoice type and ZATCA integration stage must come from approved business/provider
-  configuration, not an unconditional assumption that every subscriber owes VAT.
-- Future issuance must use an outbox/retry process with a stable payment reference and
-  provider idempotency. Network acceptance is not proof of document issuance, ZATCA
-  acceptance, PDF readiness or email delivery; store these states independently.
+- The connected Simple Fatoora chat account is not a Worker credential. The Worker uses a separate server secret, `SIMPLE_FATOORA_API_KEY`, with the [official Simple Fatoora SDK API](https://simplefatoora.com/en/apiintigration/). The API key is never sent to the browser or written to logs.
+- Use a sandbox API key with `SIMPLE_FATOORA_ENV=sandbox`, `SIMPLE_FATOORA_ENABLED=true` and `SIMPLE_FATOORA_SELLER_PROFILE_APPROVED=true` only after the seller legal/tax profile has been checked. Live issuance is separately guarded by `SIMPLE_FATOORA_ENV=live` and `SIMPLE_FATOORA_LIVE_ISSUING_ENABLED=true`. The integration remains `configured_unverified` until a sandbox document and returned record are checked.
+- Paid checkout is offered only when Moyasar and Simple Fatoora are both configured and the subscriber has a legal name and address. A buyer VAT number is required when a non-zero VAT amount is configured.
+- Payment authority comes from a server-to-server Moyasar invoice read, checked against the stored checkout, expected amount and SAR currency. The success redirect and webhook payload only trigger that read; neither alone proves payment.
+- The paid checkout transaction creates one local invoice record and one outbox job. The cron calls `POST /sdk/invoice/create` only after Moyasar confirms payment. The job uses the buyer details from the private owner billing profile and uses one stable reference for the Simple Fatoora document.
+- A completed create is recorded only after Simple Fatoora returns its document ID and invoice number. A timeout or server error is ambiguous: the job moves to `unknown`, and the worker performs read-only searches using the stable reference. It never blindly repeats an uncertain create. Multiple/no matches remain unresolved and require provider reconciliation before any manual reissue.
+- Definite provider rejections are recorded as rejected, not shown as issued. Saving corrected billing-profile details requeues those rejected jobs. A legal name/address is required; VAT is taken from the verified billing settings and configured checkout amount, not inferred from the company name.
+- Invoice records remain tenant-scoped. `GET /api/owner/invoices` is paginated and never creates documents. PDF links appear only when Simple Fatoora returned them. The current Simple Fatoora account preference does not send customer invoice emails, so the dashboard is the delivery path unless email sending is separately enabled with the provider.
+- No credential or environment is inherited from the chat connector. No live document or payment was created during this implementation. Do not use a Live invoice as a smoke test.
+- Checkout currently fails closed unless both integrations and billing details are ready. Never activate a plan from a client-supplied `status=paid`; verify the exact stored payment with Moyasar first.
+- Tax status and document type must match ZIMARA's approved seller profile. The API's presence does not itself confirm that ZIMARA has completed its tax/legal setup or ZATCA onboarding.
 
 ## Generic POS bridge v1
 

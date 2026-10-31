@@ -73,7 +73,7 @@ The public review is at https://zimara-menu-review-20261031.zimara-hq.workers.de
 
 ### Honest operational limits
 
-Payment checkout/webhooks and Simple Fatoora runtime issuance are not built/activated; no invoices are fabricated. The connected Simple Fatoora chat account does not grant this Worker API credentials. Direct Foodics/Rewaa/Odoo adapters, Wallet signing/issuance/updates, SMS/WhatsApp and native apps are not built. Existing Web Push needs VAPID setup and real-device tests; this review uses in-page alerts. R2 image/font endpoints exist and validate files, but account R2 enablement is required. The import workflow accepts CSV exported by Excel, not native XLSX. Admin model preserves the existing4-admin roles; separate super/impersonation is pending. Full account erasure, verified email delivery/password reset, legal identity and commercial acceptance still block a paid launch. Never promise100% security, legal compliance, notification sound or App Store approval.
+Moyasar subscription checkout and the Simple Fatoora invoice adapter are implemented, but both remain disabled until their Worker credentials and explicit environment flags are configured. The connected Simple Fatoora chat account does not grant this Worker API credentials. Direct Foodics/Rewaa/Odoo adapters, Wallet signing/issuance/updates, SMS/WhatsApp and native apps are not built. Existing Web Push needs VAPID setup and real-device tests; this review uses in-page alerts. R2 image/font endpoints exist and validate files, but account R2 enablement is required. The import workflow accepts CSV exported by Excel, not native XLSX. Admin model preserves the existing4-admin roles; separate super/impersonation is pending. Full account erasure, verified email delivery/password reset, legal identity and commercial acceptance still block a paid launch. Never promise100% security, legal compliance, notification sound or App Store approval.
 
 ## Payments and email — 31 October 2026
 
@@ -81,10 +81,16 @@ Built and tested, switched on only by configuration:
 
 | Feature | How it works | To switch on |
 | --- | --- | --- |
-| Subscription checkout (Moyasar) | Owner picks a plan in «باقتي وفواتيري», pays on Moyasar's hosted page (mada, Visa, Mastercard, Apple Pay). The plan activates only after `GET /v1/invoices/:id` with the secret key confirms `paid` for the exact amount. Webhook (`/api/webhooks/moyasar`, checked against `secret_token`) and the return redirect only trigger that check; a cron re-checks pending checkouts every 5 minutes. Idempotent: replays never extend twice. Each paid checkout creates a `subscription_invoices` row in state `pending` until a real ZATCA invoice is issued. | Secrets `MOYASAR_SECRET_KEY`, `MOYASAR_WEBHOOK_SECRET`; var `PUBLIC_BASE_URL`; webhook URL `https://<domain>/api/webhooks/moyasar` in the Moyasar dashboard. `VAT_RATE_BPS=1500` only after VAT registration. |
+| Subscription checkout (Moyasar) | Owner picks a plan in «باقتي وفواتيري», pays on Moyasar's hosted page (mada, Visa, Mastercard, Apple Pay). The plan activates only after `GET /v1/invoices/:id` with the secret key confirms `paid` for the exact amount. Webhook (`/api/webhooks/moyasar`, checked against `secret_token`) and the return redirect only trigger that check; a cron re-checks pending checkouts every 5 minutes. Idempotent: replays never extend twice. Checkout is offered only when both Moyasar and Simple Fatoora are configured and the tenant has legal name/address. A verified payment creates a durable invoice job; the invoice appears only after Simple Fatoora returns a real invoice number. | Secrets `MOYASAR_SECRET_KEY`, `MOYASAR_WEBHOOK_SECRET`, `SIMPLE_FATOORA_API_KEY`; var `PUBLIC_BASE_URL`; configure `SIMPLE_FATOORA_ENABLED=true`, `SIMPLE_FATOORA_SELLER_PROFILE_APPROVED=true`, `SIMPLE_FATOORA_ENV=sandbox` after confirming the Simple Fatoora seller identity/tax profile. Live issuance also requires `SIMPLE_FATOORA_ENV=live` and `SIMPLE_FATOORA_LIVE_ISSUING_ENABLED=true`. Use `VAT_RATE_BPS=1500` and standard invoices only after ZIMARA is VAT registered. |
 | Email verification and password reset (Resend) | Hashed single-use tokens (verify 48h, reset 30 min). Reset revokes all sessions. Forgot-password never reveals whether an email exists. | Secret `RESEND_API_KEY`; var `MAIL_FROM` on a verified sender domain. |
 
-Still not built: Simple Fatoora issuance (needs its runtime API key), direct Foodics/Rewaa adapters, Wallet passes, SMS/WhatsApp.
+Still not verified: Simple Fatoora sandbox/live document issuance and email delivery. Not built: direct Foodics/Rewaa adapters, Wallet passes, SMS/WhatsApp.
+
+### Simple Fatoora subscription invoices
+
+The Worker calls the official Simple Fatoora SDK API from the server with `X-API-Key`; it never exposes the key to a browser. The owner billing profile is required before checkout. An outbox runs after Moyasar confirms payment. If a create response is ambiguous, the worker searches by a stable invoice reference and does not blindly issue a duplicate. Sandbox is the default; no live invoice is used for testing. Invoices are shown in the subscription dashboard. Configure email delivery separately in Simple Fatoora if desired.
+
+Provision `SIMPLE_FATOORA_API_KEY` as a Worker secret. Keep the environment flags in the Worker settings (or `.dev.vars` locally); never put keys in Git. See [integration status and recovery](docs/INTEGRATIONS.md).
 
 ## Rewaa, legal details and billing emails
 

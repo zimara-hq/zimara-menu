@@ -7,9 +7,10 @@ import { registerAccounts, expireSubscriptions } from './accounts.js';
 import { consumeMfa } from './mfa.js';
 import { registerFeatures } from './features.js';
 import { registerIntegrations } from './integrations.js';
-import { registerBilling, reconcileCheckouts, billingConfigured } from './billing.js';
+import { registerBilling, reconcileCheckouts, subscriptionCheckoutConfigured } from './billing.js';
 import { registerMail } from './mail.js';
 import { registerRewaa, pollRewaa, rewaaConfigured } from './providers/rewaa.js';
+import { processSimpleFatooraInvoices } from './providers/simple-fatoora.js';
 import { registerLegal } from './legal.js';
 import { sendBillingNotices } from './notices.js';
 import {
@@ -751,7 +752,7 @@ app.get('/api/cards/:token', async (c) => {
   return c.json(await cardView(c.env, card));
 });
 
-app.get('/api/config', (c) => c.json({ vapidPublicKey: pushConfigured(c.env) ? c.env.VAPID_PUBLIC_KEY : null, payments: billingConfigured(c.env), rewaa: rewaaConfigured(c.env) }));
+app.get('/api/config', (c) => c.json({ vapidPublicKey: pushConfigured(c.env) ? c.env.VAPID_PUBLIC_KEY : null, payments: subscriptionCheckoutConfigured(c.env), rewaa: rewaaConfigured(c.env) }));
 
 // ---------- Alerts ----------
 
@@ -774,6 +775,7 @@ export async function scheduled(env, fetcher) {
   await expireDemo(env);
   const t = now();
   await expireSubscriptions(env);
+  try { await processSimpleFatooraInvoices(env); } catch { /* durable invoice jobs remain for the next run */ }
   // Lost-webhook fallback, every 5 minutes so abandoned checkouts do not hammer the provider.
   if (new Date(t).getUTCMinutes() % 5 === 0) await reconcileCheckouts(env);
   // POS sales from Rewaa open pager tickets; a failing connection records its error and never blocks alerts.

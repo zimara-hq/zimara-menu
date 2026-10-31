@@ -4,6 +4,7 @@ import { bad, HttpError, conflict, id, now, randomToken, hmac, slugify, str } fr
 import { newMfaSecret, sealSecret, openSecret, verifyTotp } from './mfa.js';
 import { sendVerification } from './mail.js';
 import { billingConfigured } from './billing.js';
+import { simpleFatooraConfigured } from './providers/simple-fatoora.js';
 
 export function registerAccounts(app) {
   app.post('/api/register', async (c) => {
@@ -45,7 +46,7 @@ export function registerAccounts(app) {
 
   app.get('/api/owner/subscription', requireRole('owner'), async (c) => {
     const subscription = await subscriptionFor(c.env,c.get('user').org_id);
-    return c.json({subscription,plans:Object.values(PLANS),pricesStatus:'proposed',currency:'SAR',pricesIncludeVat:false,payment:{status:billingConfigured(c.env)?'available':'needs_provider'}});
+    return c.json({subscription,plans:Object.values(PLANS),pricesStatus:'proposed',currency:'SAR',pricesIncludeVat:false,payment:{status:billingConfigured(c.env)&&simpleFatooraConfigured(c.env)?'available':'needs_provider'}});
   });
   app.post('/api/owner/subscription/cancel', requireRole('owner'), async (c) => {
     const u=c.get('user'),t=now(),s=await subscriptionFor(c.env,u.org_id);
