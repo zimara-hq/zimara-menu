@@ -37,7 +37,7 @@ export async function subscriptionView(el){
 export async function integrationsView(el){
  const {integrations}=await api('/api/owner/integrations');
  const live=integrations.filter(i=>i.configured&&i.implemented);
- el.innerHTML=`<div class="section-intro"><h2>${a('التكاملات','Integrations')}</h2><p>${a('الخدمات المتصلة بحسابك وتعمل الآن.','Services connected to your account and working now.')}</p></div><div class="integration-grid">${live.map(i=>`<article class="card stack"><h3>${esc(a(i.label_ar,i.label_en))}</h3><span class="pill ready">${a('متصل','Connected')}</span></article>`).join('')}</div>`;
+ el.innerHTML=`<div class="section-intro"><h2>${a('التكاملات','Integrations')}</h2><p>${a('الخدمات المتصلة بحسابك وتعمل الآن.','Services connected to your account and working now.')}</p></div>${live.length?`<div class="integration-grid">${live.map(i=>`<article class="card stack"><h3>${esc(a(i.label_ar,i.label_en))}</h3><span class="pill ready">${a('متصل','Connected')}</span></article>`).join('')}</div>`:`<p class="empty">${a('لا توجد تكاملات متصلة بحسابك حاليًا.','No integrations are connected to your account yet.')}</p>`}`;
  el.insertAdjacentHTML('beforeend','<section class="card stack" id="rewaa-panel"></section>');rewaaPanel(el.querySelector('#rewaa-panel'));
 }
 
