@@ -1,0 +1,34 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {makeEnv,client} from './helpers.js';
+import {expireDemo} from '../src/demo.js';
+test('demo rooms isolate roles, expose no staff credentials, and clamp session expiry',async()=>{
+ const env=makeEnv(),a=client(env),b=client(env,'2.2.2.2');
+ const room=(await a.post('/api/demo')).json,other=(await b.post('/api/demo')).json;
+ assert.ok(room.token);assert.equal(room.token.length,32);assert.equal(room.capabilities.payments,false);
+ assert.equal((await a.post('/api/demo/'+room.token+'/session',{role:'admin'})).status,400);
+ assert.equal((await a.post('/api/demo/'+room.token+'/session',{role:'owner'})).status,200);
+ assert.equal((await a.get('/api/me')).json.user.role,'owner');
+ assert.equal((await a.get('/api/admin/orgs')).status,403);
+ const session=await env.DB.prepare('SELECT expires_at FROM sessions').first();assert.equal(session.expires_at,room.expires_at);
+ assert.equal((await a.post('/api/demo/'+other.token+'/session',{role:'branch'})).status,200);
+ const me=(await a.get('/api/me')).json;assert.equal(me.org.slug,other.org_slug);
+ const metrics=(await a.get('/api/public/experience-metrics')).json;assert.equal(metrics.experiences,2);
+});
+test('demo private display shows QR only until independent customer links; expiry denies session',async()=>{
+ const env=makeEnv(),cashier=client(env),customer=client(env,'2.2.2.2');
+ const room=(await cashier.post('/api/demo')).json;
+ await cashier.post('/api/demo/'+room.token+'/session',{role:'branch'});
+ const display=(await customer.post('/api/demo/'+room.token+'/display')).json;
+ const created=(await cashier.post('/api/branch/tickets',{})).json;
+ const displayPath='/api/public'+display.url;
+ assert.equal((await customer.get(displayPath)).json.ticket.token,created.token);
+ const publicMenu=(await customer.get('/api/public/menu/'+room.branch_slug)).json;
+ assert.ok(!JSON.stringify(publicMenu).includes(created.token));
+ await customer.get('/api/t/'+created.token);
+ assert.equal((await customer.get(displayPath)).json.ticket,null);
+ await env.DB.prepare('UPDATE demo_rooms SET expires_at=0').run();await expireDemo(env);
+ assert.equal((await customer.post('/api/demo/'+room.token+'/session',{role:'owner'})).status,410);
+ assert.equal((await customer.get(displayPath)).status,404);
+ assert.equal((await cashier.get('/api/me')).status,401);
+});

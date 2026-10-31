@@ -1,4 +1,11 @@
+import { registerDemo, expireDemo } from './demo.js';
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
+import { body, requireRole, audit, newUser, isSecure, assertPlanQuota, subscriptionFor, planFor, rateLimit } from './context.js';
+import { registerAccounts, expireSubscriptions } from './accounts.js';
+import { consumeMfa } from './mfa.js';
+import { registerFeatures } from './features.js';
+import { registerIntegrations } from './integrations.js';
 import {
   checkLoginRate,
   clearCookie,
@@ -39,6 +46,7 @@ const TICKET_TTL_MS = 12 * 60 * 60 * 1000;
 const app = new Hono();
 
 app.onError((err, c) => {
+  if (/plan_(branches|items)_limit/.test(String(err?.message))) return c.json({ error: String(err.message).includes('plan_branches_limit') ? 'plan_branches_limit' : 'plan_items_limit' }, 409);
   if (err instanceof HttpError) return c.json({ error: err.code }, err.status);
   console.error(err);
   return c.json({ error: 'server_error' }, 500);
@@ -47,49 +55,32 @@ app.onError((err, c) => {
 // Security headers on everything the Worker answers.
 app.use('*', async (c, next) => {
   await next();
+  if (c.env.ENVIRONMENT === 'preview') c.header('X-Robots-Tag', 'noindex, nofollow');
   c.header('X-Content-Type-Options', 'nosniff');
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   c.header('X-Frame-Options', 'DENY');
+  c.header('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()');
+  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
+  if (new URL(c.req.url).protocol === 'https:') c.header('Strict-Transport-Security', 'max-age=31536000');
 });
+
+app.use('/api/*', bodyLimit({ maxSize: 4 * 1024 * 1024, onError: (c) => c.json({ error: 'request_too_large' }, 413) }));
 
 // Mutating API calls must be JSON: browsers cannot send cross-site JSON without
 // a CORS preflight we never grant, which closes CSRF for cookie sessions.
 app.use('/api/*', async (c, next) => {
   if (c.req.method !== 'GET' && c.req.method !== 'HEAD') {
+    const origin = c.req.header('origin');
+    if (origin && origin !== new URL(c.req.url).origin) throw forbidden('invalid_origin');
+    if (c.req.header('sec-fetch-site') === 'cross-site') throw forbidden('invalid_origin');
     const ct = c.req.header('content-type') || '';
-    if (!ct.startsWith('application/json')) throw bad('json_required');
+    if (!/^application\/json(?:\s*;|$)/i.test(ct)) throw bad('json_required');
   }
   c.header('Cache-Control', 'no-store');
   await next();
 });
 
-async function body(c) {
-  try {
-    const b = await c.req.json();
-    if (!b || typeof b !== 'object' || Array.isArray(b)) throw 0;
-    return b;
-  } catch {
-    throw bad('invalid_json');
-  }
-}
-
-function requireRole(...roles) {
-  return async (c, next) => {
-    const user = await loadUser(c.env, c.req.raw);
-    if (!user) throw new HttpError(401, 'unauthenticated');
-    if (!roles.includes(user.role)) throw forbidden();
-    c.set('user', user);
-    await next();
-  };
-}
-
-async function audit(env, user, action, detail) {
-  await env.DB.prepare('INSERT INTO audit_log (id, user_id, org_id, action, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-    .bind(id(), user?.id ?? null, user?.org_id ?? null, action, detail ? JSON.stringify(detail) : null, now())
-    .run();
-}
-
-const isSecure = (c) => new URL(c.req.url).protocol === 'https:';
+registerAccounts(app);
 
 // ---------- Session ----------
 
@@ -100,7 +91,7 @@ app.post('/api/login', async (c) => {
   const ip = c.req.header('cf-connecting-ip') || 'local';
   const keys = ['acct:' + email, 'ip:' + (await hmac(c.env.AUTH_SECRET, 'ip:' + ip))];
   await checkLoginRate(c.env, keys);
-  const user = await c.env.DB.prepare('SELECT id, password_hash, disabled FROM users WHERE email = ?').bind(email).first();
+  const user = await c.env.DB.prepare('SELECT id, password_hash, disabled, mfa_secret, mfa_last_counter FROM users WHERE email = ?').bind(email).first();
   // Verify against a dummy hash when the user is missing to keep timing similar.
   const ok = user
     ? await verifyPassword(password, user.password_hash)
@@ -109,8 +100,12 @@ app.post('/api/login', async (c) => {
     await recordLoginFailure(c.env, keys);
     throw new HttpError(401, 'invalid_credentials');
   }
+  if (user.mfa_secret && !(await consumeMfa(c.env,user,b))) {
+    await recordLoginFailure(c.env, keys);
+    throw new HttpError(401, b.code || b.recovery_code ? 'invalid_mfa_code' : 'mfa_required');
+  }
   await clearLoginFailures(c.env, keys);
-  const token = await createSession(c.env, user.id);
+  const token = await createSession(c.env, user.id, !!user.mfa_secret);
   c.header('Set-Cookie', sessionCookie(token, isSecure(c)));
   return c.json({ ok: true });
 });
@@ -126,7 +121,7 @@ app.get('/api/me', requireRole('admin', 'owner', 'branch'), async (c) => {
   const org = u.org_id ? await c.env.DB.prepare('SELECT id, slug, name_ar, name_en, brand_color, logo_url FROM orgs WHERE id = ?').bind(u.org_id).first() : null;
   const branch = u.branch_id ? await c.env.DB.prepare('SELECT id, slug, name_ar, name_en FROM branches WHERE id = ?').bind(u.branch_id).first() : null;
   return c.json({
-    user: { id: u.id, email: u.email, name: u.name, role: u.role },
+    user: { id: u.id, email: u.email, name: u.name, role: u.role, email_verified: !!u.email_verified, mfa_enabled: !!u.mfa_enabled },
     org,
     branch,
     pushConfigured: pushConfigured(c.env),
@@ -231,13 +226,6 @@ admin.patch('/users/:id', async (c) => {
 
 app.route('/api/admin', admin);
 
-async function newUser(c, b, role) {
-  const email = str(b.email, 'email', { max: 200 }).toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw bad('invalid_email');
-  if (!validPassword(b.password)) throw bad('weak_password');
-  return { id: id(), email, name: str(b.name, 'name', { max: 80 }), role, password_hash: await hashPassword(b.password) };
-}
-
 function uniqueToConflict(code) {
   return (e) => {
     if (/UNIQUE|constraint/i.test(String(e?.message ?? e))) throw conflict(code);
@@ -272,6 +260,7 @@ owner.get('/branches', async (c) => {
 
 owner.post('/branches', async (c) => {
   const u = c.get('user');
+  await assertPlanQuota(c.env, u.org_id, 'branches');
   const b = await body(c);
   const org = await c.env.DB.prepare('SELECT slug FROM orgs WHERE id = ?').bind(u.org_id).first();
   const nameEn = str(b.name_en, 'name_en', { max: 80 });
@@ -304,7 +293,14 @@ owner.patch('/branches/:id/account', async (c) => {
   const u = c.get('user');
   const b = await body(c);
   const acct = await c.env.DB.prepare("SELECT id FROM users WHERE branch_id = ? AND org_id = ? AND role = 'branch'").bind(c.req.param('id'), u.org_id).first();
-  if (!acct) throw notFound();
+  if (!acct) {
+    const branch = await c.env.DB.prepare('SELECT id FROM branches WHERE id = ? AND org_id = ?').bind(c.req.param('id'), u.org_id).first();
+    if (!branch) throw notFound();
+    const account = await newUser(c, b, 'branch');
+    await c.env.DB.prepare("INSERT INTO users (id,email,name,role,org_id,branch_id,password_hash,created_at) VALUES (?,?,?,'branch',?,?,?,?)").bind(account.id,account.email,account.name,u.org_id,branch.id,account.password_hash,now()).run().catch(uniqueToConflict('email_taken'));
+    await audit(c.env,u,'branch_account.create',{branch:branch.id});
+    return c.json({ok:true,id:account.id},201);
+  }
   const stmts = [];
   if (b.disabled !== undefined) stmts.push(c.env.DB.prepare('UPDATE users SET disabled = ? WHERE id = ?').bind(b.disabled ? 1 : 0, acct.id));
   if (b.password !== undefined) {
@@ -353,6 +349,7 @@ function itemFields(b) {
 
 owner.post('/items', async (c) => {
   const u = c.get('user');
+  await assertPlanQuota(c.env, u.org_id, 'items');
   const b = await body(c);
   const cat = await c.env.DB.prepare('SELECT id FROM categories WHERE id = ? AND org_id = ?').bind(b.category_id, u.org_id).first();
   if (!cat) throw bad('invalid_category_id');
@@ -430,7 +427,7 @@ app.route('/api/owner', owner);
 const branch = new Hono();
 branch.use('*', requireRole('branch'));
 
-const TICKET_COLS = 'id, number, token, status, linked_at, ready_at, seen_at, collected_at, alerts_sent, last_alert_at, rating, created_at, version';
+const TICKET_COLS = 'id, number, invoice_number, token, status, linked_at, ready_at, seen_at, collected_at, alerts_sent, last_alert_at, rating, created_at, version';
 
 branch.get('/tickets', async (c) => {
   const u = c.get('user');
@@ -446,25 +443,52 @@ branch.get('/tickets', async (c) => {
 branch.post('/tickets', async (c) => {
   const u = c.get('user');
   const b = await body(c);
-  let number = str(b.number, 'number', { optional: true, max: 12 });
-  if (number && !/^[0-9A-Za-z-]+$/.test(number)) throw bad('invalid_number');
-  if (!number) {
-    const last = await c.env.DB.prepare(
-      "SELECT MAX(CAST(number AS INTEGER)) AS n FROM tickets WHERE branch_id = ? AND created_at > ? AND number GLOB '[0-9]*'",
-    )
-      .bind(u.branch_id, now() - TICKET_TTL_MS)
-      .first();
-    number = String((last?.n || 0) + 1);
+  // b.number remains a backwards-compatible explicit pager number. New callers
+  // supply invoice_number and let the independent pager sequence increment.
+  const explicitNumber = str(b.number, 'number', { optional: true, max: 12 });
+  if (explicitNumber && !/^[0-9A-Za-z-]+$/.test(explicitNumber)) throw bad('invalid_number');
+  const invoiceNumber = str(b.invoice_number, 'invoice_number', { optional: true, max: 80 });
+  if (invoiceNumber && /[\x00-\x1f\x7f]/.test(invoiceNumber)) throw bad('invalid_invoice_number');
+  const idem = str(b.idem_key, 'idem_key', { optional: true, min: 8, max: 120 });
+  const fingerprint = await hmac(c.env.AUTH_SECRET, JSON.stringify({ number: explicitNumber, invoice_number: invoiceNumber }));
+  const previous = async () => {
+    if (!idem) return null;
+    const row = await c.env.DB.prepare(`SELECT r.fingerprint, t.id, t.number, t.invoice_number, t.token
+      FROM cashier_ticket_requests r JOIN tickets t ON t.id = r.ticket_id
+      WHERE r.branch_id = ? AND r.idem_key = ? AND t.org_id = ? AND t.branch_id = ?`)
+      .bind(u.branch_id, idem, u.org_id, u.branch_id).first();
+    if (!row) return null;
+    if (row.fingerprint !== fingerprint) throw conflict('idempotency_key_reused');
+    const { fingerprint: _fingerprint, ...ticket } = row;
+    return ticket;
+  };
+  const prior = await previous();
+  if (prior) return c.json({ ...prior, duplicate: true });
+  // A distinct simultaneous cashier request can win the same auto number.
+  // Retry the allocation instead of silently losing the user's invoice.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    let number = explicitNumber;
+    if (!number) {
+      const last = await c.env.DB.prepare(
+        "SELECT MAX(CAST(number AS INTEGER)) AS n FROM tickets WHERE branch_id = ? AND (created_at > ? OR status IN ('preparing', 'ready')) AND number GLOB '[0-9]*'",
+      ).bind(u.branch_id, now() - TICKET_TTL_MS).first();
+      number = String((last?.n || 0) + 1);
+    }
+    const tid = id(), token = randomToken(18), createdAt = now();
+    const stmts = [c.env.DB.prepare(
+      "INSERT INTO tickets (id, org_id, branch_id, number, invoice_number, token, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'preparing', ?)",
+    ).bind(tid, u.org_id, u.branch_id, number, invoiceNumber, token, createdAt)];
+    if (idem) stmts.push(c.env.DB.prepare('INSERT INTO cashier_ticket_requests (branch_id,idem_key,fingerprint,ticket_id,created_at) VALUES (?,?,?,?,?)').bind(u.branch_id,idem,fingerprint,tid,createdAt));
+    try {
+      await c.env.DB.batch(stmts);
+      return c.json({ id: tid, number, invoice_number: invoiceNumber, token }, 201);
+    } catch (error) {
+      const duplicate = await previous();
+      if (duplicate) return c.json({ ...duplicate, duplicate: true });
+      if (!/UNIQUE|constraint/i.test(String(error?.message ?? error))) throw error;
+      if (explicitNumber || attempt === 2) throw conflict('number_in_use');
+    }
   }
-  const tid = id();
-  const token = randomToken(18);
-  await c.env.DB.prepare(
-    "INSERT INTO tickets (id, org_id, branch_id, number, token, status, created_at) VALUES (?, ?, ?, ?, ?, 'preparing', ?)",
-  )
-    .bind(tid, u.org_id, u.branch_id, number, token, now())
-    .run()
-    .catch(uniqueToConflict('number_in_use'));
-  return c.json({ id: tid, number, token }, 201);
 });
 
 // action: ready | realert | collect | cancel. `version` gives optimistic concurrency between staff
@@ -558,8 +582,8 @@ async function orgMenu(env, orgId, { branchId = null, includeHidden = false } = 
   const { results: items } = await env.DB.prepare(
     `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.calories, i.image_url, i.sort, i.active,
             CASE WHEN bu.item_id IS NULL THEN 1 ELSE 0 END AS available
-       FROM items i LEFT JOIN branch_unavailable bu ON bu.item_id = i.id AND bu.branch_id = ?
-      WHERE i.org_id = ? ${includeHidden ? '' : 'AND i.active = 1'} ORDER BY i.sort, i.name_en`,
+       FROM items i JOIN categories category ON category.id = i.category_id AND category.org_id = i.org_id LEFT JOIN branch_unavailable bu ON bu.item_id = i.id AND bu.branch_id = ?
+      WHERE i.org_id = ? ${includeHidden ? '' : 'AND i.active = 1 AND category.active = 1'} ORDER BY i.sort, i.name_en`,
   )
     .bind(branchId, orgId)
     .all();
@@ -584,7 +608,7 @@ async function ticketByToken(env, token) {
     `SELECT t.id, t.number, t.status, t.linked_at, t.ready_at, t.seen_at, t.collected_at, t.alerts_sent, t.last_alert_at, t.rating, t.created_at,
             b.name_ar AS branch_ar, b.name_en AS branch_en, b.google_review_url, b.slug AS branch_slug,
             o.name_ar AS org_ar, o.name_en AS org_en, o.brand_color, o.logo_url, o.slug AS org_slug
-       FROM tickets t JOIN branches b ON b.id = t.branch_id JOIN orgs o ON o.id = t.org_id WHERE t.token = ?`,
+       FROM tickets t JOIN branches b ON b.id = t.branch_id JOIN orgs o ON o.id = t.org_id WHERE t.token = ? AND b.active = 1 AND o.active = 1`,
   )
     .bind(token)
     .first();
@@ -611,9 +635,13 @@ app.post('/api/t/:token/subscribe', async (c) => {
   const b = await body(c);
   if (!validEndpoint(b.endpoint)) throw bad('invalid_endpoint');
   if (t.status !== 'preparing' && t.status !== 'ready') throw conflict('ticket_closed');
-  await c.env.DB.prepare('INSERT OR IGNORE INTO push_subscriptions (id, ticket_id, endpoint, created_at) VALUES (?, ?, ?, ?)')
-    .bind(id(), t.id, b.endpoint, now())
+  const inserted = await c.env.DB.prepare('INSERT OR IGNORE INTO push_subscriptions (id, ticket_id, endpoint, created_at) SELECT ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM push_subscriptions WHERE ticket_id = ?) < 5')
+    .bind(id(), t.id, b.endpoint, now(), t.id)
     .run();
+  if (!inserted.meta.changes) {
+    const existing = await c.env.DB.prepare('SELECT id FROM push_subscriptions WHERE ticket_id = ? AND endpoint = ?').bind(t.id, b.endpoint).first();
+    if (!existing) throw new HttpError(429, 'push_device_limit');
+  }
   return c.json({ ok: true });
 });
 
@@ -652,6 +680,7 @@ async function cardView(env, card) {
 }
 
 app.post('/api/cards', async (c) => {
+  await rateLimit(c, 'public-card-create', { limit: 20, window: 3600000 });
   const b = await body(c);
   const org = await c.env.DB.prepare('SELECT o.id FROM orgs o JOIN loyalty_programs p ON p.org_id = o.id WHERE o.slug = ? AND o.active = 1 AND p.active = 1')
     .bind(str(b.org, 'org', { max: 60 }))
@@ -693,7 +722,9 @@ export async function alertTicket(env, ticketId, fetcher) {
 
 // Cron: repeat unseen ready alerts every 2 minutes (max 3 repeats), expire stale tickets and sessions.
 export async function scheduled(env, fetcher) {
+  await expireDemo(env);
   const t = now();
+  await expireSubscriptions(env);
   const { results } = await env.DB.prepare(
     "SELECT id FROM tickets WHERE status = 'ready' AND seen_at IS NULL AND alerts_sent < ? AND last_alert_at <= ?",
   )
@@ -718,7 +749,12 @@ export async function scheduled(env, fetcher) {
 // ---------- Pages ----------
 
 // Asset paths without .html: the assets layer redirects *.html to the clean URL.
-const PAGES = { '/m/': '/menu', '/t/': '/ticket', '/c/': '/card', '/j/': '/join' };
+registerFeatures(app);
+registerIntegrations(app, { onTicketReady: (env, ticketId) => alertTicket(env, ticketId) });
+
+registerDemo(app);
+
+const PAGES = { '/p/': '/profile', '/m/': '/menu', '/t/': '/ticket', '/c/': '/card', '/j/': '/join', '/display/': '/display' };
 
 app.get('*', async (c) => {
   const path = new URL(c.req.url).pathname;

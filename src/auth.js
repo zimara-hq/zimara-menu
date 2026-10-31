@@ -11,8 +11,9 @@ export async function hashPassword(password) {
 }
 
 export async function verifyPassword(password, stored) {
+  if (typeof password !== 'string' || password.length > 200) return false;
   const [scheme, iter, salt, hash] = String(stored).split('$');
-  if (scheme !== 'pbkdf2') return false;
+  if (scheme !== 'pbkdf2' || Number(iter) !== ITERATIONS || !salt || !hash) return false;
   const bits = new Uint8Array(await derive(password, fromB64url(salt), Number(iter)));
   const expected = fromB64url(hash);
   if (bits.length !== expected.length) return false;
@@ -30,12 +31,15 @@ export function validPassword(p) {
   return typeof p === 'string' && p.length >= 10 && p.length <= 200;
 }
 
-export async function createSession(env, userId) {
+export async function createSession(env, userId, mfaVerified = false) {
   const token = randomToken(32);
   const sid = await hmac(env.AUTH_SECRET, 'session:' + token);
   const t = now();
-  await env.DB.prepare('INSERT INTO sessions (id, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)')
-    .bind(sid, userId, t + SESSION_MS, t)
+  const demo = await env.DB.prepare('SELECT d.expires_at FROM demo_rooms d JOIN users u ON u.org_id = d.org_id WHERE u.id = ?').bind(userId).first();
+  if (demo && demo.expires_at <= t) throw new HttpError(410, 'demo_expired');
+  const expiresAt = demo ? Math.min(t + SESSION_MS, demo.expires_at) : t + SESSION_MS;
+  await env.DB.prepare('INSERT INTO sessions (id, user_id, expires_at, created_at, mfa_verified) VALUES (?, ?, ?, ?, ?)')
+    .bind(sid, userId, expiresAt, t, mfaVerified ? 1 : 0)
     .run();
   return token;
 }
@@ -64,11 +68,12 @@ export async function loadUser(env, req) {
   if (!token) return null;
   const sid = await hmac(env.AUTH_SECRET, 'session:' + token);
   const row = await env.DB.prepare(
-    `SELECT u.id, u.email, u.name, u.role, u.org_id, u.branch_id, s.id AS sid
+    `SELECT u.id, u.email, u.name, u.role, u.org_id, u.branch_id, u.email_verified, CASE WHEN u.mfa_secret IS NULL THEN 0 ELSE 1 END AS mfa_enabled, s.mfa_verified, s.id AS sid
        FROM sessions s JOIN users u ON u.id = s.user_id
-      WHERE s.id = ? AND s.expires_at > ? AND u.disabled = 0`,
+      WHERE s.id = ? AND s.expires_at > ? AND u.disabled = 0
+        AND NOT EXISTS (SELECT 1 FROM demo_rooms d WHERE d.org_id = u.org_id AND d.expires_at <= ?)`,
   )
-    .bind(sid, now())
+    .bind(sid, now(), now())
     .first();
   return row || null;
 }

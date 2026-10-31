@@ -41,10 +41,12 @@ export async function vapidHeader(env, endpoint) {
 
 // Returns 'ok' | 'gone' | 'error'. 'gone' means the subscription must be deleted.
 export async function sendPush(env, endpoint, fetcher = fetch) {
-  if (!pushConfigured(env)) return 'error';
+  if (!pushConfigured(env) || !validEndpoint(endpoint)) return 'error';
   try {
     const res = await fetcher(endpoint, {
       method: 'POST',
+      redirect: 'error',
+      signal: AbortSignal.timeout(10000),
       headers: {
         Authorization: await vapidHeader(env, endpoint),
         TTL: '300',
@@ -65,7 +67,7 @@ const PUSH_HOSTS = [/^fcm\.googleapis\.com$/, /(^|\.)push\.apple\.com$/, /(^|\.)
 export function validEndpoint(endpoint) {
   try {
     const u = new URL(endpoint);
-    return u.protocol === 'https:' && endpoint.length <= 1000 && PUSH_HOSTS.some((r) => r.test(u.hostname));
+    return u.protocol === 'https:' && !u.username && !u.password && !u.hash && (!u.port || u.port === '443') && endpoint.length <= 1000 && PUSH_HOSTS.some((r) => r.test(u.hostname));
   } catch {
     return false;
   }

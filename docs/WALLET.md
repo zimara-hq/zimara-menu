@@ -7,9 +7,13 @@ this plan extends rather than replaces.
 
 ## What Wallet adds, and what it cannot do
 
-- A pass update makes iOS/Android show a lock-screen notification with the system
-  sound, even if the customer closed the browser. This is the main gain over Web
-  Push on iPhone, where Web Push needs the page added to the Home Screen first.
+- A correctly signed pass plus its implemented update service can provide a
+  lock-screen update when the device and platform permit it. Visibility, delivery
+  and sound depend on platform rules, notification settings, connectivity and
+  focus/silent modes. No lock-screen sound or delivery guarantee is made.
+- The pass-signing and update service are not built in this repository yet.
+  Web Push on iPhone normally requires a supported iOS version and installation
+  to the Home Screen; certificate ownership alone does not remove that limit.
 - It cannot ring a phone that is powered off or has no network. Nothing can.
 - The sound is the system notification sound; a custom ringtone is not possible.
 
@@ -19,7 +23,7 @@ this plan extends rather than replaces.
 | --- | --- | --- |
 | Apple Developer Program (organisation) | developer.apple.com | 99 USD / year |
 | Pass Type ID + its certificate (.p12) | Certificates, Identifiers & Profiles | included |
-| APNs auth key (.p8) for pass updates | Keys | included |
+| APNs credentials appropriate to Wallet pass updates | Verify current Apple PassKit/APNs requirements | included |
 | Google Wallet API issuer account | pay.google.com/business/console | free |
 | Google Cloud service account + JSON key, with Wallet API enabled | console.cloud.google.com | free |
 
