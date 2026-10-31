@@ -21,7 +21,7 @@ const t = makeT({
     readyNow: 'جاهز للاستلام', latest: 'آخر طلب', fullscreen: 'ملء الشاشة', soundOn: 'تفعيل صوت الشاشة',
     cardCode: 'رمز بطاقة العميل', find: 'بحث', scan: 'مسح بالكاميرا', addStamp: 'إضافة ختم', redeemBtn: 'استبدال المكافأة', stampsOf: '{n} أختام · المطلوب {m}', notEnough: 'الأختام غير كافية.', cardNF: 'البطاقة غير موجودة.',
     available: 'متوفر', soldout: 'نفد', current: 'كلمة المرور الحالية', next: 'كلمة المرور الجديدة', changed: 'تم تغيير كلمة المرور',
-    pushOff: 'إشعارات الويب غير مهيأة على الخادم بعد (مفاتيح VAPID). التنبيه يعمل بالصوت والصفحة مفتوحة فقط.',
+    pushOff: 'التنبيه يصل للعميل بالصوت والاهتزاز وصفحته مفتوحة. إشعارات شاشة القفل تتفعّل قريبًا.',
     walletSoon: 'Apple Wallet وGoogle Wallet غير مفعّلتين. تحتاجان إصدار البطاقات والشهادات واختبار الأجهزة الفعلية.',
   },
   en: {
@@ -42,7 +42,7 @@ const t = makeT({
     readyNow: 'Ready for pickup', latest: 'Latest order', fullscreen: 'Full screen', soundOn: 'Enable display sound',
     cardCode: 'Customer card code', find: 'Find', scan: 'Scan with camera', addStamp: 'Add stamp', redeemBtn: 'Redeem reward', stampsOf: '{n} stamps · {m} needed', notEnough: 'Not enough stamps.', cardNF: 'Card not found.',
     available: 'Available', soldout: 'Sold out', current: 'Current password', next: 'New password', changed: 'Password changed',
-    pushOff: 'Web push is not configured on the server yet (VAPID keys). Alerts work by sound with the page open only.',
+    pushOff: 'Customers are alerted by sound and vibration while their page is open. Lock-screen notifications are coming soon.',
     walletSoon: 'Apple Wallet and Google Wallet are not enabled. Pass issuance, credentials and real-device tests are still required.',
   },
 });
@@ -60,6 +60,7 @@ function flash(el, text, error = false) {
 const uuid = () => crypto.randomUUID();
 
 function tabs(list, onPick) {
+  addEventListener('hashchange', () => { const k = location.hash.slice(1); if (k !== current && list.some(([x]) => x === k)) show(k); });
   const nav = document.createElement('nav');
   nav.className = 'tabs';
   nav.setAttribute('role', 'tablist');
@@ -74,6 +75,7 @@ function tabs(list, onPick) {
   function show(k) {
     current = k;
     try { sessionStorage.setItem('zm_tab_' + me.user.role, k); } catch {}
+    if (location.hash.slice(1) !== k) history.replaceState(null, '', location.pathname + location.search + '#' + k);
     nav.querySelectorAll('button').forEach((b) => { b.setAttribute('aria-selected', String(b.dataset.k === k)); b.tabIndex = b.dataset.k === k ? 0 : -1; });
     const panel = document.createElement('section');
     panel.setAttribute('role', 'tabpanel');
@@ -345,7 +347,7 @@ let lastIssued = null;
 async function branchOrders(el) {
   clearTimeout(boardTimer);
   el.innerHTML = `
-    ${me.pushConfigured ? '' : `<p class="msg error small">${esc(t('pushOff'))}</p>`}
+    ${me.pushConfigured ? '' : `<p class="msg small">${esc(t('pushOff'))}</p>`}
     <div class="board">
       <div class="card stack"><h2>${esc(t('newTicket'))}</h2>
         <form class="row" id="nt"><div><label for="num">${esc(t('number'))}</label><input id="num" name="number" maxlength="64" autocomplete="off"></div><button class="btn big">${esc(t('newTicket'))}</button></form>
