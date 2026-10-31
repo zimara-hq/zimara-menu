@@ -45,7 +45,7 @@ test('verified paid subscription invoice is issued once and never exposes the AP
     ...configured,
     HTTP_FETCH: async (url, init) => {
       calls.push({ url, init });
-      return new Response(JSON.stringify({ status: true, response: { id: 732, invoice_number: 'INV-732', invoice: 'https://simplefatoora.test/invoice/732.pdf', environment: 'sandbox' } }), { status: 200 });
+      return new Response(JSON.stringify({ status: true, response: { id: 732, invoice_number: 'INV-732', invoice: 'https://simplefatoora.test/invoice/732.pdf', total: 129, environment: 'sandbox' } }), { status: 200 });
     },
   });
   const { owner } = await setupOrg(env);
@@ -86,7 +86,7 @@ test('ambiguous create is reconciled by stable reference, never blindly issued t
         return new Response('temporary failure', { status: 503 });
       }
       return new Response(JSON.stringify({ status: true, response: { invoices: [{
-        id: 901, invoice_number: 'INV-901', invoice: 'https://simplefatoora.test/invoice/901.pdf',
+        id: 901, invoice_number: 'INV-901', invoice: 'https://simplefatoora.test/invoice/901.pdf', total: 129,
         reference_number: 'ZM-SUB-checkout-unknown', environment: 'sandbox',
       }] } }), { status: 200 });
     },
