@@ -98,7 +98,7 @@ export function registerBilling(app) {
     if (!org?.billing_legal_name || !org?.billing_address || (price.vat > 0 && !org.billing_vat_number)) {
       throw new HttpError(400, 'billing_profile_incomplete');
     }
-    await validateSimpleFatooraKey(c.env);
+    try { await validateSimpleFatooraKey(c.env); } catch { throw new HttpError(503, 'invoicing_not_ready'); }
     const cid = id(), t = now();
     const base = c.env.PUBLIC_BASE_URL.replace(/\/$/, '');
     await c.env.DB.prepare("INSERT INTO billing_checkouts (id, org_id, plan, cycle, provider, subtotal, vat, total, status, created_by, created_at) VALUES (?, ?, ?, ?, 'moyasar', ?, ?, ?, 'pending', ?, ?)")
