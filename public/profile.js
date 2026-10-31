@@ -1,25 +1,110 @@
 import { api, esc, lang, makeT, pick, setBrandColor, topbar, applyTenantFont } from './common.js';
-const a=(ar,en)=>lang==='ar'?ar:en;const t=makeT({ar:{title:'عن المنشأة'},en:{title:'About the business'}});
-const main=document.getElementById('main');main.className='wrap profile-page';
+const a = (ar, en) => (lang === 'ar' ? ar : en);
+const t = makeT({ ar: { title: 'عن المنشأة' }, en: { title: 'About the business' } });
+const main = document.getElementById('main');
+main.className = 'wrap profile-page';
+
+const icon = (d) => `<svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ICONS = {
+  menu: icon('<path d="M4 6h16M4 12h16M4 18h10"/>'),
+  pin: icon('<path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>'),
+  clock: icon('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+  phone: icon('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>'),
+  gift: icon('<rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8S9 3 7 5s5 3 5 3 3-5 5-3-5 3-5 3"/>'),
+  link: icon('<path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>'),
+};
+
 function openNow(hours) {
- if (!hours?.length) return null;
- const parts = new Intl.DateTimeFormat('en-US', {timeZone:'Asia/Riyadh',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
- const values = Object.fromEntries(parts.map(x=>[x.type,x.value]));
- const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(values.weekday);
- const time = values.hour+':'+values.minute;
- const today = hours.find(h=>h.day===day), previous=hours.find(h=>h.day===(day+6)%7);
- if(previous&&!previous.closed&&previous.open>previous.close&&time<previous.close)return true;
- if(!today)return null;
- if(today.closed)return false;
- return today.open<today.close ? time>=today.open&&time<today.close : time>=today.open;
+  if (!hours?.length) return null;
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Riyadh', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
+  const v = Object.fromEntries(parts.map((x) => [x.type, x.value]));
+  const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(v.weekday);
+  const time = v.hour + ':' + v.minute;
+  const today = hours.find((h) => h.day === day), previous = hours.find((h) => h.day === (day + 6) % 7);
+  if (previous && !previous.closed && previous.open > previous.close && time < previous.close) return true;
+  if (!today) return null;
+  if (today.closed) return false;
+  return today.open < today.close ? time >= today.open && time < today.close : time >= today.open;
 }
-const slug=decodeURIComponent(location.pathname.split('/')[2]||'');
-try{
- const {org,profile:p,branches}=await api('/api/public/profile/'+encodeURIComponent(slug));setBrandColor(org.brand_color);topbar(document.getElementById('top'),t,{subtitle:pick(org,'name')});document.title=pick(org,'name')+' · '+t('brand');
- applyTenantFont(p.font_url);
- const days=a(['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']);
- const sectors={cafe:a('مقهى','Café'),restaurant:a('مطعم','Restaurant'),clinic:a('عيادة','Clinic'),bank:a('بنك','Bank'),service:a('مركز خدمة','Service centre')};
- const sections=p.sections||['menu','branches','hours','social','loyalty'];
- const bits={menu:`<section class="profile-menu-cta card"><div><p class="muted">${a('تجربتك تبدأ من هنا','Your experience begins here')}</p><h2>${a(['clinic','bank','service'].includes(p.sector)?'استكشف خدماتنا':'ما الذي تفضله اليوم؟',['clinic','bank','service'].includes(p.sector)?'Explore our services':'What are you in the mood for?')}</h2></div><div class="row">${branches.map(b=>`<a class="btn" href="/m/${esc(b.slug)}">${a('افتح','Open')} ${esc(pick(b,'name'))} ↗</a>`).join('')}</div></section>`,branches:`<section><div class="section-intro"><h2>${a('قريبون منك','Find us nearby')}</h2><p>${a('اختر الفرع المناسب لزيارتك.','Choose a branch for your visit.')}</p></div><div class="grid">${branches.map(b=>`<article class="card stack"><h3>${esc(pick(b,'name'))}</h3>${openNow(b.settings.hours)===null?'':`<span class="pill ${openNow(b.settings.hours)?'ready':'pending'}">${openNow(b.settings.hours)?a('مفتوح الآن','Open now'):a('مغلق الآن','Closed now')}</span>`}${b.settings.address?`<p class="muted">${esc(b.settings.address)}</p>`:''}${b.settings.maps_url?`<a class="btn ghost" href="${esc(b.settings.maps_url)}" target="_blank" rel="noopener">${a('الاتجاهات على الخرائط','Directions on Maps')} ↗</a>`:''}<a href="/m/${esc(b.slug)}">${a('استعرض المنيو','Browse menu')}</a></article>`).join('')}</div></section>`,hours:`<section class="card"><h2>${a('أوقات العمل','Opening hours')}</h2><div class="grid">${branches.map(b=>`<div><h3>${esc(pick(b,'name'))}</h3>${b.settings.hours?.length?`<dl class="opening-hours">${b.settings.hours.map(h=>`<div><dt>${esc(days[h.day])}</dt><dd>${h.closed?a('مغلق','Closed'):`<bdi>${esc(h.open)} – ${esc(h.close)}</bdi>`}</dd></div>`).join('')}</dl><p class="small muted">${a('بتوقيت الرياض','Riyadh time')}</p>`:`<p class="muted">${a('تواصل مع المنشأة لمعرفة أوقات العمل.','Contact the business for opening hours.')}</p>`}</div>`).join('')}</div></section>`,social:`<section class="card"><h2>${a('نبقى على تواصل','Stay in touch')}</h2><div class="row">${p.phone?`<a class="btn ghost" href="tel:${esc(p.phone.replace(/[^+\d]/g,''))}"><bdi>${esc(p.phone)}</bdi></a>`:''}${(p.social_links||[]).map(l=>`<a class="btn ghost" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} ↗</a>`).join('')}</div></section>`,loyalty:`<section class="profile-loyalty card"><span class="eyebrow">${a('زيارة تستحق أن تتكرر','A visit worth repeating')}</span><h2>${a('لكل زيارة، أثر.','Every visit counts.')}</h2><p>${a('استعرض بطاقة الولاء وشروط المكافأة لدى المنشأة.','View the business loyalty card and reward terms.')}</p><a class="btn" href="/j/${esc(org.slug)}">${a('بطاقتي الرقمية','My digital loyalty card')} ↗</a></section>`};
- main.innerHTML=`<section class="profile-hero">${p.banners?.[0]?`<img class="profile-cover" src="${esc(p.banners[0].image_url)}" alt="${esc(pick(p.banners[0],'alt'))}" width="1240" height="440">`:''}<div class="profile-identity">${org.logo_url?`<img class="profile-logo" src="${esc(org.logo_url)}" alt="" width="112" height="112">`:''}<span class="pill">${esc(sectors[p.sector]||sectors.cafe)}</span><h1>${esc(pick(org,'name'))}</h1><p class="profile-description">${esc(pick(p,'description'))}</p>${p.address?`<p class="muted">${esc(p.address)}</p>`:''}</div></section>${sections.map(key=>bits[key]||'').join('')}`;
-}catch{topbar(document.getElementById('top'),t);main.innerHTML=`<div class="card"><h1>${a('الصفحة غير متاحة','Page unavailable')}</h1><p class="muted">${a('تأكد من رابط المنشأة وحاول مجددًا.','Check the business link and try again.')}</p><a class="btn ghost" href="/">${a('زيمارا منيو','ZIMARA Menu')}</a></div>`;}
+const statusPill = (hours) => {
+  const s = openNow(hours);
+  return s === null ? '' : `<span class="status-pill ${s ? 'open' : 'closed'}"><span class="dot" aria-hidden="true"></span>${s ? a('مفتوح الآن', 'Open now') : a('مغلق الآن', 'Closed now')}</span>`;
+};
+
+const slug = decodeURIComponent(location.pathname.split('/')[2] || '');
+try {
+  const { org, profile: p, branches, loyalty } = await api('/api/public/profile/' + encodeURIComponent(slug));
+  setBrandColor(org.brand_color);
+  const name = pick(org, 'name');
+  topbar(document.getElementById('top'), t, { subtitle: name });
+  document.title = name + ' · ' + t('brand');
+  applyTenantFont(p.font_url);
+  document.body.classList.add('profile-body');
+
+  const days = a(['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'], ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']);
+  const sectors = { cafe: a('مقهى', 'Café'), restaurant: a('مطعم', 'Restaurant'), clinic: a('عيادة', 'Clinic'), bank: a('بنك', 'Bank'), service: a('مركز خدمة', 'Service centre') };
+  const services = ['clinic', 'bank', 'service'].includes(p.sector);
+  const sections = p.sections || ['menu', 'branches', 'hours', 'social', 'loyalty'];
+  const show = (k) => sections.includes(k);
+  const single = branches.length === 1 ? branches[0] : null;
+  const withHours = branches.filter((b) => b.settings.hours?.length);
+  const links = (p.social_links || []).filter((l) => l?.url);
+  const hasContact = p.phone || links.length;
+  const hasPlaces = branches.some((b) => b.settings.address || b.settings.maps_url);
+  const menuLabel = services ? a('استعرض الخدمات', 'Browse services') : a('افتح المنيو', 'Open the menu');
+
+  const heroActions = [
+    show('menu') && branches.length ? `<a class="btn hero-primary" href="${single ? '/m/' + esc(single.slug) : '#branches'}">${ICONS.menu}${menuLabel}</a>` : '',
+    show('loyalty') && loyalty ? `<a class="btn hero-secondary" href="/j/${esc(org.slug)}">${ICONS.gift}${a('بطاقة الولاء', 'Loyalty card')}</a>` : '',
+  ].join('');
+
+  const hero = `<section class="brand-hero profile-hero" aria-labelledby="org-name">
+    ${p.banners?.[0] ? `<img class="profile-cover" src="${esc(p.banners[0].image_url)}" alt="${esc(pick(p.banners[0], 'alt'))}" width="1240" height="440">` : ''}
+    <div class="profile-hero-body">
+      ${org.logo_url ? `<img class="hero-mark" src="${esc(org.logo_url)}" alt="" width="88" height="88">` : `<span class="hero-mark hero-monogram" aria-hidden="true">${esc([...name][0] || 'Z')}</span>`}
+      <div class="profile-hero-text">
+        <p class="hero-tags"><span>${esc(sectors[p.sector] || sectors.cafe)}</span>${single ? statusPill(single.settings.hours) : ''}</p>
+        <h1 id="org-name">${esc(name)}</h1>
+        ${pick(p, 'description') ? `<p class="hero-lead">${esc(pick(p, 'description'))}</p>` : ''}
+        ${p.address ? `<p class="hero-address">${ICONS.pin}<span>${esc(p.address)}</span></p>` : ''}
+        ${heroActions ? `<div class="hero-actions">${heroActions}</div>` : ''}
+      </div>
+    </div>
+  </section>`;
+
+  const bits = {
+    branches: show('branches') && (branches.length > 1 || hasPlaces) ? `<section class="profile-section" id="branches" aria-labelledby="h-branches">
+      <h2 id="h-branches">${branches.length > 1 ? a('فروعنا', 'Our branches') : a('موقعنا', 'Find us')}</h2>
+      <div class="place-grid">${branches.map((b) => `<article class="place-card">
+        <div class="branch-head"><h3>${esc(pick(b, 'name'))}</h3>${statusPill(b.settings.hours)}</div>
+        ${b.settings.address ? `<p class="branch-line">${ICONS.pin}<span>${esc(b.settings.address)}</span></p>` : ''}
+        <div class="branch-actions"><a class="btn sm" href="/m/${esc(b.slug)}">${menuLabel}</a>${b.settings.maps_url ? `<a class="btn ghost sm" href="${esc(b.settings.maps_url)}" target="_blank" rel="noopener">${a('الاتجاهات', 'Directions')}</a>` : ''}</div>
+      </article>`).join('')}</div>
+    </section>` : '',
+    hours: show('hours') && withHours.length ? `<section class="profile-section" aria-labelledby="h-hours">
+      <h2 id="h-hours">${a('أوقات العمل', 'Opening hours')}</h2>
+      <div class="place-grid">${withHours.map((b) => `<div class="hours-card">
+        ${branches.length > 1 ? `<h3>${esc(pick(b, 'name'))}</h3>` : ''}
+        <dl class="opening-hours">${b.settings.hours.map((h) => `<div><dt>${esc(days[h.day])}</dt><dd>${h.closed ? a('مغلق', 'Closed') : `<bdi>${esc(h.open)} – ${esc(h.close)}</bdi>`}</dd></div>`).join('')}</dl>
+        <p class="small muted">${ICONS.clock} ${a('بتوقيت الرياض', 'Riyadh time')}</p>
+      </div>`).join('')}</div>
+    </section>` : '',
+    social: show('social') && hasContact ? `<section class="profile-section" aria-labelledby="h-contact">
+      <h2 id="h-contact">${a('تواصل معنا', 'Contact us')}</h2>
+      <div class="contact-row">${p.phone ? `<a class="contact-chip" href="tel:${esc(p.phone.replace(/[^+\d]/g, ''))}">${ICONS.phone}<bdi>${esc(p.phone)}</bdi></a>` : ''}${links.map((l) => `<a class="contact-chip" href="${esc(l.url)}" target="_blank" rel="noopener">${ICONS.link}<span>${esc(l.label)}</span></a>`).join('')}</div>
+    </section>` : '',
+    loyalty: show('loyalty') && loyalty ? `<section class="loyalty-band" aria-labelledby="h-loyalty">
+      <div>
+        <h2 id="h-loyalty">${a('كل زيارة تقربك من مكافأتك', 'Every visit brings a reward closer')}</h2>
+        <p>${a(`اجمع ${loyalty.stamps_required} أختام واحصل على ${esc(loyalty.reward_ar)}.`, `Collect ${loyalty.stamps_required} stamps and get ${esc(loyalty.reward_en)}.`)}</p>
+        <a class="btn" href="/j/${esc(org.slug)}">${ICONS.gift}${a('احصل على بطاقتك', 'Get your card')}</a>
+      </div>
+      <ol class="stamp-dots" aria-hidden="true">${Array.from({ length: Math.min(loyalty.stamps_required, 10) }, (_, i) => `<li class="${i < 2 ? 'on' : ''}"></li>`).join('')}</ol>
+    </section>` : '',
+  };
+  const info = sections.filter((k) => k !== 'loyalty').map((k) => bits[k] || '').join('');
+  main.innerHTML = hero + (info ? `<div class="profile-info">${info}</div>` : '') + bits.loyalty;
+} catch {
+  topbar(document.getElementById('top'), t);
+  main.innerHTML = `<div class="card"><h1>${a('الصفحة غير متاحة', 'Page unavailable')}</h1><p class="muted">${a('تأكد من رابط المنشأة وحاول مجددًا.', 'Check the business link and try again.')}</p><a class="btn ghost" href="/">${a('زيمارا منيو', 'ZIMARA Menu')}</a></div>`;
+}

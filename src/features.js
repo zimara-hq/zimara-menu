@@ -677,10 +677,16 @@ export function registerFeatures(app) {
     )
       .bind(org.id)
       .all();
+    const program = await c.env.DB.prepare(
+      'SELECT stamps_required,reward_ar,reward_en FROM loyalty_programs WHERE org_id=? AND active=1',
+    )
+      .bind(org.id)
+      .first();
     const { id: _id, ...info } = org;
     return c.json({
       org: info,
       profile,
+      loyalty: program || null,
       branches: branches.map((b) => ({
         ...branchPublic(b),
         settings:

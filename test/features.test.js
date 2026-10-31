@@ -52,6 +52,8 @@ test('tenant profile round trips sector, hours and sections without leaking page
   assert.equal(profile.status, 200);
   assert.equal(profile.json.profile.sector, 'clinic');
   assert.equal(profile.json.branches[0].settings.orders_enabled, true);
+  assert.equal(profile.json.loyalty.stamps_required > 1, true);
+  assert.equal(typeof profile.json.loyalty.reward_ar, 'string');
   assert.equal(profile.text.includes(ticket.json.token), false);
   assert.equal(
     (
