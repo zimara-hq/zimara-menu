@@ -7,7 +7,7 @@ import { registerAccounts, expireSubscriptions } from './accounts.js';
 import { consumeMfa } from './mfa.js';
 import { registerFeatures } from './features.js';
 import { registerIntegrations } from './integrations.js';
-import { registerBilling, reconcileCheckouts, billingConfigured, subscriptionCheckoutConfigured } from './billing.js';
+import { registerBilling, reconcileCheckouts, subscriptionCheckoutConfigured } from './billing.js';
 import { registerMail } from './mail.js';
 import { registerRewaa, pollRewaa, rewaaConfigured } from './providers/rewaa.js';
 import { processSimpleFatooraInvoices } from './providers/simple-fatoora.js';
