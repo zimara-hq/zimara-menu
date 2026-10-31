@@ -1,0 +1,49 @@
+name: test
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm run build:preview
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Configure isolated local test environment
+        run: node -e "require('fs').writeFileSync('.dev.vars','AUTH_SECRET='+require('crypto').randomBytes(32).toString('hex')+'\nREQUIRE_ADMIN_MFA=true\n')"
+      - run: npm run db:migrate:local
+      - name: Run separate-browser customer, cashier and display journey
+        run: |
+          npm run dev -- --ip 127.0.0.1 --port 8787 > /tmp/zimara-menu-test.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8787/ > /dev/null; then break; fi
+            sleep 1
+          done
+          npm run test:e2e -- http://127.0.0.1:8787
+          npm run test:onboarding -- http://127.0.0.1:8787
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: connected-browser-evidence
+          path: output/playwright/
