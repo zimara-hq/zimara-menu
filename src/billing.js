@@ -1,6 +1,7 @@
 import { requireRole, body, audit, rateLimit, PLANS, subscriptionFor } from './context.js';
 import { HttpError, bad, id, notFound, now, hmac } from './util.js';
 import { sendPaymentReceipt } from './notices.js';
+import { simpleFatooraConfigured } from './providers/simple-fatoora.js';
 
 // Moyasar hosted invoices (SAMA-licensed gateway). Card data never touches this Worker.
 // Activation rule: a plan is activated only after GET /v1/invoices/:id, authenticated with the
@@ -66,14 +67,17 @@ export async function settleCheckout(env, checkout) {
   const sub = await env.DB.prepare('SELECT current_period_end, status FROM subscriptions WHERE org_id = ?').bind(checkout.org_id).first();
   const base = sub && sub.status === 'active' && sub.current_period_end > t ? sub.current_period_end : t;
   const end = base + PERIOD[checkout.cycle];
+  const invoiceId = id();
+  const invoiceReference = 'ZM-SUB-' + checkout.id;
   await env.DB.batch([
     sub
       ? env.DB.prepare("UPDATE subscriptions SET plan = ?, status = 'active', current_period_end = ?, cancel_at_period_end = 0, updated_at = ? WHERE org_id = ?").bind(checkout.plan, end, t, checkout.org_id)
       : env.DB.prepare("INSERT INTO subscriptions (org_id, plan, status, current_period_end, created_at, updated_at) VALUES (?, ?, 'active', ?, ?, ?)").bind(checkout.org_id, checkout.plan, end, t, t),
-    // Payment record awaiting the ZATCA e-invoice; state becomes 'issued' only when the
-    // invoicing provider returns a real invoice number and document.
-    env.DB.prepare("INSERT OR IGNORE INTO subscription_invoices (id, org_id, provider, provider_reference, state, currency, subtotal, vat, total, created_at) VALUES (?, ?, 'moyasar', ?, 'pending', 'SAR', ?, ?, ?, ?)")
-      .bind(id(), checkout.org_id, checkout.provider_invoice_id, checkout.subtotal, checkout.vat, checkout.total, t),
+    // The invoice outbox is durable; it runs only after Moyasar confirms payment.
+    env.DB.prepare("INSERT OR IGNORE INTO subscription_invoices (id, org_id, provider, provider_reference, state, currency, subtotal, vat, total, created_at) VALUES (?, ?, 'simple_fatoora', ?, 'pending', 'SAR', ?, ?, ?, ?)")
+      .bind(invoiceId, checkout.org_id, checkout.provider_invoice_id, checkout.subtotal, checkout.vat, checkout.total, t),
+    env.DB.prepare("INSERT OR IGNORE INTO subscription_invoice_jobs (invoice_id, payment_reference, reference_number, state, next_attempt_at, created_at, updated_at) VALUES (?, ?, ?, 'pending', ?, ?, ?)")
+      .bind(invoiceId, checkout.provider_invoice_id, invoiceReference, t, t, t),
   ]);
   await audit(env, null, 'billing.paid', { org_id: checkout.org_id, checkout: checkout.id, plan: checkout.plan, cycle: checkout.cycle, total: checkout.total });
   try { await sendPaymentReceipt(env, checkout, end); } catch { /* the payment stands; the receipt is best effort */ }
@@ -88,7 +92,10 @@ export function registerBilling(app) {
     const plan = String(b.plan || ''), cycle = String(b.cycle || '');
     const price = priceFor(c.env, plan, cycle);
     const u = c.get('user');
-    const org = await c.env.DB.prepare('SELECT name_ar FROM orgs WHERE id = ?').bind(u.org_id).first();
+    const org = await c.env.DB.prepare('SELECT name_ar, billing_legal_name, billing_vat_number, billing_address FROM orgs WHERE id = ?').bind(u.org_id).first();
+    if (!org?.billing_legal_name || !org?.billing_address || (price.vat > 0 && !org.billing_vat_number)) {
+      throw new HttpError(400, 'billing_profile_incomplete');
+    }
     const cid = id(), t = now();
     const base = c.env.PUBLIC_BASE_URL.replace(/\/$/, '');
     await c.env.DB.prepare("INSERT INTO billing_checkouts (id, org_id, plan, cycle, provider, subtotal, vat, total, status, created_by, created_at) VALUES (?, ?, ?, ?, 'moyasar', ?, ?, ?, 'pending', ?, ?)")
