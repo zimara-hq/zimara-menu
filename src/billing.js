@@ -12,6 +12,7 @@ const DAY = 86400000;
 const PERIOD = { monthly: 30 * DAY, annual: 365 * DAY };
 
 export const billingConfigured = (env) => Boolean(env.MOYASAR_SECRET_KEY && env.MOYASAR_WEBHOOK_SECRET && env.PUBLIC_BASE_URL);
+export const subscriptionCheckoutConfigured = (env) => billingConfigured(env) && simpleFatooraConfigured(env);
 
 const http = (env) => env.HTTP_FETCH || fetch;
 
