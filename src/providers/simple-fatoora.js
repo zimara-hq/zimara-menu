@@ -26,7 +26,16 @@ async function request(env, path, payload) {
   return data.response;
 }
 
+async function validateApiKeyEnvironment(env) {
+  const response = await request(env, '/sdk/users/validate_user_api_key', { api_key: env.SIMPLE_FATOORA_API_KEY });
+  const keyMatches = targetEnvironment(env) === 'sandbox'
+    ? response.sandbox_api_key === env.SIMPLE_FATOORA_API_KEY
+    : response.production_api_key === env.SIMPLE_FATOORA_API_KEY;
+  if (!keyMatches) throw Object.assign(new Error('simple_fatoora_api_key_environment_mismatch'), { kind: 'rejected' });
+}
+
 export async function createSimpleFatooraInvoice(env, payload) {
+  await validateApiKeyEnvironment(env);
   const response = await request(env, '/sdk/invoice/create', payload);
   const receivedEnvironment = response.environment === 'live' ? 'live' : 'sandbox';
   if (receivedEnvironment !== targetEnvironment(env)) throw Object.assign(new Error('simple_fatoora_environment_mismatch'), { kind: 'unknown' });
