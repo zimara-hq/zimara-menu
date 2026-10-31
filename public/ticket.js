@@ -5,7 +5,7 @@ const t = makeT({
     title: 'طلبك', number: 'رقم طلبك', preparing: 'طلبك قيد التحضير', preparingHint: 'خذ راحتك… بنناديك أول ما يجهز.',
     ready: 'طلبك جاهز!', readyHint: 'توجّه لنقطة الاستلام الحين.', seenBtn: 'شفت التنبيه', seenDone: 'تمام، الموظف يعرف إنك شفت التنبيه.',
     collected: 'تم الاستلام، بالعافية!', cancelled: 'تم إلغاء هذا الطلب.',
-    enable: 'فعّل التنبيه بالصوت', enabled: 'التنبيه مفعّل', enableHint: 'الصوت يحتاج الصفحة مفتوحة. تنبيه شاشة القفل يعتمد على تفعيل الإشعارات ودعم المتصفح وإعدادات الجهاز؛ لا نضمن الصوت في الوضع الصامت.',
+    enable: 'فعّل تنبيه شاشة القفل', enabled: 'تنبيه شاشة القفل مفعّل لهذا الطلب.', enableSoundOnly: 'فعّل الصوت والاهتزاز داخل الصفحة', soundEnabled: 'صوت الصفحة يعمل ما دامت مفتوحة.', pushEnabled: 'سجّلنا هذا الطلب لتنبيه شاشة القفل.', pushLockHint: 'بعد السماح بالإشعارات، يمكن للهاتف إظهار تنبيه النظام والشاشة مقفلة. يجب أن يبقى الهاتف مشغّلًا ومتصلًا بالإنترنت؛ صوت الإشعار واهتزازه يخضعان لإعدادات النظام ولا يمكن فرضهما.', pageOnlyHint: 'التنبيه خارج الصفحة غير مهيأ لهذا الموقع أو هذا الجهاز حاليًا. الصوت داخل الصفحة يعمل عندما تبقى مفتوحة. الهاتف المطفي بالكامل لا يستقبل تنبيهًا.', pushUnavailable: 'تنبيه شاشة القفل غير متاح الآن. أبقِ هذه الصفحة مفتوحة ليعمل الصوت، أو أعد المحاولة بعد تهيئة إشعارات الموقع.', pushSetupFailed: 'تعذر تسجيل تنبيه شاشة القفل. تحقق من إذن الإشعارات والاتصال ثم حاول مجددًا.',
     iosHint: 'على الآيفون: اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية» وافتح الصفحة منها، عشان يوصلك التنبيه والجوال مقفل.',
     notifDenied: 'الإشعارات مرفوضة من إعدادات المتصفح. بنعتمد على الصوت والصفحة مفتوحة.',
     rateQ: 'كيف كانت تجربتك؟', thanks: 'شكرًا على تقييمك!', google: 'قيّمنا على خرائط Google', send: 'إرسال', comment: 'ملاحظة (اختياري)',
@@ -16,7 +16,7 @@ const t = makeT({
     title: 'Your order', number: 'Your order number', preparing: 'Your order is being prepared', preparingHint: 'Relax — we will call you the moment it is ready.',
     ready: 'Your order is ready!', readyHint: 'Head to the pickup point now.', seenBtn: 'I saw the alert', seenDone: 'Got it — staff know you saw the alert.',
     collected: 'Collected. Enjoy!', cancelled: 'This order was cancelled.',
-    enable: 'Turn on sound alerts', enabled: 'Alerts are on', enableHint: 'Sound needs this page open. Lock-screen alerts depend on notification permission, browser support and device settings. Silent-mode sound is not guaranteed.',
+    enable: 'Enable lock-screen alerts', enabled: 'Lock-screen alerts are enabled for this order.', enableSoundOnly: 'Enable sound while this page is open', soundEnabled: 'Page sound works while this page stays open.', pushEnabled: 'This order is registered for lock-screen alerts.', pushLockHint: 'After notification permission is granted, the phone can show a system alert while locked. Keep the phone powered on and online; notification sound and vibration follow system settings and cannot be forced.', pageOnlyHint: 'Background alerts are not configured for this site or device right now. Page sound works while this page remains open. A fully powered-off phone cannot receive alerts.', pushUnavailable: 'Lock-screen alerts are not available right now. Keep this page open for sound, or try again after site notifications are configured.', pushSetupFailed: 'Could not register lock-screen alerts. Check notification permission and connection, then try again.',
     iosHint: 'On iPhone: tap Share, then “Add to Home Screen”, and open the page from there to get alerts on the lock screen.',
     notifDenied: 'Notifications are blocked in browser settings. We will rely on sound with this page open.',
     rateQ: 'How was your experience?', thanks: 'Thanks for rating!', google: 'Rate us on Google Maps', send: 'Send', comment: 'Comment (optional)',
@@ -34,6 +34,7 @@ document.title = `${t('brand')} · ${t('title')}`;
 let state = null;
 let lastAlerts = 0;
 let soundOn = false;
+let pushOn = false;
 let failures = 0;
 let wakeLock = null;
 let notice = '';
@@ -45,6 +46,10 @@ let gameState = null;
 
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+function pushAvailable() {
+  return Boolean(state?.vapidPublicKey && 'serviceWorker' in navigator && 'PushManager' in window &&
+    'Notification' in window && (!isIOS || standalone));
+}
 
 async function keepAwake() {
   try {
@@ -56,28 +61,46 @@ async function keepAwake() {
 }
 document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && soundOn && keepAwake());
 
+async function trackTicket(reg) {
+  const worker = reg.active || reg.waiting || reg.installing;
+  if (!worker) throw new Error('service_worker_not_ready');
+  const channel = new MessageChannel();
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('service_worker_track_timeout')), 5000);
+    channel.port1.onmessage = (event) => {
+      clearTimeout(timer);
+      channel.port1.close();
+      event.data?.type === 'tracked' ? resolve() : reject(new Error('service_worker_track_failed'));
+    };
+    worker.postMessage({ type: 'track', token, lang }, [channel.port2]);
+  });
+}
+
 async function enableAlerts() {
   soundOn = unlockAudio();
   try { sessionStorage.setItem('zm_sound_' + token, '1'); } catch {}
   keepAwake();
   notice = '';
-  if ('serviceWorker' in navigator && 'PushManager' in window && state?.vapidPublicKey) {
-    try {
-      const perm = await Notification.requestPermission();
-      if (perm !== 'granted') notice = t('notifDenied');
-      else {
-        const reg = await navigator.serviceWorker.register('/sw.js');
-        await navigator.serviceWorker.ready;
-        reg.active?.postMessage({ type: 'track', token, lang });
-        const sub = (await reg.pushManager.getSubscription()) ||
-          (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: state.vapidPublicKey }));
-        await api(`/api/t/${token}/subscribe`, { method: 'POST', body: { endpoint: sub.endpoint } });
-      }
-    } catch {
-      notice = t('notifDenied');
+  if (!pushAvailable()) {
+    notice = t('pushUnavailable');
+    render();
+    return;
+  }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') notice = t('notifDenied');
+    else {
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      await navigator.serviceWorker.ready;
+      const sub = (await reg.pushManager.getSubscription()) ||
+        (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: state.vapidPublicKey }));
+      await trackTicket(reg);
+      await api(`/api/t/${token}/subscribe`, { method: 'POST', body: { endpoint: sub.endpoint } });
+      pushOn = true;
+      try { sessionStorage.setItem('zm_push_' + token, '1'); } catch {}
     }
-  } else if (isIOS && !standalone) {
-    notice = t('iosHint');
+  } catch {
+    notice = t('pushSetupFailed');
   }
   render();
 }
@@ -118,11 +141,12 @@ function render() {
         ${s === 'ready' && state.seen_at ? `<p class="msg">${esc(t('seenDone'))}</p>` : ''}
       </div>
       <div class="card stack">
-        ${soundOn ? `<p class="msg">🔔 ${esc(t('enabled'))}</p>` : `<button class="btn big" id="enable" type="button" style="width:100%">🔔 ${esc(t('enable'))}</button>`}
-        <p class="small muted">${esc(t('enableHint'))}</p>
+        ${soundOn ? `<p class="msg">🔊 ${esc(t('soundEnabled'))}</p>` : ''}
+        ${pushOn ? `<p class="msg">📳 ${esc(t('pushEnabled'))}</p>` : ''}
+        ${(!soundOn || (pushAvailable() && !pushOn)) ? `<button class="btn big" id="enable" type="button" style="width:100%">🔔 ${esc(t(pushAvailable() ? 'enable' : 'enableSoundOnly'))}</button>` : ''}
+        <p class="small muted">${esc(t(pushAvailable() ? 'pushLockHint' : 'pageOnlyHint'))}</p>
         ${isIOS && !standalone ? `<p class="small">${esc(t('iosHint'))}</p>` : ''}
-        ${notice ? `<p class="msg error small">${esc(notice)}</p>` : ''}
-        ${!state.vapidPublicKey ? `<p class="small muted">${lang === 'ar' ? 'اترك هذه الصفحة مفتوحة، وننبهك بالصوت والاهتزاز لحظة جاهزية طلبك.' : 'Keep this page open and we will alert you with sound and vibration when your order is ready.'}</p>` : ''}
+        ${notice ? `<p class="msg error small">${esc(notice))}</p>` : ''}
       </div>${s === 'preparing' && gameType !== 'none' ? '<section class="card wait-game" id="waiting-game"></section>' : ''}`;
   } else if (s === 'collected') {
     body = `
