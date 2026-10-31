@@ -5,7 +5,7 @@ const http = (env) => env.HTTP_FETCH || fetch;
 const targetEnvironment = (env) => env.SIMPLE_FATOORA_ENV === 'live' ? 'live' : 'sandbox';
 
 export function simpleFatooraConfigured(env) {
-  if (env.SIMPLE_FATOORA_ENABLED !== 'true' || !env.SIMPLE_FATOORA_API_KEY) return false;
+  if (env.SIMPLE_FATOORA_ENABLED !== 'true' || env.SIMPLE_FATOORA_SELLER_PROFILE_APPROVED !== 'true' || !env.SIMPLE_FATOORA_API_KEY) return false;
   return targetEnvironment(env) !== 'live' || env.SIMPLE_FATOORA_LIVE_ISSUING_ENABLED === 'true';
 }
 
