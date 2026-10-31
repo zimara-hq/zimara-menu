@@ -3,7 +3,7 @@ import { HttpError, bad, conflict, id, int, notFound, now, randomToken, str } fr
 import { encryptionConfigured, encryptSigningSecret, decryptSigningSecret, verifyBridgeSignature, payloadHash } from './providers/pos-bridge.js';
 import { paymentProvider } from './providers/contracts.js';
 import { pushConfigured } from './push.js';
-import { billingConfigured } from './billing.js';
+import { billingConfigured, subscriptionCheckoutConfigured } from './billing.js';
 import { mailConfigured } from './mail.js';
 import { rewaaConfigured } from './providers/rewaa.js';
 import { simpleFatooraConfigured } from './providers/simple-fatoora.js';
@@ -14,7 +14,7 @@ const POS_COLS = 'id, branch_id, provider, label, active, created_at, revoked_at
 export function integrationReadiness(env) {
   const entry = (id, label_ar, label_en, state, implemented, configured, reason_ar, reason_en) => ({ id, label_ar, label_en, state, implemented, configured, verified: false, reason_ar, reason_en });
   return [
-    entry('payments', 'الدفع والاشتراكات (ميسر)', 'Subscription payments (Moyasar)', billingConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, billingConfigured(env),
+    entry('payments', 'الدفع والاشتراكات (ميسر)', 'Subscription payments (Moyasar)', subscriptionCheckoutConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, subscriptionCheckoutConfigured(env),
       'الدفع عبر صفحة ميسر المستضافة مبني. الاشتراك يتفعّل فقط بعد تأكيد الدفع من واجهة ميسر نفسها. يحتاج مفاتيح الحساب واختبار دفعة حقيقية.', 'Moyasar hosted checkout is built. A plan activates only after Moyasar\'s API confirms the payment. Needs account keys and a real test payment.'),
     entry('email', 'البريد (تأكيد الحساب واستعادة كلمة المرور)', 'Email (verification and password reset)', mailConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, mailConfigured(env),
       'الإرسال عبر Resend مبني. يحتاج مفتاح Resend ونطاق مرسل موثّق.', 'Sending through Resend is built. Needs a Resend key and a verified sender domain.'),
