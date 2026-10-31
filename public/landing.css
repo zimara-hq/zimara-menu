@@ -12,3 +12,17 @@
 .quiet{min-width:44px;min-height:44px}.login-link{min-height:44px;display:inline-flex;align-items:center}
 .sample-actions{margin-top:14px}.sample-actions button{border:1px solid var(--line);border-radius:7px;background:var(--ink);color:var(--night);font:inherit;padding:10px 18px;min-height:44px;font-weight:700}.sample-actions button:hover{background:var(--lavender);color:var(--indigo)}
 @media(max-width:750px){.login-link{display:inline-flex;font-size:.85rem}.nav-actions{gap:2px}.nav{gap:5px;padding-inline:12px}.identity{font-size:1rem}.quiet{width:44px}.portal-stage{min-height:715px}.sample-item{font-size:.9rem}.sample-item span{font-size:.75rem}.phone #phone-content{font-size:.8rem}.phone .stamp-row{font-size:1.2rem}.metrics span{font-size:.75rem}.demo-tag{font-size:.75rem}.stage-copy p{font-size:1rem}}
+
+/* UI/UX polish 2026-10-31: 44px touch targets, 12px minimum text, SVG icons, RTL arrows */
+.identity{min-height:44px}
+.quiet{display:inline-grid;place-items:center;min-width:44px;min-height:44px}
+.quiet .icon,.value-list article>span svg{display:block}
+.value-list article>span{color:var(--accent);line-height:0;padding-top:4px}
+.questions summary{min-height:44px;display:flex;align-items:center;padding-block:8px}
+.footer a{display:inline-flex;align-items:center;min-height:44px}
+.scan-caption{font-size:max(12px,.55rem)}
+.door-word{font-size:max(12px,.65rem)}
+.origin-coordinate{font-size:max(12px,.8rem)}
+.footer-note{font-size:max(12px,.75rem)}
+[dir=rtl] .button span[aria-hidden=true]{display:inline-block;transform:scaleX(-1)}
+.text-link,.truth-strip a{display:inline-flex;align-items:center;min-height:44px}

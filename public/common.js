@@ -62,7 +62,7 @@ export function toggleTheme() {
 export const pick = (o, base) => (lang === 'ar' ? o[base + '_ar'] : o[base + '_en']) || o[base + '_ar'] || o[base + '_en'] || '';
 
 export function money(halalas) {
-  return new Intl.NumberFormat(lang === 'ar' ? 'ar-SA' : 'en-SA', { style: 'currency', currency: 'SAR' }).format(halalas / 100);
+  return new Intl.NumberFormat(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-SA', { style: 'currency', currency: 'SAR' }).format(halalas / 100);
 }
 
 export function esc(s) {
@@ -141,7 +141,7 @@ export function topbar(el, t, { extra = '', subtitle = '' } = {}) {
     <a class="brandmark" href="/"><img src="/brand/symbol.webp" alt="" width="40" height="40"><span>${esc(t('brand'))}${subtitle ? `<small>${esc(subtitle)}</small>` : ''}</span></a>
     <div class="tools">${extra}
       <button class="btn ghost sm" data-act="lang" type="button">${esc(t('lang'))}</button>
-      <button class="btn ghost sm" data-act="theme" type="button" aria-label="${esc(t('theme'))}">◐</button>
+      <button class="btn ghost sm icon-btn" data-act="theme" type="button" aria-label="${esc(t('theme'))}"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg></button>
     </div>`;
   el.querySelector('[data-act=lang]').onclick = toggleLang;
   el.querySelector('[data-act=theme]').onclick = toggleTheme;

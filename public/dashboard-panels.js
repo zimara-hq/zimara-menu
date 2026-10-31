@@ -1,6 +1,6 @@
 import { api, esc, lang, money, pick, qrSvg, requestValue, announce } from './common.js';
 const a = (ar,en) => lang === 'ar' ? ar : en;
-const date = n => n ? new Date(n).toLocaleDateString(lang==='ar'?'ar-SA-u-ca-gregory':'en-GB',{timeZone:'Asia/Riyadh'}) : '—';
+const date = n => n ? new Date(n).toLocaleDateString(lang==='ar'?'ar-SA-u-ca-gregory-nu-latn':'en-GB',{timeZone:'Asia/Riyadh'}) : '—';
 const input=(name,label,value='',type='text')=>`<div><label for="x-${name}">${esc(label)}</label><input id="x-${name}" name="${name}" type="${type}" value="${esc(value)}"></div>`;
 const message=(el,error)=>{el.innerHTML=`<p class="msg error" role="alert">${esc(a('تعذر تنفيذ الإجراء. تحقق من القيم والاتصال ثم حاول مجددًا.','Could not complete the action. Check your entries and connection, then retry.'))} ${error?.status===403?esc(a('قد لا تسمح باقتك أو صلاحيتك بهذا الإجراء.','Your plan or role may not allow this action.')):''}</p>`;};
 
