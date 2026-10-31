@@ -5,6 +5,7 @@ import { paymentProvider } from './providers/contracts.js';
 import { pushConfigured } from './push.js';
 import { billingConfigured } from './billing.js';
 import { mailConfigured } from './mail.js';
+import { rewaaConfigured } from './providers/rewaa.js';
 
 const INVOICE_COLS = 'id, provider, provider_reference, number, state, currency, subtotal, vat, total, pdf_url, issued_at, created_at';
 const POS_COLS = 'id, branch_id, provider, label, active, created_at, revoked_at';
@@ -18,8 +19,8 @@ export function integrationReadiness(env) {
       'الإرسال عبر Resend مبني. يحتاج مفتاح Resend ونطاق مرسل موثّق.', 'Sending through Resend is built. Needs a Resend key and a verified sender domain.'),
     entry('simple_fatoora', 'الفوترة الإلكترونية', 'Electronic invoicing', 'needs_api_contract', false, false,
       'ربط حساب Simple Fatoora بالمحادثة لا يربط خادم المنصة. يلزم عقد API وتفويض تشغيل مستقل.', 'The chat connector does not connect the application server. A runtime API contract and authorization are required.'),
-    entry('rewaa', 'رواء', 'Rewaa', 'not_built', false, false,
-      'محول رواء المباشر غير مبني. الجسر العام أدناه ليس ربط رواء معتمدًا.', 'The direct Rewaa adapter is not built. The generic bridge is not a certified Rewaa integration.'),
+    entry('rewaa', 'رواء', 'Rewaa', rewaaConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, rewaaConfigured(env),
+      'الربط المباشر مع رواء مبني: كل فاتورة بيع في فرع مربوط تفتح رقم انتظار تلقائيًا. يحتاج بيانات API من رواء واختبار فاتورة حقيقية.', 'The direct Rewaa link is built: each sale invoice in a linked branch opens a pager ticket. Needs Rewaa API access and a real invoice test.'),
     entry('foodics', 'فودكس', 'Foodics', 'needs_partner_approval', false, false,
       'يحتاج محول OAuth واعتماد الشريك واختبار حساب تجريبي.', 'Requires an OAuth adapter, partner approval and sandbox verification.'),
     entry('pos_bridge', 'جسر نقاط البيع العام', 'Generic POS bridge', env.POS_BRIDGE_ENABLED === 'true' && encryptionConfigured(env) ? 'configured_unverified' : 'needs_configuration', true,

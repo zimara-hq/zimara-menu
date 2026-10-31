@@ -13,3 +13,7 @@ VAT_RATE_BPS=0
 # Transactional email (Resend). Leave empty to keep email disabled.
 RESEND_API_KEY=
 MAIL_FROM=ZIMARA <no-reply@zimara.co>
+
+# Direct Rewaa link (polling). Needs POS_ENCRYPTION_KEY too. REWAA_SALES_PATH only if Rewaa support gives a different sale-invoice list path.
+REWAA_ENABLED=false
+# REWAA_SALES_PATH=/pos/invoices

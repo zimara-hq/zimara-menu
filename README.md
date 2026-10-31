@@ -85,3 +85,9 @@ Built and tested, switched on only by configuration:
 | Email verification and password reset (Resend) | Hashed single-use tokens (verify 48h, reset 30 min). Reset revokes all sessions. Forgot-password never reveals whether an email exists. | Secret `RESEND_API_KEY`; var `MAIL_FROM` on a verified sender domain. |
 
 Still not built: Simple Fatoora issuance (needs its runtime API key), direct Foodics/Rewaa adapters, Wallet passes, SMS/WhatsApp.
+
+## Rewaa, legal details and billing emails
+
+- **Rewaa** (`src/providers/rewaa.js`): owners link a branch to a Rewaa stock location from Integrations. The Worker polls sale invoices every minute and opens one pager ticket per invoice (`rewaa_invoices` guarantees once). Credentials and tokens are AES-GCM encrypted with `POS_ENCRYPTION_KEY`. Enable with `REWAA_ENABLED=true`. Rewaa does not publicly document a sale-invoice list endpoint; the default is `/pos/invoices`, overridable with `REWAA_SALES_PATH`. Readiness stays `configured_unverified` until a real sale is tested.
+- **Legal details**: admins edit ZIMARA's legal name, CR, VAT number, address and support contacts (`PUT /api/admin/legal`); `/legal` shows only filled fields. Owners keep their own billing details (`/api/owner/billing-profile`).
+- **Billing emails** (`src/notices.js`): payment receipt after a verified Moyasar payment, trial-ending (3 days), and renewal reminders (7 days and 1 day), each sent once per period.

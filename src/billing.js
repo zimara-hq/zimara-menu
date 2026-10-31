@@ -1,5 +1,6 @@
 import { requireRole, body, audit, rateLimit, PLANS, subscriptionFor } from './context.js';
 import { HttpError, bad, id, notFound, now, hmac } from './util.js';
+import { sendPaymentReceipt } from './notices.js';
 
 // Moyasar hosted invoices (SAMA-licensed gateway). Card data never touches this Worker.
 // Activation rule: a plan is activated only after GET /v1/invoices/:id, authenticated with the
@@ -75,6 +76,7 @@ export async function settleCheckout(env, checkout) {
       .bind(id(), checkout.org_id, checkout.provider_invoice_id, checkout.subtotal, checkout.vat, checkout.total, t),
   ]);
   await audit(env, null, 'billing.paid', { org_id: checkout.org_id, checkout: checkout.id, plan: checkout.plan, cycle: checkout.cycle, total: checkout.total });
+  try { await sendPaymentReceipt(env, checkout, end); } catch { /* the payment stands; the receipt is best effort */ }
   return { status: 'paid', current_period_end: end };
 }
 

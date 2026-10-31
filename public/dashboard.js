@@ -1,6 +1,6 @@
 import { ApiError, api, chime, esc, lang, makeT, money, pick, qrSvg, relTime, setBrandColor, topbar, unlockAudio, requestValue, announce } from './common.js';
 
-import { profileView, importView, subscriptionView, integrationsView, devicesView, menuOrdersView, branchSettingsView, mfaView, assetUploadView, dataControlsView } from './dashboard-panels.js';
+import { profileView, importView, subscriptionView, integrationsView, devicesView, menuOrdersView, branchSettingsView, mfaView, assetUploadView, dataControlsView, adminLegalView } from './dashboard-panels.js';
 
 const t = makeT({
   ar: {
@@ -389,6 +389,12 @@ async function branchOrders(el) {
     }
     refresh();
   }
+  let seenPrep = null;
+  // Keep the cashier screen awake while the board is open, and re-acquire after tab switches.
+  let wake = null;
+  const holdWake = async () => { try { if ('wakeLock' in navigator && document.visibilityState === 'visible') wake = await navigator.wakeLock.request('screen'); } catch {} };
+  holdWake();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && (!wake || wake.released)) holdWake(); });
   async function refresh() {
     clearTimeout(boardTimer);
     try {
@@ -406,6 +412,10 @@ async function branchOrders(el) {
         return `<div class="ticket ${late ? 'late' : ''}" data-id="${esc(tk.id)}"><span class="n">${esc(tk.number)}</span><span class="small">${info}<br><span class="muted">${esc(age)}</span>${tk.invoice_number ? `<br><span class="muted">${lang === 'ar' ? 'فاتورة' : 'Invoice'} ${esc(tk.invoice_number)}</span>` : ''}</span><span class="row" style="flex:0 1 auto">${btns}</span></div>`;
       };
       const open = tickets.filter((x) => x.status === 'preparing' || x.status === 'ready');
+      // Tickets opened elsewhere (Rewaa sale, menu order) ring the cashier once; the first load is silent.
+      const prepIds = open.filter((x) => x.status === 'preparing').map((x) => x.id);
+      if (seenPrep && prepIds.some((i) => !seenPrep.has(i) && i !== lastIssued?.id)) { try { chime(1); } catch {} }
+      seenPrep = new Set([...(seenPrep || []), ...prepIds]);
       for (const [id, st] of [['prep', 'preparing'], ['ready', 'ready']]) {
         const list = open.filter((x) => x.status === st);
         const box = el.querySelector('#' + id);
@@ -551,7 +561,7 @@ heading.innerHTML = `<div><h1>${esc(me.user.role === 'admin' ? t('admin') : me.u
 main.before(heading);
 
 const views = {
-  admin: [['orgs', t('orgs'), adminOrgs], ['admins', t('admins'), adminAdmins], ['account', t('account'), accountView]],
+  admin: [['orgs', t('orgs'), adminOrgs], ['admins', t('admins'), adminAdmins], ['legal', lang === 'ar' ? 'البيانات القانونية' : 'Legal details', adminLegalView], ['account', t('account'), accountView]],
   owner: [['branches', t('branches'), ownerBranches], ['menu', t('menu'), ownerMenu], ['loyalty', t('loyalty'), ownerLoyalty], ['stats', t('stats'), ownerStats], ['brand', t('brandTab'), ownerBrand], ['profile', lang === 'ar' ? 'صفحتي العامة' : 'Public profile', el => profileView(el, me)], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'تجربة الفروع' : 'Branch experience', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
   branch: [['orders', t('orders'), branchOrders], ['display', t('display'), branchDisplay], ['loyalty', t('loyalty'), branchLoyalty], ['availability', t('availability'), branchAvailability], ['inbox', lang === 'ar' ? 'طلبات المنيو' : 'Menu orders', menuOrdersView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['account', t('account'), accountView]],
 }[me.user.role];

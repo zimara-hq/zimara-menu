@@ -8,6 +8,9 @@ import { registerFeatures } from './features.js';
 import { registerIntegrations } from './integrations.js';
 import { registerBilling, reconcileCheckouts } from './billing.js';
 import { registerMail } from './mail.js';
+import { registerRewaa, pollRewaa } from './providers/rewaa.js';
+import { registerLegal } from './legal.js';
+import { sendBillingNotices } from './notices.js';
 import {
   checkLoginRate,
   clearCookie,
@@ -85,6 +88,8 @@ app.use('/api/*', async (c, next) => {
 registerAccounts(app);
 registerBilling(app);
 registerMail(app);
+registerRewaa(app);
+registerLegal(app);
 
 // ---------- Session ----------
 
@@ -731,6 +736,9 @@ export async function scheduled(env, fetcher) {
   await expireSubscriptions(env);
   // Lost-webhook fallback, every 5 minutes so abandoned checkouts do not hammer the provider.
   if (new Date(t).getUTCMinutes() % 5 === 0) await reconcileCheckouts(env);
+  // POS sales from Rewaa open pager tickets; a failing connection records its error and never blocks alerts.
+  try { await pollRewaa(env); } catch { /* next minute */ }
+  if (new Date(t).getUTCMinutes() === 7) { try { await sendBillingNotices(env); } catch { /* next hour */ } }
   const { results } = await env.DB.prepare(
     "SELECT id FROM tickets WHERE status = 'ready' AND seen_at IS NULL AND alerts_sent < ? AND last_alert_at <= ?",
   )

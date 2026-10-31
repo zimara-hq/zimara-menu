@@ -10,13 +10,13 @@ export const mailConfigured = (env) => Boolean(env.RESEND_API_KEY && env.MAIL_FR
 const http = (env) => env.HTTP_FETCH || fetch;
 const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
 
-async function send(env, to, subject, lines, link, cta) {
+export async function send(env, to, subject, lines, link, cta, footer = 'إذا ما طلبت هذا، تجاهل الرسالة.') {
   const html = `<div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;background:#faf8fb;padding:24px;color:#23003f">
 <div style="max-width:520px;margin:auto;background:#fff;border:1px solid #ded5e6;border-radius:16px;padding:28px">
 <p style="margin:0 0 16px;font-weight:700;letter-spacing:.12em">ZIMARA · زيمارا منيو</p>
 ${lines.map((l) => `<p style="margin:0 0 12px;line-height:1.7">${esc(l)}</p>`).join('')}
 <p style="margin:24px 0"><a href="${esc(link)}" style="background:#23003f;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:700">${esc(cta)}</a></p>
-<p style="margin:0;color:#65536f;font-size:13px">إذا ما طلبت هذا، تجاهل الرسالة.</p></div></div>`;
+<p style="margin:0;color:#65536f;font-size:13px">${esc(footer)}</p></div></div>`;
   const res = await http(env)('https://api.resend.com/emails', {
     method: 'POST',
     headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json' },
