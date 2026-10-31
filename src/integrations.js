@@ -15,7 +15,7 @@ export function integrationReadiness(env) {
   const entry = (id, label_ar, label_en, state, implemented, configured, reason_ar, reason_en) => ({ id, label_ar, label_en, state, implemented, configured, verified: false, reason_ar, reason_en });
   return [
     entry('payments', 'الدفع والاشتراكات (ميسر)', 'Subscription payments (Moyasar)', subscriptionCheckoutConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, subscriptionCheckoutConfigured(env),
-      'الدفع عبر صفحة ميسر المستضافة مبني. الاشتراك يتفعّل فقط بعد تأكيد الدفع من واجهة ميسر نفسها. يحتاج مفاتيح الحساب واختبار دفعة حقيقية.', 'Moyasar hosted checkout is built. A plan activates only after Moyasar\'s API confirms the payment. Needs account keys and a real test payment.'),
+      'الدفع عبر صفحة ميسر آمن بعد تأكيد المبلغ، ويُعرض فقط مع جاهزية Simple Fatoora. يحتاج مفاتيح المزودين واختبار Sandbox.', 'Moyasar hosted checkout activates only after a verified payment and is offered only when Simple Fatoora is ready. Provider keys and sandbox verification are required.'),
     entry('email', 'البريد (تأكيد الحساب واستعادة كلمة المرور)', 'Email (verification and password reset)', mailConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, mailConfigured(env),
       'الإرسال عبر Resend مبني. يحتاج مفتاح Resend ونطاق مرسل موثّق.', 'Sending through Resend is built. Needs a Resend key and a verified sender domain.'),
     entry('simple_fatoora', 'الفوترة الإلكترونية', 'Electronic invoicing', simpleFatooraConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, simpleFatooraConfigured(env),
