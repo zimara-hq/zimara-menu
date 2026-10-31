@@ -587,12 +587,12 @@ app.route('/api/branch', branch);
 
 async function orgMenu(env, orgId, { branchId = null, includeHidden = false } = {}) {
   const active = includeHidden ? '' : 'AND active = 1';
-  const { results: categories } = await env.DB.prepare(`SELECT id, name_ar, name_en, sort, active FROM categories WHERE org_id = ? ${active} ORDER BY sort, name_en`).bind(orgId).all();
+  const { results: categories } = await env.DB.prepare(`SELECT id, name_ar, name_en, sort, active FROM categories WHERE org_id = ? ${active} ORDER BY sort, rowid`).bind(orgId).all();
   const { results: items } = await env.DB.prepare(
     `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.calories, i.image_url, i.sort, i.active,
             CASE WHEN bu.item_id IS NULL THEN 1 ELSE 0 END AS available
        FROM items i JOIN categories category ON category.id = i.category_id AND category.org_id = i.org_id LEFT JOIN branch_unavailable bu ON bu.item_id = i.id AND bu.branch_id = ?
-      WHERE i.org_id = ? ${includeHidden ? '' : 'AND i.active = 1 AND category.active = 1'} ORDER BY i.sort, i.name_en`,
+      WHERE i.org_id = ? ${includeHidden ? '' : 'AND i.active = 1 AND category.active = 1'} ORDER BY i.sort, i.rowid`,
   )
     .bind(branchId, orgId)
     .all();
