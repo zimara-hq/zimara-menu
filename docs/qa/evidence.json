@@ -1,0 +1,156 @@
+{
+  "date": "2026-10-31T06:13:12.286Z",
+  "source_commit": "efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d",
+  "bundle": {
+    "path": ".wrangler/preview-build/index.js",
+    "sha256": "428760a77a9b0808c9263f5919f3a84e9c20afe1a2efac498147435b41200f34",
+    "bytes": 2126318,
+    "gzip_bytes": 1144709
+  },
+  "preview": "https://zimara-menu-review-20261031.zimara-hq.workers.dev",
+  "worker": "zimara-menu-review-20261031",
+  "database": "zimara-menu-review-20261031",
+  "database_id": "60a47a0e-e8e7-40d7-92ee-90889e685318",
+  "worker_version": "2e053893-7c57-4c59-b24e-8c82e18619af",
+  "deployment_id": "c805f9ea-89cc-4edc-a69b-8641eaac3bb2",
+  "api": {
+    "passed": 55,
+    "failed": 0,
+    "environment": "node:sqlite in-memory D1 adapter"
+  },
+  "https_connected": {
+    "base": "https://zimara-menu-review-20261031.zimara-hq.workers.dev",
+    "at": "2026-10-31T06:12:16.548Z",
+    "checks": [
+      "UI creates isolated room",
+      "independent cashier sessions linked without admin access",
+      "invoice distinct from automatic pager number",
+      "public menu contains no ticket token or pager QR",
+      "customer link hides private display QR",
+      "cashier ready reaches independent mobile customer",
+      "second cashier cannot overwrite stale ticket version",
+      "seen acknowledgment does not imply collection",
+      "customer state recovers after offline and reload",
+      "actual pickup and rating complete persisted journey",
+      "loyalty stamps and redeem update persistent customer balance",
+      "English landing pricing and interactive portal work",
+      "mobile fits viewport and honors reduced motion",
+      "no browser JavaScript errors"
+    ],
+    "errors": []
+  },
+  "https_onboarding": {
+    "passed": true,
+    "script": "test/e2e/onboarding.mjs",
+    "checks": [
+      "signup UI",
+      "CSV preview/apply",
+      "profile editor",
+      "branch order/game settings",
+      "truthful plan/invoices",
+      "integration panels",
+      "mobile menu order",
+      "cashier acceptance to pager and waiting game"
+    ],
+    "page_errors": []
+  },
+  "ux": {
+    "method": "dual independent agents + one confirmation batch",
+    "variants": 8,
+    "cta_contrast_default": 5.14,
+    "cta_contrast_hover": 6.73,
+    "physical_devices_tested": false
+  },
+  "ci": {
+    "source_commit": "efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d",
+    "url": "https://github.com/zimara-hq/zimara-menu/actions/runs/41175502983",
+    "conclusion": "success"
+  },
+  "limits": [
+    "No real iPhone/Android/Watch notification test",
+    "No payments, live invoices, Wallet passes, SMS or WhatsApp sent",
+    "R2 account enablement required (Cloudflare403/10042)",
+    "No commercial legal approval or100%security claim"
+  ],
+  "performance": {
+    "profile": "single Chromium lab run, mobile390,1.6Mbps,150msRTT,4xCPU,no cache; not field/CoreWebVitals certification",
+    "lcp": {
+      "time": 1124,
+      "element": "H1"
+    },
+    "cls": 0.00611074715478303,
+    "resources": [
+      {
+        "name": "landing.css",
+        "bytes": 6789,
+        "end": 496.69999999925494
+      },
+      {
+        "name": "landing.js",
+        "bytes": 7012,
+        "end": 504.80000000074506
+      },
+      {
+        "name": "symbol.webp",
+        "bytes": 13736,
+        "end": 582.6999999992549
+      },
+      {
+        "name": "logo.webp",
+        "bytes": 65392,
+        "end": 854.3000000007451
+      },
+      {
+        "name": "tajawal.css",
+        "bytes": 466,
+        "end": 661.5
+      },
+      {
+        "name": "jakarta.css",
+        "bytes": 474,
+        "end": 669.3000000007451
+      },
+      {
+        "name": "tajawal-arabic-0.woff2",
+        "bytes": 55372,
+        "end": 2449.699999999255
+      },
+      {
+        "name": "tajawal-arabic-4.woff2",
+        "bytes": 54972,
+        "end": 2714.199999999255
+      },
+      {
+        "name": "tajawal-arabic-2.woff2",
+        "bytes": 55820,
+        "end": 2721.900000002235
+      },
+      {
+        "name": "jakarta-latin-4.woff2",
+        "bytes": 63672,
+        "end": 2842.699999999255
+      },
+      {
+        "name": "jakarta-latin-0.woff2",
+        "bytes": 63636,
+        "end": 2850.199999999255
+      },
+      {
+        "name": "tajawal-arabic-3.woff2",
+        "bytes": 55544,
+        "end": 2742.800000000745
+      },
+      {
+        "name": "jakarta-latin-3.woff2",
+        "bytes": 63636,
+        "end": 2856.900000002235
+      },
+      {
+        "name": "experience-metrics",
+        "bytes": 362,
+        "end": 1327.699999999255
+      }
+    ],
+    "viewport": 390
+  }
+}

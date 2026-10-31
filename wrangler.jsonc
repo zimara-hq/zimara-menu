@@ -26,6 +26,6 @@
   "vars": { "ENVIRONMENT": "production" },
   // VAPID_PUBLIC_KEY is not secret, but keeping all four together lets .dev.vars and
   // `wrangler secret put` configure push the same way.
-  "secrets": { "required": ["AUTH_SECRET", "VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY", "VAPID_SUBJECT"] },
+  "secrets": { "required": ["AUTH_SECRET"] },
   "observability": { "enabled": true }
 }
