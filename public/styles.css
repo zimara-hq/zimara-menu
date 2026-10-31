@@ -338,3 +338,11 @@ form .error:empty { display: none; }
 @media(max-width:600px){.branch-card { align-items: center; gap: 18px; }.branch-card>.stack{flex-basis:130px}.branch-copy h3{font-size:1.2rem}.branch-copy .row{display:block}.branch-copy .btn{margin-block:5px;width:100%}}
 
 .btn.sm { min-height: 44px; }
+
+/* UI/UX polish 2026-10-31: square 44px icon buttons, 44px brand link, branded image placeholder */
+.btn.icon-btn { min-width: 44px; min-height: 44px; padding: 0; display: inline-grid; place-items: center; }
+.btn.icon-btn .icon { display: block; }
+.brandmark { min-height: 44px; }
+.item .item-placeholder img { width: 44%; height: auto; opacity: .35; filter: saturate(.6); }
+.price, .money, td.num { font-variant-numeric: tabular-nums; }
+.menu-cats a { display: inline-flex; align-items: center; min-height: 44px; }

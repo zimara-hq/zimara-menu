@@ -33,7 +33,7 @@ async function load() {
         <p class="small muted">${esc(t('wallet'))}</p>
       </div>
       ${c.history.length ? `<div class="card"><h2>${esc(t('history'))}</h2><table>${c.history
-        .map((h) => `<tr><td>${esc(t(h.kind))}</td><td>${h.delta > 0 ? '+' : ''}${h.delta}</td><td class="muted small">${new Date(h.created_at).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-GB')}</td></tr>`)
+        .map((h) => `<tr><td>${esc(t(h.kind))}</td><td>${h.delta > 0 ? '+' : ''}${h.delta}</td><td class="muted small">${new Date(h.created_at).toLocaleString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-GB')}</td></tr>`)
         .join('')}</table></div>` : ''}<p class="small" style="text-align:center"><button class="btn danger sm" id="delete-card" type="button">${lang === 'ar' ? 'إلغاء البطاقة' : 'Revoke card'}</button></p>`;
     main.querySelector('#delete-card').onclick = async e => {
       const confirm = await requestValue({title: lang === 'ar' ? 'إلغاء بطاقة الولاء' : 'Revoke loyalty card',label: lang === 'ar' ? 'اكتب DELETE CARD لإلغاء الرمز نهائيًا' : 'Type DELETE CARD to permanently revoke this code',hint: lang === 'ar' ? 'لن يعود الرمز صالحًا. يبقى سجل الحركات غير التعريفي محفوظًا.' : 'The code will stop working. The nonidentifying ledger is retained.',confirmLabel: lang === 'ar' ? 'إلغاء البطاقة' : 'Revoke card'});
