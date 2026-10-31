@@ -43,6 +43,7 @@ export function client(env, ip = '1.1.1.1') {
     post: (p, b = {}, h) => call('POST', p, b, h),
     patch: (p, b = {}) => call('PATCH', p, b),
     put: (p, b = {}) => call('PUT', p, b),
+    del: (p) => call('DELETE', p, {}),
     raw: call,
     login: (email, password) => call('POST', '/api/login', { email, password }),
   };

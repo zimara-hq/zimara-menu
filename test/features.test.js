@@ -261,7 +261,30 @@ test('asset uploader fails honestly without storage and validates magic bytes be
         data: btoa('not actually png'),
       })
     ).status,
-    503,
+    400,
+  );
+  // Without an R2 bucket, uploads are kept in D1 and served from the same URL.
+  const png = btoa(
+    String.fromCharCode(137, 80, 78, 71, 13, 10, 26, 10) + '\0'.repeat(40),
+  );
+  const local = await s.owner.post('/api/owner/assets', {
+    mime: 'image/png',
+    data: png,
+  });
+  assert.equal(local.status, 201, JSON.stringify(local.json));
+  const localFile = await client(env).get(local.json.url);
+  assert.equal(localFile.status, 200);
+  assert.equal(localFile.headers.get('content-type'), 'image/png');
+  assert.equal(
+    (
+      await s.owner.patch('/api/owner/org', {
+        name_ar: 'مقهى',
+        name_en: 'Cafe',
+        brand_color: '#23003f',
+        logo_url: local.json.url,
+      })
+    ).status,
+    200,
   );
   const stored = new Map();
   env.MEDIA = {

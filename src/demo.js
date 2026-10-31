@@ -1,3 +1,4 @@
+import { sampleMenuStatements } from './sample-menu.js';
 import { createSession, sessionCookie, hashPassword } from './auth.js';
 import { body, isSecure, rateLimit } from './context.js';
 import { id, randomToken, hmac, now, HttpError, bad, notFound } from './util.js';
@@ -20,7 +21,7 @@ export function registerDemo(app) {
   await rateLimit(c,'demo-create',{limit:8,window:HOUR});
   const n=await c.env.DB.prepare('SELECT COUNT(*) AS n FROM demo_rooms WHERE expires_at>?').bind(now()).first();
   if(n.n>=200)throw new HttpError(429,'demo_capacity');
-  const token=randomToken(24),oid=id(),bid=id(),owner=id(),cashier=id(),cat=id(),t=now(),expires=t+2*HOUR;
+  const token=randomToken(24),oid=id(),bid=id(),owner=id(),cashier=id(),t=now(),expires=t+2*HOUR;
   const slug='demo-'+randomToken(8).replace(/[-_]/g,'a').toLowerCase();
   const passwordHash=await hashPassword(randomToken(32));
   const statements=[
@@ -30,11 +31,10 @@ export function registerDemo(app) {
    c.env.DB.prepare("INSERT INTO users(id,email,name,role,org_id,branch_id,password_hash,created_at) VALUES(?,?,?,'branch',?,?,?,?)").bind(cashier,cashier+'@demo.invalid','كاشير التجربة',oid,bid,passwordHash,t),
    c.env.DB.prepare('INSERT INTO loyalty_programs(org_id,stamps_required) VALUES(?,3)').bind(oid),
    c.env.DB.prepare("INSERT INTO org_profiles(org_id,sector,description_ar,description_en,updated_at) VALUES(?,'cafe',?,?,?)").bind(oid,'منشأة توضيحية ببيانات اصطناعية، وليست مقهى فعليًا.','A synthetic sample business, not a real café.',t),
-   c.env.DB.prepare('INSERT INTO categories(id,org_id,name_ar,name_en) VALUES(?,?,?,?)').bind(cat,oid,'قهوة ومخبوزات','Coffee & bakery'),
    c.env.DB.prepare("INSERT INTO subscriptions(org_id,plan,status,trial_ends_at,current_period_end,created_at,updated_at) VALUES(?,'pro','trial',?,?,?,?)").bind(oid,expires,expires,t,t),
    c.env.DB.prepare('INSERT INTO demo_rooms(id,token_hash,org_id,branch_id,owner_id,cashier_id,created_at,expires_at) VALUES(?,?,?,?,?,?,?,?)').bind(id(),await hmac(c.env.AUTH_SECRET,'demo:'+token),oid,bid,owner,cashier,t,expires)
   ];
-  for(const [ar,en,price,cal] of [['لاتيه','Latte',1850,190],['قهوة اليوم','Daily brew',1200,5],['كروسان بالزبدة','Butter croissant',1500,260]])statements.push(c.env.DB.prepare('INSERT INTO items(id,org_id,category_id,name_ar,name_en,price,calories) VALUES(?,?,?,?,?,?,?)').bind(id(),oid,cat,ar,en,price,cal));
+  statements.splice(statements.length-2,0,...sampleMenuStatements(c.env.DB,oid,'cafe',id));
   await c.env.DB.batch(statements);
   return c.json({token,...view({expires_at:expires,org_slug:slug,branch_slug:slug+'-hail'})},201);
  });
