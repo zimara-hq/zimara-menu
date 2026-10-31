@@ -45,6 +45,7 @@ test('verified paid subscription invoice is issued once and never exposes the AP
     ...configured,
     HTTP_FETCH: async (url, init) => {
       calls.push({ url, init });
+      if (url.endsWith('/sdk/users/validate_user_api_key')) return new Response(JSON.stringify({ status: true, response: { sandbox_api_key: configured.SIMPLE_FATOORA_API_KEY } }), { status: 200 });
       return new Response(JSON.stringify({ status: true, response: { id: 732, invoice_number: 'INV-732', invoice: 'https://simplefatoora.test/invoice/732.pdf', total: 129, environment: 'sandbox' } }), { status: 200 });
     },
   });
@@ -52,10 +53,11 @@ test('verified paid subscription invoice is issued once and never exposes the AP
   const seeded = await seedInvoice(env, owner);
   const result = await processSimpleFatooraInvoices(env);
   assert.equal(result.processed, 1);
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].url, 'https://api.simplefatoora.com/sdk/invoice/create');
-  assert.equal(calls[0].init.headers['X-API-Key'], configured.SIMPLE_FATOORA_API_KEY);
-  const payload = JSON.parse(calls[0].init.body);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].url, 'https://api.simplefatoora.com/sdk/users/validate_user_api_key');
+  assert.equal(calls[1].url, 'https://api.simplefatoora.com/sdk/invoice/create');
+  assert.equal(calls[1].init.headers['X-API-Key'], configured.SIMPLE_FATOORA_API_KEY);
+  const payload = JSON.parse(calls[1].init.body);
   assert.equal(payload.reference_number, seeded.reference);
   assert.equal(payload.invoice_type, 0);
   assert.equal(payload.client_name, 'مقهى الاختبار');
@@ -71,7 +73,7 @@ test('verified paid subscription invoice is issued once and never exposes the AP
   assert.equal(invoice.pdf_url, 'https://simplefatoora.test/invoice/732.pdf');
   assert.equal(job.state, 'issued');
   await processSimpleFatooraInvoices(env);
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2);
 });
 
 test('ambiguous create is reconciled by stable reference, never blindly issued twice', async () => {
@@ -81,6 +83,7 @@ test('ambiguous create is reconciled by stable reference, never blindly issued t
     ...configured,
     HTTP_FETCH: async (url) => {
       paths.push(url);
+      if (url.endsWith('/sdk/users/validate_user_api_key')) return new Response(JSON.stringify({ status: true, response: { sandbox_api_key: configured.SIMPLE_FATOORA_API_KEY } }), { status: 200 });
       if (url.endsWith('/sdk/invoice/create')) {
         creates++;
         return new Response('temporary failure', { status: 503 });
