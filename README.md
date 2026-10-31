@@ -4,7 +4,7 @@
 
 **ZIMARA Menu**: e-menu, a pager on the customer's phone, and loyalty cards, for restaurants and cafés. Runs on one Cloudflare Worker, separate from the zimara-website Worker and its databases. The public trial on zimara.co (`/منيو/تجربة`) stays in zimara-website; this repo is the commercial product.
 
-## What works now (phase 1)
+## Retained phase 1 foundation
 
 | Area | Behaviour |
 | --- | --- |
@@ -14,12 +14,12 @@
 | Loyalty | Customer gets a card at `/j/<business>` (no signup), shown at `/c/<token>` with a QR + 6-char code. Cashier scans or types the code to stamp or redeem. Append-only ledger; stamp/redeem is a single atomic SQL statement with an idempotency key, so retries never double-stamp and two redeems cannot overdraw. |
 | Stats | Per branch, last 30 days: orders, collected, average/longest prep, pickup delay after the call, rating; loyalty totals. |
 
-Not built yet, on purpose: Apple/Google Wallet passes (needs the owner's certificates, see [docs/WALLET.md](docs/WALLET.md)), payments/subscriptions, POS integrations, SMS/WhatsApp. Nothing in the UI claims them.
+Original phase1 did not include paid subscriptions, vendor POS or Wallet. The continuation below adds trial/subscription state and an internal POS bridge; direct external integrations remain disabled. See [integration readiness](docs/INTEGRATIONS.md).
 
 ### Alert limits (honest version)
 
-- Android Chrome: Web Push reaches a locked phone.
-- iPhone: Web Push needs iOS 16.4+ and the page added to the Home Screen; otherwise the page must stay open (it keeps the screen awake and chimes). Wallet passes in phase 2 remove this limit.
+- Android Chrome can support Web Push on a locked phone after setup and permission; delivery/sound depend on the OS, settings and network.
+- iPhone: Web Push needs iOS 16.4+ and the page added to the Home Screen; otherwise the page must stay open (it keeps the screen awake and chimes). Wallet requires separate credentials, implementation and real-device acceptance; it does not guarantee sound.
 - No technology can alert a phone that is powered off.
 
 ## Layout
@@ -60,3 +60,17 @@ Done once by the owner or Codex; the code never creates infrastructure itself.
 6. Optional: Custom Domain `menu.zimara.co`.
 
 Never point this Worker at `zimara-platform` or `zimara-menu-trial`.
+
+## Standalone review implementation — 31 October 2026
+
+This continuation builds on PR #1, preserving its pager and loyalty lifecycle. It adds a bilingual branded marketing site, real isolated demo rooms, self-signup with14-day trials, per-tenant profiles, CSV import preview, optional server-priced orders, revocable counter-display credentials, TOTP/recovery controls, invoice/status views, an independently signed generic POS bridge, data export and deletion-request/card-revocation controls.
+
+Start at `/` for the product, `/demo` for a synthetic room, `/register` for a trial, `/login` for accounts, `/app` for the role dashboard, `/p/{org}` for the public profile, `/m/{branch}` for public menu, and `/display/{token}` for a revocable device screen. The public menu/profile never include pager QR. Ready, seen and collected remain separate.
+
+Run `npm test`, `npm run build`, `npm run build:preview`, and `npm run test:e2e -- http://127.0.0.1:8787`. E2E requires `npx playwright install chromium`; HTTP(S) proxy variables are honored for remote test targets. Apply all additive migrations before running. No production reset/seed is part of this continuation. Initial admin bootstrap remains an explicit setup command for a new environment; do not run it against the institutional account.
+
+The public review is at https://zimara-menu-review-20261031.zimara-hq.workers.dev/ with an independent database. It is not a commercial launch. See [acceptance evidence](docs/ACCEPTANCE.md), [integration states](docs/INTEGRATIONS.md), [security review](docs/SECURITY-AUDIT.md), [competitor review](docs/COMPETITOR-REVIEW.md), [pricing assumptions](docs/PRICING.md), [compliance research](docs/COMPLIANCE.md), [inputs/scope](docs/INPUTS.md), and [rollback](docs/ROLLBACK.md).
+
+### Honest operational limits
+
+Payment checkout/webhooks and Simple Fatoora runtime issuance are not built/activated; no invoices are fabricated. The connected Simple Fatoora chat account does not grant this Worker API credentials. Direct Foodics/Rewaa/Odoo adapters, Wallet signing/issuance/updates, SMS/WhatsApp and native apps are not built. Existing Web Push needs VAPID setup and real-device tests; this review uses in-page alerts. R2 image/font endpoints exist and validate files, but account R2 enablement is required. The import workflow accepts CSV exported by Excel, not native XLSX. Admin model preserves the existing4-admin roles; separate super/impersonation is pending. Full account erasure, verified email delivery/password reset, legal identity and commercial acceptance still block a paid launch. Never promise100% security, legal compliance, notification sound or App Store approval.
