@@ -77,27 +77,30 @@ test('verified paid subscription invoice is issued once and never exposes the AP
   assert.equal(calls.length, 2);
 });
 
-test('sandbox config rejects a live key before any invoice create request', async () => {
+test('sandbox config rejects a live key before create and retries after configuration is corrected', async () => {
   const paths = [];
+  let wrongEnvironment = true;
   const env = makeEnv({
     ...configured,
     HTTP_FETCH: async (url) => {
       paths.push(url);
-      return new Response(JSON.stringify({ status: true, response: {
-        production_api_key: configured.SIMPLE_FATOORA_API_KEY,
-        sandbox_api_key: 'different-sandbox-key',
+      if (url.endsWith('/sdk/users/validate_user_api_key')) return new Response(JSON.stringify({ status: true, response: {
+        production_api_key: wrongEnvironment ? configured.SIMPLE_FATOORA_API_KEY : 'different-production-key',
+        sandbox_api_key: wrongEnvironment ? 'different-sandbox-key' : configured.SIMPLE_FATOORA_API_KEY,
       } }), { status: 200 });
+      return new Response(JSON.stringify({ status: true, response: { id: 915, invoice_number: 'INV-915', total: 129, environment: 'sandbox' } }), { status: 200 });
     },
   });
   const { owner } = await setupOrg(env);
   const seeded = await seedInvoice(env, owner, 'checkout-wrong-key');
   await processSimpleFatooraInvoices(env);
-  const invoice = await env.DB.prepare('SELECT state FROM subscription_invoices WHERE id = ?').bind(seeded.invoiceId).first();
-  const job = await env.DB.prepare('SELECT state, last_error FROM subscription_invoice_jobs WHERE invoice_id = ?').bind(seeded.invoiceId).first();
-  assert.equal(invoice.state, 'rejected');
-  assert.equal(job.state, 'rejected');
-  assert.equal(job.last_error, 'simple_fatoora_api_key_environment_mismatch');
   assert.deepEqual(paths, ['https://api.simplefatoora.com/sdk/users/validate_user_api_key']);
+  assert.equal((await env.DB.prepare('SELECT state FROM subscription_invoices WHERE id = ?').bind(seeded.invoiceId).first()).state, 'pending');
+  assert.equal((await env.DB.prepare('SELECT state FROM subscription_invoice_jobs WHERE invoice_id = ?').bind(seeded.invoiceId).first()).state, 'pending');
+  wrongEnvironment = false;
+  await processSimpleFatooraInvoices(env);
+  assert.equal(paths.filter((url) => url.endsWith('/sdk/invoice/create')).length, 1);
+  assert.equal((await env.DB.prepare('SELECT state FROM subscription_invoices WHERE id = ?').bind(seeded.invoiceId).first()).state, 'issued');
 });
 
 test('ambiguous create is reconciled by stable reference, never blindly issued twice', async () => {
