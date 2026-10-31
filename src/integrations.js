@@ -19,7 +19,7 @@ export function integrationReadiness(env) {
     entry('email', 'البريد (تأكيد الحساب واستعادة كلمة المرور)', 'Email (verification and password reset)', mailConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, mailConfigured(env),
       'الإرسال عبر Resend مبني. يحتاج مفتاح Resend ونطاق مرسل موثّق.', 'Sending through Resend is built. Needs a Resend key and a verified sender domain.'),
     entry('simple_fatoora', 'الفوترة الإلكترونية', 'Electronic invoicing', simpleFatooraConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, simpleFatooraConfigured(env),
-      'إصدار فواتير الاشتراكات بعد تأكيد الدفع مبني. يحتاج مفتاح API في أسرار الخادم وبيانات فوترة مكتملة؛ لم يُثبت إصدار فاتورة حتى الآن.', 'Subscription invoicing after confirmed payment is implemented. It needs a server-side API key and complete billing details; no invoice issuance has been verified.'),
+      'إصدار فواتير الاشتراكات بعد تأكيد الدفع مبني. يحتاج مفتاح API، وبيانات فوترة مكتملة، واعتماد ملف البائع؛ لم يُثبت إصدار فاتورة حتى الآن.', 'Subscription invoicing after confirmed payment is implemented. It needs an API key, complete billing details, and an approved seller profile; no invoice issuance has been verified.'),
     entry('rewaa', 'رواء', 'Rewaa', rewaaConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, rewaaConfigured(env),
       'الربط المباشر مع رواء مبني: كل فاتورة بيع في فرع مربوط تفتح رقم انتظار تلقائيًا. يحتاج بيانات API من رواء واختبار فاتورة حقيقية.', 'The direct Rewaa link is built: each sale invoice in a linked branch opens a pager ticket. Needs Rewaa API access and a real invoice test.'),
     entry('foodics', 'فودكس', 'Foodics', 'needs_partner_approval', false, false,
