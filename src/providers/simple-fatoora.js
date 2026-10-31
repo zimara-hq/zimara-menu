@@ -26,7 +26,7 @@ async function request(env, path, payload) {
   return data.response;
 }
 
-async function validateApiKeyEnvironment(env) {
+export async function validateSimpleFatooraKey(env) {
   const response = await request(env, '/sdk/users/validate_user_api_key', { api_key: env.SIMPLE_FATOORA_API_KEY });
   const keyMatches = targetEnvironment(env) === 'sandbox'
     ? response.sandbox_api_key === env.SIMPLE_FATOORA_API_KEY
@@ -35,7 +35,6 @@ async function validateApiKeyEnvironment(env) {
 }
 
 export async function createSimpleFatooraInvoice(env, payload) {
-  await validateApiKeyEnvironment(env);
   const response = await request(env, '/sdk/invoice/create', payload);
   const receivedEnvironment = response.environment === 'live' ? 'live' : 'sandbox';
   if (receivedEnvironment !== targetEnvironment(env)) throw Object.assign(new Error('simple_fatoora_environment_mismatch'), { kind: 'unknown' });
@@ -114,6 +113,7 @@ function invoicePayload(row, reference) {
 
 export async function processSimpleFatooraInvoices(env) {
   if (!simpleFatooraConfigured(env)) return { processed: 0, configured: false };
+  try { await validateSimpleFatooraKey(env); } catch { return { processed: 0, configured: true, keyValidated: false }; }
   const t = now();
 
   // A worker can be terminated after the provider creates a document but before D1 records it.
