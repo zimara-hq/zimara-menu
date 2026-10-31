@@ -87,6 +87,7 @@ export async function settleCheckout(env, checkout) {
 export function registerBilling(app) {
   app.post('/api/owner/billing/checkout', requireRole('owner'), async (c) => {
     if (!billingConfigured(c.env)) throw new HttpError(503, 'billing_not_configured');
+    if (!simpleFatooraConfigured(c.env)) throw new HttpError(503, 'invoicing_not_configured');
     await rateLimit(c, 'checkout', { limit: 10, window: 3600000 });
     const b = await body(c);
     const plan = String(b.plan || ''), cycle = String(b.cycle || '');
