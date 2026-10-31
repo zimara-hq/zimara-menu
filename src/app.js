@@ -6,9 +6,9 @@ import { registerAccounts, expireSubscriptions } from './accounts.js';
 import { consumeMfa } from './mfa.js';
 import { registerFeatures } from './features.js';
 import { registerIntegrations } from './integrations.js';
-import { registerBilling, reconcileCheckouts } from './billing.js';
+import { registerBilling, reconcileCheckouts, billingConfigured } from './billing.js';
 import { registerMail } from './mail.js';
-import { registerRewaa, pollRewaa } from './providers/rewaa.js';
+import { registerRewaa, pollRewaa, rewaaConfigured } from './providers/rewaa.js';
 import { registerLegal } from './legal.js';
 import { sendBillingNotices } from './notices.js';
 import {
@@ -711,7 +711,7 @@ app.get('/api/cards/:token', async (c) => {
   return c.json(await cardView(c.env, card));
 });
 
-app.get('/api/config', (c) => c.json({ vapidPublicKey: pushConfigured(c.env) ? c.env.VAPID_PUBLIC_KEY : null }));
+app.get('/api/config', (c) => c.json({ vapidPublicKey: pushConfigured(c.env) ? c.env.VAPID_PUBLIC_KEY : null, payments: billingConfigured(c.env), rewaa: rewaaConfigured(c.env) }));
 
 // ---------- Alerts ----------
 
