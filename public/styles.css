@@ -299,21 +299,7 @@ form .error:empty { display: none; }
 .cart-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 14px; border-bottom: 1px solid var(--line); }
 .cart-row p { margin: 5px 0; }
 .quantity-controls { display: flex; align-items: center; gap: 12px; }
-.menu-footer-links { text-align: center; padding-block: 30px; }
 @media(max-width: 900px) { .menu-layout:has(.cart-panel:not([hidden])) { grid-template-columns: 1fr; } .cart-panel { position: static; } }
-.profile-page { max-width: 1100px; }
-.profile-hero { position: relative; margin-block: 28px 42px; }
-.profile-cover { width: 100%; height: clamp(180px,35vw,380px); object-fit: cover; border-radius: 26px; }
-.profile-identity { padding-block: 36px 0; max-width: 700px; }
-.profile-logo { width: 100px; height: 100px; object-fit: contain; border: 1px solid var(--line); padding: 12px; background: var(--surface); border-radius: 22px; margin-block-end: 20px; }
-.profile-identity h1 { font-size: clamp(2.5rem,7vw,4rem); margin-block: 18px; }
-.profile-description { font-size: 1.15rem; max-width: 54ch; }
-.profile-menu-cta { display: flex; gap: 24px; align-items: center; justify-content: space-between; background: var(--indigo); color: white; padding: 38px; }
-.profile-menu-cta .muted { color: var(--lavender); }
-.profile-menu-cta .btn { background: var(--solar); color: var(--indigo); }
-.profile-menu-cta .row { flex: 0 1 340px; }
-.profile-loyalty { padding: 45px; text-align: center; background: color-mix(in srgb,var(--lavender) 20%,var(--surface)); }
-.profile-loyalty h2 { font-size: 2rem; }
 .opening-hours { margin: 0; }
 .opening-hours > div { display: flex; justify-content: space-between; gap: 15px; border-bottom: 1px solid var(--line); padding-block: 12px; }
 .opening-hours dd { margin: 0; }
@@ -328,7 +314,7 @@ form .error:empty { display: none; }
 .display-menu-item strong { white-space: nowrap; font-family: 'Plus Jakarta Sans','Tajawal',sans-serif; }
 #ready-numbers .ticket-num { font-size: 3rem; }
 .disconnected .status-dot { background: var(--danger); }
-@media(max-width:800px){ .profile-menu-cta { display: block; } .profile-menu-cta .row { margin-block-start: 25px; } .display-layout { grid-template-columns: 1fr; } .display-toolbar { flex-wrap: wrap; } }
+@media(max-width:800px){ .display-layout { grid-template-columns: 1fr; } .display-toolbar { flex-wrap: wrap; } }
 .branch-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit,minmax(min(460px,100%),1fr)); }
 .branch-card { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
 .branch-copy { flex: 1; min-width: 0; }
@@ -348,7 +334,7 @@ form .error:empty { display: none; }
 .menu-cats a { display: inline-flex; align-items: center; min-height: 44px; }
 
 /* Public menu: branded hero, roomy search, two-column cards on wide screens. */
-.menu-page .menu-hero { position: relative; overflow: hidden; margin-block: 24px 20px; padding: clamp(22px, 4vw, 40px); border-radius: 28px; color: #fff; background: radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--accent) 70%, #ff5a1f) 0%, var(--accent) 45%, color-mix(in srgb, var(--accent) 60%, #0d0118) 100%); box-shadow: 0 18px 50px color-mix(in srgb, var(--accent) 30%, transparent); }
+.menu-page .menu-hero { position: relative; overflow: hidden; margin-block: 24px 20px; padding: clamp(22px, 4vw, 40px); border-radius: 28px; color: #fff; background: var(--hero-bg); }
 .menu-page .menu-hero::after { content: ''; position: absolute; inset-inline-start: -60px; bottom: -80px; width: 260px; height: 260px; border-radius: 50%; border: 1px solid rgb(255 255 255 / 18%); box-shadow: 0 0 0 40px rgb(255 255 255 / 5%), 0 0 0 80px rgb(255 255 255 / 3%); pointer-events: none; }
 .menu-page .menu-hero h1 { color: #fff; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.15; }
 .menu-page .menu-hero p { color: rgb(255 255 255 / 85%); }
@@ -364,3 +350,80 @@ form .error:empty { display: none; }
 .menu-page .item .price { display: inline-block; padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 10%, transparent); }
 @media (min-width: 900px) { .menu-page .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .menu-page .item { transition: none; } .menu-page .item:hover { transform: none; } }
+
+/* Brand band shared by the public menu and business page. Darkened so white text stays readable for any brand colour and in dark mode. */
+:root { --hero-bg: linear-gradient(135deg, color-mix(in srgb, var(--brand, #3b0a66) 55%, #0d0118) 0%, color-mix(in srgb, var(--brand, #3b0a66) 32%, #0d0118) 100%); }
+.ico { flex: none; vertical-align: -4px; }
+
+/* Business page */
+.profile-page { max-width: 1040px; padding-block-end: 48px; }
+.brand-hero { position: relative; overflow: hidden; margin-block: 24px 32px; border-radius: 24px; color: #fff; background: var(--hero-bg); }
+.brand-hero::after { content: ''; position: absolute; inset-inline-start: -70px; bottom: -90px; width: 280px; height: 280px; border-radius: 50%; border: 1px solid rgb(255 255 255 / 16%); box-shadow: 0 0 0 44px rgb(255 255 255 / 4%), 0 0 0 88px rgb(255 255 255 / 3%); pointer-events: none; }
+.profile-cover { display: block; width: 100%; height: clamp(160px, 30vw, 320px); object-fit: cover; }
+.profile-hero-body { position: relative; z-index: 1; display: flex; gap: 20px; align-items: flex-start; padding: clamp(22px, 4vw, 40px); }
+.hero-mark { width: 88px; height: 88px; flex: none; border-radius: 20px; background: #fff; padding: 10px; object-fit: contain; box-shadow: 0 8px 24px rgb(0 0 0 / 20%); }
+.hero-monogram { display: grid; place-items: center; font-size: 2.4rem; font-weight: 800; color: var(--indigo); }
+.profile-hero-text { min-width: 0; }
+.profile-hero-text h1 { color: #fff; font-size: clamp(2rem, 5vw, 3rem); line-height: 1.1; margin: 8px 0 10px; }
+.hero-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+.hero-tags > span:first-child { padding: 4px 12px; border-radius: 999px; background: rgb(255 255 255 / 14%); font-size: 14px; }
+.hero-lead { color: rgb(255 255 255 / 88%); font-size: 1.1rem; line-height: 1.7; max-width: 56ch; margin: 0 0 8px; }
+.hero-address { display: flex; gap: 6px; align-items: center; color: rgb(255 255 255 / 78%); margin: 0; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-block-start: 20px; }
+.hero-actions .btn { display: inline-flex; gap: 8px; align-items: center; min-height: 48px; }
+.hero-primary { background: var(--solar); color: var(--indigo); border-color: transparent; }
+.hero-secondary { background: rgb(255 255 255 / 10%); color: #fff; border-color: rgb(255 255 255 / 35%); }
+.status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 14px; font-weight: 700; background: var(--ready-bg); color: var(--ok); }
+.status-pill.closed { background: color-mix(in srgb, var(--danger) 12%, var(--surface)); color: var(--danger); }
+.status-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.brand-hero .status-pill { background: rgb(255 255 255 / 92%); }
+.profile-info { display: grid; gap: 8px 28px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); align-items: start; }
+.profile-section { margin-block: 28px 8px; }
+.hours-card .opening-hours > div { padding-block: 7px; }
+.profile-section > h2, .loyalty-band h2 { font-size: 1.4rem; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+.profile-section > h2::before { content: ''; width: 6px; height: 22px; border-radius: 3px; background: var(--accent); }
+.place-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.place-card, .hours-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.branch-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.place-card h3, .hours-card h3 { margin: 0; font-size: 1.1rem; }
+.branch-line { display: flex; gap: 8px; color: var(--muted); margin: 0; }
+.branch-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-block-start: auto; }
+.branch-actions .btn.sm { min-height: 44px; }
+.hours-card .opening-hours { margin: 0; }
+.contact-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.contact-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 10px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-decoration: none; font-weight: 600; }
+.contact-chip:hover { border-color: var(--accent); }
+.loyalty-band { display: flex; gap: 24px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-block: 36px; padding: clamp(22px, 4vw, 36px); border-radius: 24px; background: color-mix(in srgb, var(--solar) 55%, var(--surface)); color: var(--indigo); }
+.loyalty-band h2 { color: var(--indigo); }
+.loyalty-band p { margin: 0 0 16px; }
+.loyalty-band .btn { display: inline-flex; gap: 8px; align-items: center; background: var(--indigo); color: #fff; }
+.stamp-dots { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; max-width: 260px; }
+.stamp-dots li { width: 34px; height: 34px; border-radius: 50%; border: 2px dashed color-mix(in srgb, var(--indigo) 40%, transparent); }
+.stamp-dots li.on { border: 0; background: var(--indigo); }
+@media (max-width: 600px) { .profile-hero-body { flex-direction: column; } .hero-actions .btn { flex: 1 1 100%; justify-content: center; } }
+
+/* Public menu: "more from the business" */
+.menu-more { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); margin-block: 36px 24px; }
+.more-card { display: flex; align-items: center; gap: 14px; min-height: 72px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); text-decoration: none; }
+.more-card:hover { border-color: var(--accent); }
+.more-card strong { display: block; }
+.more-card small { color: var(--muted); }
+.more-ico { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--cta-bg); color: var(--cta-ink); font-weight: 800; }
+/* Primary action on the business page: indigo in light, solar in dark, so it never disappears into the surface. */
+:root { --cta-bg: var(--indigo); --cta-ink: #fff; --band-bg: color-mix(in srgb, var(--solar) 55%, var(--surface)); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) { --cta-bg: var(--solar); --cta-ink: var(--indigo); --band-bg: var(--solar); } }
+:root[data-theme='dark'] { --cta-bg: var(--solar); --cta-ink: var(--indigo); --band-bg: var(--solar); }
+.branch-actions .btn:not(.ghost) { background: var(--cta-bg); color: var(--cta-ink); border-color: transparent; }
+.profile-section > h2::before { background: var(--accent-ink, var(--accent)); }
+.loyalty-band { background: var(--band-bg); }
+
+/* Dashboard: sidebar as one calm panel, clear active tab, header link to the live page */
+.heading-link { min-height: 44px; display: inline-flex; align-items: center; }
+@media (min-width: 850px) {
+  .dashboard-page #main > .tabs { margin: 24px 16px 0; padding: 10px; gap: 2px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
+  .dashboard-page .tabs button { color: var(--ink); font-weight: 600; }
+  .dashboard-page .tabs button:hover { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+  .dashboard-page .tabs button[aria-selected='true'] { background: var(--cta-bg); color: var(--cta-ink); border-color: transparent; box-shadow: none; font-weight: 800; }
+  .dashboard-page #main > .wrap { padding-block-start: 24px; }
+}
+@media (max-width: 849px) { .dashboard-page .tabs button[aria-selected='true'] { background: var(--cta-bg); color: var(--cta-ink); } }
