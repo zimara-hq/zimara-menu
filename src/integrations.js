@@ -3,7 +3,7 @@ import { HttpError, bad, conflict, id, int, notFound, now, randomToken, str } fr
 import { encryptionConfigured, encryptSigningSecret, decryptSigningSecret, verifyBridgeSignature, payloadHash } from './providers/pos-bridge.js';
 import { paymentProvider } from './providers/contracts.js';
 import { pushConfigured } from './push.js';
-import { billingConfigured, subscriptionCheckoutConfigured } from './billing.js';
+import { subscriptionCheckoutConfigured } from './billing.js';
 import { mailConfigured } from './mail.js';
 import { rewaaConfigured } from './providers/rewaa.js';
 import { simpleFatooraConfigured } from './providers/simple-fatoora.js';
