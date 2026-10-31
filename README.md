@@ -91,3 +91,9 @@ Still not built: Simple Fatoora issuance (needs its runtime API key), direct Foo
 - **Rewaa** (`src/providers/rewaa.js`): owners link a branch to a Rewaa stock location from Integrations. The Worker polls sale invoices every minute and opens one pager ticket per invoice (`rewaa_invoices` guarantees once). Credentials and tokens are AES-GCM encrypted with `POS_ENCRYPTION_KEY`. Enable with `REWAA_ENABLED=true`. Rewaa does not publicly document a sale-invoice list endpoint; the default is `/pos/invoices`, overridable with `REWAA_SALES_PATH`. Readiness stays `configured_unverified` until a real sale is tested.
 - **Legal details**: admins edit ZIMARA's legal name, CR, VAT number, address and support contacts (`PUT /api/admin/legal`); `/legal` shows only filled fields. Owners keep their own billing details (`/api/owner/billing-profile`).
 - **Billing emails** (`src/notices.js`): payment receipt after a verified Moyasar payment, trial-ending (3 days), and renewal reminders (7 days and 1 day), each sent once per period.
+
+## Automatic deploys (review)
+
+The review Worker `zimara-menu-review-20261031` is connected to Cloudflare Workers Builds on `main`.
+Build: `npm ci && npm test`. Deploy: `npx wrangler d1 migrations apply zimara-menu-review-20261031 --remote -c wrangler.review.jsonc && npx wrangler deploy -c wrangler.review.jsonc`.
+Every merge to `main` runs the tests, applies new D1 migrations to the review database only, and deploys the review Worker. Production (`wrangler.jsonc`) is not deployed by this pipeline.
