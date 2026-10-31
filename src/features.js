@@ -1,3 +1,4 @@
+import { DEFAULT_THEME, validateTheme } from './identity.js';
 import { loadUser, verifyPassword } from './auth.js';
 import {
   requireRole,
@@ -33,6 +34,7 @@ const DEFAULT_PROFILE = {
   banners: [],
   sections: [...SECTIONS],
   font_url: null,
+  theme: { ...DEFAULT_THEME },
 };
 const DEFAULT_SETTINGS = {
   orders_enabled: false,
@@ -55,6 +57,7 @@ function profileView(row) {
     banners: JSON.parse(row.banners_json),
     sections: JSON.parse(row.sections_json),
     font_url: row.font_url,
+    theme: { ...DEFAULT_THEME, ...(row.font_url ? {font:'custom'} : {}), ...JSON.parse(row.theme_json || '{}') },
   };
 }
 function settingsView(row) {
@@ -126,6 +129,7 @@ function validateProfile(b, current) {
       throw bad('invalid_font_url');
     p.font_url = b.font_url;
   }
+  if (b.theme !== undefined) p.theme = validateTheme(b.theme, current.theme);
   return p;
 }
 function validateSettings(b, current) {
@@ -641,7 +645,7 @@ export function registerFeatures(app) {
       if (!asset) throw bad('invalid_font_url');
     }
     await c.env.DB.prepare(
-      `INSERT INTO org_profiles(org_id,sector,description_ar,description_en,phone,address,social_json,banners_json,sections_json,font_url,updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11) ON CONFLICT(org_id) DO UPDATE SET sector=?2,description_ar=?3,description_en=?4,phone=?5,address=?6,social_json=?7,banners_json=?8,sections_json=?9,font_url=?10,updated_at=?11`,
+      `INSERT INTO org_profiles(org_id,sector,description_ar,description_en,phone,address,social_json,banners_json,sections_json,font_url,updated_at,theme_json) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12) ON CONFLICT(org_id) DO UPDATE SET sector=?2,description_ar=?3,description_en=?4,phone=?5,address=?6,social_json=?7,banners_json=?8,sections_json=?9,font_url=?10,updated_at=?11,theme_json=?12`,
     )
       .bind(
         u.org_id,
@@ -655,6 +659,7 @@ export function registerFeatures(app) {
         JSON.stringify(p.sections),
         p.font_url,
         now(),
+        JSON.stringify(p.theme),
       )
       .run();
     await audit(c.env, u, 'profile.update');

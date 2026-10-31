@@ -79,7 +79,7 @@ export function wireImageFields(root) {
       clear.hidden = !v;
     };
     input.addEventListener('change', () => show(input.value.trim()));
-    clear.onclick = () => { input.value = ''; show(''); status.textContent = ''; };
+    clear.onclick = () => { input.value = ''; show(''); status.textContent = ''; input.dispatchEvent(new Event('input',{bubbles:true})); };
     file.onchange = async () => {
       const f = file.files[0];
       if (!f) return;
@@ -89,6 +89,7 @@ export function wireImageFields(root) {
       try {
         input.value = await uploadImage(f);
         show(input.value);
+        input.dispatchEvent(new Event('input',{bubbles:true}));
         status.textContent = a('تم رفع الصورة. اضغط حفظ لتطبيقها.', 'Photo uploaded. Press Save to apply it.');
       } catch (err) {
         status.textContent = err?.message === 'asset_storage_limit'

@@ -1,7 +1,10 @@
+import {identityView,fontEditor} from './identity.js';
+import {profileEditor} from './profile-editor.js';
+import {overviewView,workspaceIcon} from './workspace.js';
 import { ApiError, api, chime, esc, lang, makeT, money, pick, qrSvg, relTime, setBrandColor, topbar, unlockAudio, requestValue, announce } from './common.js';
 
 import { imageField, wireImageFields } from './uploads.js';
-import { profileView, importView, subscriptionView, integrationsView, devicesView, menuOrdersView, branchSettingsView, mfaView, assetUploadView, dataControlsView, adminLegalView } from './dashboard-panels.js';
+import { importView, subscriptionView, integrationsView, devicesView, menuOrdersView, branchSettingsView, mfaView, dataControlsView, adminLegalView } from './dashboard-panels.js';
 
 const t = makeT({
   ar: {
@@ -65,6 +68,9 @@ function tabs(list, onPick) {
   const nav = document.createElement('nav');
   nav.className = 'tabs';
   nav.setAttribute('role', 'tablist');
+  nav.setAttribute('aria-label', lang==='ar'?'أقسام لوحة التحكم':'Workspace sections');
+  const vertical=matchMedia('(min-width:850px)');
+  const orient=()=>nav.setAttribute('aria-orientation',vertical.matches?'vertical':'horizontal');orient();vertical.addEventListener('change',orient);
   const body = document.createElement('div');
   body.className = 'wrap';
   let current = list[0][0];
@@ -93,13 +99,13 @@ function tabs(list, onPick) {
     b.dataset.k = k;
     b.id = 'tab-' + k;
     b.setAttribute('aria-controls', 'panel-' + k);
-    b.textContent = label;
+    b.innerHTML = workspaceIcon(k) + `<span>${esc(label)}</span>`;
     b.onclick = () => show(k);
     b.addEventListener('keydown', (e) => {
       const buttons = [...nav.querySelectorAll('button')];
       let index = buttons.indexOf(b);
-      if (e.key === 'ArrowRight') index = (index + 1) % buttons.length;
-      else if (e.key === 'ArrowLeft') index = (index - 1 + buttons.length) % buttons.length;
+      if (e.key === 'ArrowDown' || e.key === (lang==='ar'?'ArrowLeft':'ArrowRight')) index = (index + 1) % buttons.length;
+      else if (e.key === 'ArrowUp' || e.key === (lang==='ar'?'ArrowRight':'ArrowLeft')) index = (index - 1 + buttons.length) % buttons.length;
       else if (e.key === 'Home') index = 0;
       else if (e.key === 'End') index = buttons.length - 1;
       else return;
@@ -363,35 +369,7 @@ async function ownerMenu(el) {
   }));
 }
 
-async function ownerOverview(el) {
-  const [{ branches }, { categories, items }, { profile }, loyalty] = await Promise.all([
-    api('/api/owner/branches'), api('/api/owner/menu'), api('/api/owner/profile'), api('/api/owner/loyalty').catch(() => ({ program: null })),
-  ]);
-  const branch = branches[0];
-  const steps = [
-    [Boolean(me.org.logo_url), A('أضف شعارك ولون هويتك', 'Add your logo and brand colour'), A('يظهر أعلى المنيو وفي صفحتك العامة.', 'Shown at the top of your menu and public page.'), 'brand'],
-    [items.length > 0, A('جهّز المنيو', 'Build your menu'), items.length ? A(`${items.length} صنف في ${categories.length} قسم.`, `${items.length} items in ${categories.length} sections.`) : A('ابدأ بمنيو نموذجي أو أضف أصنافك.', 'Start from a sample or add your items.'), 'menu'],
-    [Boolean(profile.banners?.[0] || profile.description_ar), A('أكمل صفحة المنشأة', 'Complete your business page'), A('صورة الغلاف، الوصف، العنوان ورقم التواصل.', 'Cover photo, description, address and phone.'), 'brand'],
-    [branches.some((b) => b.account_email), A('جهّز حساب الكاشير', 'Set up the cashier account'), A('ليستقبل الطلبات وينادي العملاء.', 'To take orders and call customers.'), 'branches'],
-    [Boolean(loyalty.program?.active), A('فعّل بطاقة الولاء', 'Turn on the loyalty card'), A('أختام رقمية تعيد العميل لك.', 'Digital stamps that bring customers back.'), 'loyalty'],
-  ];
-  const done = steps.filter((s) => s[0]).length;
-  el.innerHTML = `<div class="section-intro"><h2>${A('أهلًا', 'Welcome')} ${esc(me.user.name || '')}</h2><p>${done === steps.length ? A('كل شيء جاهز. شارك رابط المنيو مع عملائك.', 'Everything is ready. Share your menu link with customers.') : A(`أكملت ${done} من ${steps.length} خطوات لتجهيز منشأتك.`, `${done} of ${steps.length} setup steps done.`)}</p></div>
-    <div class="overview-grid">
-      <section class="card setup-card" aria-labelledby="setup-h"><h3 id="setup-h">${A('خطوات التجهيز', 'Setup steps')}</h3>
-        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${steps.length}" aria-valuenow="${done}"><span style="width:${(done / steps.length) * 100}%"></span></div>
-        <ol class="setup-list">${steps.map(([ok, title, desc, tab]) => `<li class="${ok ? 'done' : ''}"><span class="step-dot" aria-hidden="true">${ok ? '✓' : ''}</span><div><strong>${esc(title)}</strong><p class="small muted">${esc(desc)}</p></div>${ok ? `<span class="small muted">${A('تم', 'Done')}</span>` : `<a class="btn ghost sm" href="#${tab}">${A('ابدأ', 'Start')}</a>`}</li>`).join('')}</ol>
-      </section>
-      ${branch ? `<section class="card share-card" aria-labelledby="share-h"><h3 id="share-h">${A('رابط المنيو', 'Menu link')}</h3><div class="qr">${qrSvg(`${location.origin}/m/${branch.slug}`, 5)}</div>
-        <p class="device-link"><a href="/m/${esc(branch.slug)}" target="_blank" rel="noopener" dir="ltr">${esc(location.host)}/m/${esc(branch.slug)}</a></p>
-        <div class="row center"><button class="btn sm" type="button" id="copy-link">${A('نسخ الرابط', 'Copy link')}</button><a class="btn ghost sm" href="/m/${esc(branch.slug)}" target="_blank" rel="noopener">${A('فتح المنيو', 'Open menu')} ↗</a></div>
-        <p class="small muted">${A('اطبع الرمز وضعه على الطاولات أو عند الكاشير. لكل فرع رمز في تبويب الفروع.', 'Print it for tables or the counter. Each branch has its own code in Branches.')}</p></section>` : ''}
-    </div>`;
-  el.querySelectorAll('a[href^="#"]').forEach((a2) => a2.addEventListener('click', (e) => { e.preventDefault(); document.getElementById('tab-' + a2.getAttribute('href').slice(1))?.click(); }));
-  el.querySelector('#copy-link')?.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(`${location.origin}/m/${branch.slug}`); announce(A('نُسخ الرابط.', 'Link copied.')); } catch { announce(`${location.origin}/m/${branch.slug}`); }
-  });
-}
+const ownerOverview=el=>overviewView(el,me);
 
 async function ownerLoyalty(el) {
   const { program: p } = await api('/api/owner/loyalty');
@@ -435,31 +413,8 @@ async function ownerStats(el) {
 }
 
 async function ownerBrand(el) {
-  const o = me.org;
-  el.innerHTML = `<div class="section-intro"><h2>${A('هويتك', 'Your brand')}</h2><p>${A('الاسم والشعار واللون تظهر في المنيو وصفحتك العامة وشاشة النداء.', 'Name, logo and colour appear on your menu, public page and pager screen.')}</p></div>
-    <form class="card stack" id="f">
-      <div class="row">${field('name_ar', t('nameAr'), `required value="${esc(o.name_ar)}"`)}${field('name_en', t('nameEn'), `required value="${esc(o.name_en)}"`)}</div>
-      ${imageField('logo_url', A('الشعار', 'Logo'), o.logo_url || '', 'f', A('صورة مربعة بخلفية فاتحة أو شفافة تعطي أفضل نتيجة.', 'A square image on a light or transparent background works best.'))}
-      <div class="color-field">${field('brand_color', t('color'), `type="color" value="${esc(o.brand_color || '#23003f')}"`)}<p class="small muted">${A('يُستخدم للأزرار والعناوين في المنيو.', 'Used for buttons and headings on your menu.')}</p></div>
-      <div id="m"></div><button class="btn" type="submit">${esc(t('save'))}</button></form>
-    <div id="profile-slot"></div>`;
-  wireImageFields(el.querySelector('#f'));
-  el.querySelector('#f').onsubmit = async (e) => {
-    e.preventDefault();
-    const v = fd(e.target);
-    v.logo_url = v.logo_url.trim() || null;
-    try {
-      await api('/api/owner/org', { method: 'PATCH', body: v });
-      Object.assign(me.org, v);
-      setBrandColor(v.brand_color);
-      flash(el.querySelector('#m'), t('saved'));
-    } catch (err) {
-      flash(el.querySelector('#m'), errMsg(err), true);
-    }
-  };
-  const slot = el.querySelector('#profile-slot');
-  await profileView(slot, me);
-  const uploads = document.createElement('section'); uploads.className = 'card'; assetUploadView(uploads); el.append(uploads);
+  await identityView(el,me);
+  const uploads=document.createElement('section');uploads.className='card';el.append(uploads);await fontEditor(uploads,el);
 }
 
 // ---------- branch: cashier & prep board ----------
@@ -670,7 +625,9 @@ try {
   location.replace('/login');
   throw new Error('redirect');
 }
-if (me.org) setBrandColor(me.org.brand_color);
+// Platform workspace keeps ZIMARA identity; tenant branding is previewed in the studio.
+if (me.user.role === 'owner') setBrandColor('#23003f');
+else if (me.org) setBrandColor(me.org.brand_color);
 const subtitle = me.user.role === 'admin' ? t('admin') : me.user.role === 'owner' ? pick(me.org, 'name') : `${pick(me.org, 'name')} · ${pick(me.branch, 'name')}`;
 topbar(top, t, { subtitle, extra: `<button class="btn ghost sm" id="out" type="button">${esc(t('logout'))}</button>` });
 top.querySelector('#out').onclick = async () => {
@@ -686,7 +643,7 @@ main.before(heading);
 
 const views = {
   admin: [['orgs', t('orgs'), adminOrgs], ['admins', t('admins'), adminAdmins], ['legal', lang === 'ar' ? 'البيانات القانونية' : 'Legal details', adminLegalView], ['account', t('account'), accountView]],
-  owner: [['overview', lang === 'ar' ? 'نظرة عامة' : 'Overview', ownerOverview], ['menu', t('menu'), ownerMenu], ['brand', lang === 'ar' ? 'الهوية وصفحتي' : 'Brand & page', ownerBrand], ['branches', t('branches'), ownerBranches], ['loyalty', t('loyalty'), ownerLoyalty], ['stats', t('stats'), ownerStats], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'إعدادات الفروع' : 'Branch settings', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
+  owner: [['overview', lang === 'ar' ? 'نظرة عامة' : 'Overview', ownerOverview], ['menu', t('menu'), ownerMenu], ['brand', lang === 'ar' ? 'استوديو الهوية' : 'Brand studio', ownerBrand], ['profile',lang === 'ar' ? 'صفحة المنشأة' : 'Business page',el=>profileEditor(el,me)], ['branches', t('branches'), ownerBranches], ['loyalty', t('loyalty'), ownerLoyalty], ['stats', t('stats'), ownerStats], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'إعدادات الفروع' : 'Branch settings', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
   branch: [['orders', t('orders'), branchOrders], ['display', t('display'), branchDisplay], ['loyalty', t('loyalty'), branchLoyalty], ['availability', t('availability'), branchAvailability], ['inbox', lang === 'ar' ? 'طلبات المنيو' : 'Menu orders', menuOrdersView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['account', t('account'), accountView]],
 }[me.user.role];
 tabs(views.map(([k, l]) => [k, l]), (k, el) => {

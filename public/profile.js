@@ -1,4 +1,5 @@
-import { api, esc, lang, makeT, pick, setBrandColor, topbar, applyTenantFont } from './common.js';
+import {applyTenantTheme,bannerGallery,coverImage} from './tenant-theme.js';
+import { api, esc, lang, makeT, pick, setBrandColor, topbar } from './common.js';
 const a = (ar, en) => (lang === 'ar' ? ar : en);
 const t = makeT({ ar: { title: 'عن المنشأة' }, en: { title: 'About the business' } });
 const main = document.getElementById('main');
@@ -38,7 +39,7 @@ try {
   const name = pick(org, 'name');
   topbar(document.getElementById('top'), t, { subtitle: name });
   document.title = name + ' · ' + t('brand');
-  applyTenantFont(p.font_url);
+  applyTenantTheme(p);
   document.body.classList.add('profile-body');
 
   const days = a(['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'], ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']);
@@ -54,12 +55,12 @@ try {
   const menuLabel = services ? a('استعرض الخدمات', 'Browse services') : a('افتح المنيو', 'Open the menu');
 
   const heroActions = [
-    show('menu') && branches.length ? `<a class="btn" href="${single ? '/m/' + esc(single.slug) : '#branches'}">${ICONS.menu}${menuLabel}</a>` : '',
+    show('menu') && branches.length ? `<a class="btn" href="${branches.length>1&&show('branches') ? '#branches' : '/m/' + esc((single||branches[0]).slug)}">${ICONS.menu}${menuLabel}</a>` : '',
     show('loyalty') && loyalty ? `<a class="btn ghost" href="/j/${esc(org.slug)}">${ICONS.gift}${a('بطاقة الولاء', 'Loyalty card')}</a>` : '',
   ].join('');
 
   const cover = p.banners?.[0];
-  const hero = `<header class="menu-cover ${cover ? 'has-photo' : ''}">${cover ? `<img src="${esc(cover.image_url)}" alt="${esc(pick(cover, 'alt'))}" width="1240" height="440">` : ''}</header>
+  const hero = `<header class="menu-cover ${cover ? 'has-photo' : ''}">${coverImage(cover)}</header>
     <section class="menu-sheet profile-sheet" aria-labelledby="org-name">
       <div class="menu-id">
         ${org.logo_url ? `<img class="menu-logo" src="${esc(org.logo_url)}" alt="" width="84" height="84">` : `<span class="menu-logo menu-monogram" aria-hidden="true">${esc([...name][0] || 'Z')}</span>`}
@@ -100,8 +101,8 @@ try {
       <ol class="stamp-dots" aria-hidden="true">${Array.from({ length: Math.min(loyalty.stamps_required, 10) }, (_, i) => `<li class="${i < 2 ? 'on' : ''}"></li>`).join('')}</ol>
     </section>` : '',
   };
-  const info = sections.filter((k) => k !== 'loyalty').map((k) => bits[k] || '').join('');
-  main.innerHTML = hero + (info ? `<div class="profile-info">${info}</div>` : '') + bits.loyalty;
+  const info = sections.map(k=>bits[k]||'').join('');
+  main.innerHTML = hero + bannerGallery(p.banners) + (info ? `<div class="profile-info">${info}</div>` : '');
 } catch {
   topbar(document.getElementById('top'), t);
   main.innerHTML = `<div class="card"><h1>${a('الصفحة غير متاحة', 'Page unavailable')}</h1><p class="muted">${a('تأكد من رابط المنشأة وحاول مجددًا.', 'Check the business link and try again.')}</p><a class="btn ghost" href="/">${a('زيمارا منيو', 'ZIMARA Menu')}</a></div>`;

@@ -447,6 +447,7 @@ owner.get('/stats', async (c) => {
   const { results } = await c.env.DB.prepare(
     `SELECT b.id, b.name_ar, b.name_en,
             COUNT(t.id) AS tickets,
+            COUNT(t.ready_at) AS prepared,
             SUM(CASE WHEN t.status = 'collected' THEN 1 ELSE 0 END) AS collected,
             AVG(CASE WHEN t.ready_at IS NOT NULL THEN t.ready_at - t.created_at END) AS avg_prep_ms,
             MAX(CASE WHEN t.ready_at IS NOT NULL THEN t.ready_at - t.created_at END) AS max_prep_ms,

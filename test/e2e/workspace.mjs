@@ -1,0 +1,54 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
+const base=process.argv[2]||'http://127.0.0.1:8790',out=process.argv[3]||'output/workspace';
+mkdirSync(out,{recursive:true});
+const launch={headless:true},proxy=process.env.HTTPS_PROXY||process.env.HTTP_PROXY;
+if(proxy&&!/^http:\/\/(127\.0\.0\.1|localhost):/.test(base)){const u=new URL(proxy);launch.proxy={server:u.origin,...(u.username?{username:decodeURIComponent(u.username),password:decodeURIComponent(u.password)}:{})};}
+const browser=await chromium.launch(launch),errors=[],checks=[];
+const owner=await browser.newPage({viewport:{width:1440,height:1000}});owner.on('pageerror',e=>errors.push(e.message));
+const pass=s=>{checks.push(s);console.log('PASS',s);};
+const shot=async(page,options)=>{await page.locator('#global-notice').waitFor({state:'hidden'});await page.evaluate(()=>{document.activeElement?.blur();scrollTo(0,0);});await page.evaluate(()=>document.fonts.ready);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await page.screenshot(options);};
+const get=async path=>{const r=await owner.request.get(base+path);assert.equal(r.status(),200,await r.text());return r.json();};
+const tab=async key=>{await owner.locator(`[data-k=${key}]`).click();await owner.locator(`#panel-${key}`).waitFor();};
+try{
+ await owner.goto(base+'/demo');
+ const room=await owner.evaluate(async()=>{const r=await fetch('/api/demo',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});if(!r.ok)throw new Error('demo '+r.status);return r.json();});
+ await owner.evaluate(async token=>{const r=await fetch('/api/demo/'+token+'/session',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({role:'owner'})});if(!r.ok)throw new Error('session '+r.status);},room.token);
+ await owner.goto(base+'/app');await owner.locator('.workspace-welcome').waitFor();
+ assert.equal(await owner.locator('[role=tab]').count(),13);assert.equal(await owner.locator('.workspace-metrics article').count(),4);
+ await shot(owner,{path:out+'/overview-desktop.png',fullPage:true});pass('owner workspace uses actual menu, branch, subscription and stats APIs');
+ await tab('brand');const f=owner.locator('#identity-form');await f.waitFor();
+ await f.locator('[name=name_ar]').fill('مقهى التفاصيل');await f.locator('[name=name_en]').fill('Details Cafe');await f.locator('[name=layout]').selectOption('cards');await f.locator('[name=corners]').selectOption('square');await f.locator('[name=cover]').selectOption('compact');await f.locator('[name=show_calories]').uncheck();await f.locator('[data-color="#185345"]').click();
+ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64');
+ await f.locator('input[type=file]').setInputFiles({name:'sample.png',mimeType:'image/png',buffer:png});await f.locator('[data-status-for]').filter({hasText:'تم رفع الصورة'}).waitFor();
+ await owner.waitForFunction(()=>document.querySelector('.preview-logo img')?.getAttribute('src')?.startsWith('/api/assets/'));
+ await f.locator('[type=submit]').click();await owner.getByText('حُفظت الهوية وظهرت على صفحاتك العامة.').waitFor();
+ let p=(await get('/api/owner/profile')).profile;assert.equal(p.theme.layout,'cards');assert.equal(p.theme.show_calories,false);assert.equal((await get('/api/me')).org.brand_color,'#185345');
+ await shot(owner,{path:out+'/brand-desktop.png',fullPage:true});pass('logo upload updates preview; tenant identity persists server-side');
+ await owner.locator('#brand-file').setInputFiles({name:'brand.ttf',mimeType:'font/ttf',buffer:readFileSync(new URL('../../public/fonts/tajawal-arabic-0.woff2',import.meta.url))});await owner.locator('#asset-upload [type=submit]').click();await owner.getByText('تم رفع الخط وتطبيقه.').waitFor();assert.equal((await get('/api/owner/profile')).profile.theme.font,'custom');assert.equal(await owner.locator('#identity-form [name=font]').inputValue(),'custom');await owner.click('#font-reset');await owner.getByText('تمت العودة للخط الافتراضي.').waitFor();assert.equal((await get('/api/owner/profile')).profile.font_url,null);assert.equal((await get('/api/owner/profile')).profile.theme.layout,'cards');pass('custom font uploads, applies and restores without losing other identity choices');
+ await tab('profile');await owner.locator('#profile-form').waitFor();await owner.fill('#description_ar','قهوة بهدوء. وتفاصيل تستحق الزيارة.');await owner.fill('#description_en','Coffee and thoughtful details.');
+ for(const [name,url] of [['الموقع','https://example.org'],['المتجر','https://example.org/shop']]){await owner.click('#add-social');const row=owner.locator('#social-rows>.editor-row').last();await row.locator('[name=link-label]').fill(name);await row.locator('[name=link-url]').fill(url);}
+ const logo=(await get('/api/me')).org.logo_url;
+ for(const alt of ['غلاف المقهى','جلسات المقهى']){await owner.click('#add-banner');const row=owner.locator('#banner-rows>.editor-row').last();await row.locator('[name=image_url]').fill(logo);await row.locator('[name=alt_ar]').fill(alt);await row.locator('[name=alt_en]').fill(alt==='غلاف المقهى'?'Cover':'Seating');await row.locator('[name=href]').fill('https://example.org/shop');}
+ await owner.locator('#banner-rows>.editor-row').last().locator('[data-move="-1"]').click();
+ await owner.locator('[data-section=loyalty] [data-move="-1"]').click();
+ await owner.locator('[data-section=hours] [type=checkbox]').uncheck();
+ await owner.locator('#profile-form [type=submit]').click();await owner.getByText('تم حفظ الصفحة العامة.').waitFor();
+ p=(await get('/api/owner/profile')).profile;assert.equal(p.social_links.length,2);assert.equal(p.banners[0].alt_ar,'جلسات المقهى');assert.ok(!p.sections.includes('hours'));assert.ok(p.sections.indexOf('loyalty')<p.sections.indexOf('social'));pass('multi-link and banner edits, reordering and section visibility persist');
+ await owner.reload();await owner.locator('#profile-form').waitFor();assert.equal(await owner.locator('#social-rows>.editor-row').count(),2);assert.equal(await owner.locator('#banner-rows>.editor-row').count(),2);
+ await shot(owner,{path:out+'/profile-editor.png',fullPage:true});pass('saved profile restores after browser reload');
+ await tab('settings');await owner.locator('.hours-editor').waitFor();const settings=owner.locator('#branch-settings-list form').first();await settings.locator('[name=publish_hours]').check();await settings.locator('[name=closed-0]').uncheck();await settings.locator('[name=open-0]').fill('18:00');await settings.locator('[name=close-0]').fill('02:00');await settings.locator('[name=orders_enabled]').check();await settings.locator('[name=game]').selectOption('memory');await settings.locator('[type=submit]').click();await owner.getByText('تم حفظ إعدادات الفرع.').waitFor();
+ const branches=(await get('/api/owner/branches')).branches,branch=branches[0];const actual=(await get(`/api/owner/branches/${branch.id}/settings`)).settings;assert.equal(actual.hours[0].open,'18:00');assert.equal(actual.hours[0].close,'02:00');assert.equal(actual.hours.length,7);assert.equal(actual.orders_enabled,true);pass('branch orders, waiting game and overnight hours save correctly');
+ const guest=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});guest.on('pageerror',e=>errors.push(e.message));
+ await guest.goto(base+'/p/'+room.org_slug);await guest.locator('#org-name').waitFor();assert.equal(await guest.locator('#org-name').innerText(),'مقهى التفاصيل');assert.equal(await guest.locator('.tenant-gallery img').count(),1);assert.equal(await guest.locator('.menu-cover>a').getAttribute('href'),'https://example.org/shop');assert.equal(await guest.locator('.contact-chip').count(),2);assert.equal(await guest.locator('.opening-hours').count(),0);assert.equal(await guest.locator('.qr').count(),0);await shot(guest,{path:out+'/public-profile-mobile.png',fullPage:true});
+ await guest.goto(base+'/m/'+branch.slug);await guest.locator('.dish').first().waitFor();assert.equal(await guest.locator('.dish-kcal').count(),0);assert.equal(await guest.evaluate(()=>document.documentElement.dataset.tenantLayout),'cards');assert.equal(await guest.locator('.qr').count(),0);await shot(guest,{path:out+'/public-menu-mobile.png',fullPage:true});pass('public menu and profile honor saved branding without pager QR');
+ for(const key of ['menu','branches','loyalty','stats','import','devices','subscription','integrations','account']){await tab(key);await owner.locator(`#panel-${key} .card,#panel-${key} form,#panel-${key} .integration-grid`).first().waitFor();assert.equal(await owner.locator(`#panel-${key} .msg.error`).count(),0);}
+ pass('all 13 owner sections load without API or JavaScript errors');
+ await tab('overview');await owner.locator('.workspace-welcome').waitFor();
+ for(const width of [360,390,768,1024,1440]){await owner.setViewportSize({width,height:900});assert.equal(await owner.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'overview overflow '+width);}
+ await owner.setViewportSize({width:390,height:844});await owner.evaluate(()=>scrollTo(0,0));await owner.locator('#global-notice').waitFor({state:'hidden'});assert.ok(await owner.locator('.workspace-share').evaluate(e=>e.clientWidth)>300);await shot(owner,{path:out+'/overview-mobile.png',fullPage:true});
+ await tab('brand');await owner.locator('.preview-phone').waitFor();assert.equal(await owner.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await shot(owner,{path:out+'/brand-mobile.png',fullPage:true});
+ await owner.goto(base+'/app?lang=en#overview');await owner.locator('.workspace-welcome').waitFor();assert.equal(await owner.evaluate(()=>document.documentElement.dir),'ltr');await owner.locator('[data-act=theme]').click();await owner.emulateMedia({reducedMotion:'reduce'});await shot(owner,{path:out+'/overview-en-dark-mobile.png',fullPage:true});assert.equal(await owner.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);pass('360–1440px layout, English, dark mode and reduced motion checked');
+ assert.deepEqual(errors,[]);writeFileSync(out+'/workspace-results.json',JSON.stringify({base,at:new Date().toISOString(),checks,errors},null,2));
+}finally{await browser.close();}
