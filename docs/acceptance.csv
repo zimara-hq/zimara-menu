@@ -1,0 +1,20 @@
+id,requirement,status,environment,evidence,source_sha
+A01,Tenant signup and14day trial,pass,HTTPS+isolatedAPI,test/e2e/onboarding.mjs,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A02,Tenant isolation and quotas,pass,isolatedAPI,test/onboarding-security.test.js,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A03,TOTP and singleuse recovery,pass,isolatedAPI,test/onboarding-security.test.js,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A04,CSV preview and transactional import,pass,HTTPS+isolatedAPI,test/e2e/onboarding.mjs,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A05,Server priced optional food orders,pass,HTTPS+isolatedAPI,test/e2e/onboarding.mjs,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A06,Private display QR disappears on linking,pass,finalHTTPS,test/e2e/connected.mjs,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A07,Public profile and menu have no pager QR,pass,HTTPS+isolatedAPI,test/features.test.js,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A08,Ready then seen then collected then rating,pass,finalHTTPS,test/e2e/connected.mjs,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A09,Concurrent cashier and offline recovery,pass,finalHTTPS+isolatedAPI,test/e2e/connected.mjs,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A10,Loyalty stamp and atomic redeem,pass,finalHTTPS+isolatedAPI,test/e2e/connected.mjs,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A11,Data export and card revoke,pass,isolatedAPI,test/features-data.test.js,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A12,Branded responsiveAR-EN light-dark reducedmotion,pass,browser8variants,docs/UX-REVIEW.md,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A13,Lab mobile4G LCPtarget,pass-single-lab-run,Chromium390-1.6Mbps-150ms-4xCPU,docs/qa/performance.json,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A14,Payment upgrade to invoice,blocked,provider-runtime-not-built,docs/INTEGRATIONS.md,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A15,R2 upload endtoend,blocked,account-R2-disabled403-10042,docs/ROLLBACK.md,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A16,Apple-GoogleWallet and lockeddevice sound,not-built,certificates-issuer-and-device-tests-required,docs/WALLET.md,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A17,Vendor POS directadapters,not-built,genericbridge-only,docs/INTEGRATIONS.md,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A18,NativeXLSX and separate superimpersonation,not-built,followup-implementation,docs/ACCEPTANCE.md,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d
+A19,Commercial domain and legal launch,blocked,owner-policy-and-provider-acceptance,docs/COMPLIANCE.md,efbfe3bf3f4ee272ce5a72bfbf5c11f22cb9961d

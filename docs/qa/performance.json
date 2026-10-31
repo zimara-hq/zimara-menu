@@ -1,0 +1,81 @@
+{
+  "profile": "single Chromium lab run, mobile390,1.6Mbps,150msRTT,4xCPU,no cache; not field/CoreWebVitals certification",
+  "lcp": {
+    "time": 1124,
+    "element": "H1"
+  },
+  "cls": 0.00611074715478303,
+  "resources": [
+    {
+      "name": "landing.css",
+      "bytes": 6789,
+      "end": 496.69999999925494
+    },
+    {
+      "name": "landing.js",
+      "bytes": 7012,
+      "end": 504.80000000074506
+    },
+    {
+      "name": "symbol.webp",
+      "bytes": 13736,
+      "end": 582.6999999992549
+    },
+    {
+      "name": "logo.webp",
+      "bytes": 65392,
+      "end": 854.3000000007451
+    },
+    {
+      "name": "tajawal.css",
+      "bytes": 466,
+      "end": 661.5
+    },
+    {
+      "name": "jakarta.css",
+      "bytes": 474,
+      "end": 669.3000000007451
+    },
+    {
+      "name": "tajawal-arabic-0.woff2",
+      "bytes": 55372,
+      "end": 2449.699999999255
+    },
+    {
+      "name": "tajawal-arabic-4.woff2",
+      "bytes": 54972,
+      "end": 2714.199999999255
+    },
+    {
+      "name": "tajawal-arabic-2.woff2",
+      "bytes": 55820,
+      "end": 2721.900000002235
+    },
+    {
+      "name": "jakarta-latin-4.woff2",
+      "bytes": 63672,
+      "end": 2842.699999999255
+    },
+    {
+      "name": "jakarta-latin-0.woff2",
+      "bytes": 63636,
+      "end": 2850.199999999255
+    },
+    {
+      "name": "tajawal-arabic-3.woff2",
+      "bytes": 55544,
+      "end": 2742.800000000745
+    },
+    {
+      "name": "jakarta-latin-3.woff2",
+      "bytes": 63636,
+      "end": 2856.900000002235
+    },
+    {
+      "name": "experience-metrics",
+      "bytes": 362,
+      "end": 1327.699999999255
+    }
+  ],
+  "viewport": 390
+}

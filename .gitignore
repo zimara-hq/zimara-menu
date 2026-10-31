@@ -152,3 +152,6 @@ vite.config.ts.timestamp-*
 .wrangler/
 .dev.vars*
 !.dev.vars.example
+
+# Local verification artifacts
+output/
