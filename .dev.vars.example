@@ -10,6 +10,12 @@ MOYASAR_WEBHOOK_SECRET=
 PUBLIC_BASE_URL=http://localhost:8787
 # Only after ZIMARA is VAT-registered: 1500 = 15%
 VAT_RATE_BPS=0
+# Simple Fatoora (subscription e-invoices). Use a sandbox key for review; never commit a key.
+SIMPLE_FATOORA_API_KEY=
+SIMPLE_FATOORA_ENABLED=false
+SIMPLE_FATOORA_ENV=sandbox
+SIMPLE_FATOORA_LIVE_ISSUING_ENABLED=false
+
 # Transactional email (Resend). Leave empty to keep email disabled.
 RESEND_API_KEY=
 MAIL_FROM=ZIMARA <no-reply@zimara.co>
