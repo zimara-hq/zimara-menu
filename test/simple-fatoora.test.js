@@ -76,6 +76,29 @@ test('verified paid subscription invoice is issued once and never exposes the AP
   assert.equal(calls.length, 2);
 });
 
+test('sandbox config rejects a live key before any invoice create request', async () => {
+  const paths = [];
+  const env = makeEnv({
+    ...configured,
+    HTTP_FETCH: async (url) => {
+      paths.push(url);
+      return new Response(JSON.stringify({ status: true, response: {
+        production_api_key: configured.SIMPLE_FATOORA_API_KEY,
+        sandbox_api_key: 'different-sandbox-key',
+      } }), { status: 200 });
+    },
+  });
+  const { owner } = await setupOrg(env);
+  const seeded = await seedInvoice(env, owner, 'checkout-wrong-key');
+  await processSimpleFatooraInvoices(env);
+  const invoice = await env.DB.prepare('SELECT state FROM subscription_invoices WHERE id = ?').bind(seeded.invoiceId).first();
+  const job = await env.DB.prepare('SELECT state, last_error FROM subscription_invoice_jobs WHERE invoice_id = ?').bind(seeded.invoiceId).first();
+  assert.equal(invoice.state, 'rejected');
+  assert.equal(job.state, 'rejected');
+  assert.equal(job.last_error, 'simple_fatoora_api_key_environment_mismatch');
+  assert.deepEqual(paths, ['https://api.simplefatoora.com/sdk/users/validate_user_api_key']);
+});
+
 test('ambiguous create is reconciled by stable reference, never blindly issued twice', async () => {
   const paths = [];
   let creates = 0;
