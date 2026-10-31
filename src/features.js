@@ -1173,13 +1173,18 @@ export function registerFeatures(app) {
         'INSERT INTO tenant_assets(id,org_id,object_key,mime,size,kind,created_at) VALUES(?,?,?,?,?,?,?)',
       ).bind(aid, u.org_id, key, mime, bytes.length, kind, now());
       if (c.env.MEDIA) await insert.run();
-      else
+      else {
+        // Self-heals databases where migration 0011 has not been applied yet.
+        await c.env.DB.prepare(
+          'CREATE TABLE IF NOT EXISTS tenant_asset_blobs (asset_id TEXT PRIMARY KEY REFERENCES tenant_assets(id) ON DELETE CASCADE, data BLOB NOT NULL)',
+        ).run();
         await c.env.DB.batch([
           insert,
           c.env.DB.prepare(
             'INSERT INTO tenant_asset_blobs(asset_id,data) VALUES(?,?)',
           ).bind(aid, bytes),
         ]);
+      }
     } catch (e) {
       if (c.env.MEDIA) await c.env.MEDIA.delete(key);
       if (String(e.message).includes('asset_storage_limit'))
