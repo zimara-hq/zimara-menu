@@ -113,7 +113,6 @@ function invoicePayload(row, reference) {
 
 export async function processSimpleFatooraInvoices(env) {
   if (!simpleFatooraConfigured(env)) return { processed: 0, configured: false };
-  try { await validateSimpleFatooraKey(env); } catch { return { processed: 0, configured: true, keyValidated: false }; }
   const t = now();
 
   // A worker can be terminated after the provider creates a document but before D1 records it.
@@ -122,6 +121,8 @@ export async function processSimpleFatooraInvoices(env) {
     .bind(t, t - 60000).run();
 
   const { results } = await env.DB.prepare("SELECT * FROM subscription_invoice_jobs WHERE state IN ('pending','unknown') AND next_attempt_at <= ? ORDER BY created_at LIMIT 10").bind(t).all();
+  if (!results.length) return { processed: 0, configured: true, keyValidated: false };
+  try { await validateSimpleFatooraKey(env); } catch { return { processed: 0, configured: true, keyValidated: false }; }
   let processed = 0;
   for (const job of results) {
     if (job.state === 'unknown') {
