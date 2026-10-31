@@ -35,6 +35,7 @@ let state = null;
 let lastAlerts = 0;
 let soundOn = false;
 let pushOn = false;
+let keepPageAwake = false;
 let failures = 0;
 let wakeLock = null;
 let notice = '';
@@ -59,7 +60,7 @@ async function keepAwake() {
     }
   } catch {}
 }
-document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && soundOn && keepAwake());
+document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && keepPageAwake && soundOn && keepAwake());
 
 async function trackTicket(reg) {
   const worker = reg.active || reg.waiting || reg.installing;
@@ -79,10 +80,12 @@ async function trackTicket(reg) {
 async function enableAlerts() {
   soundOn = unlockAudio();
   try { sessionStorage.setItem('zm_sound_' + token, '1'); } catch {}
-  keepAwake();
+  keepPageAwake = false;
   notice = '';
   if (!pushAvailable()) {
     notice = t('pushUnavailable');
+    keepPageAwake = true;
+    keepAwake();
     render();
     return;
   }
@@ -102,6 +105,8 @@ async function enableAlerts() {
   } catch {
     notice = t('pushSetupFailed');
   }
+  keepPageAwake = !pushOn;
+  if (keepPageAwake) keepAwake();
   render();
 }
 
@@ -121,7 +126,7 @@ async function rate(stars, comment) {
 
 function render() {
   if (!state) return;
-  const key = JSON.stringify([state, failures > 1, soundOn, notice, sector, gameType]);
+  const key = JSON.stringify([state, failures > 1, soundOn, pushOn, notice, sector, gameType]);
   if (renderedKey === key) return;
   renderedKey = key;
   const previousComment = main.querySelector('#cm')?.value || '';
