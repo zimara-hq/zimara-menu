@@ -36,6 +36,7 @@ export async function createSimpleFatooraInvoice(env, payload) {
     number: String(response.invoice_number),
     pdfUrl: typeof response.invoice === 'string' ? response.invoice : null,
     environment: receivedEnvironment,
+    totalHalalas: Number.isFinite(Number(response.total)) ? Math.round(Number(response.total) * 100) : null,
   };
 }
 
@@ -53,6 +54,7 @@ export async function findSimpleFatooraInvoice(env, reference) {
     number: String(row.invoice_number),
     pdfUrl: typeof row.invoice === 'string' ? row.invoice : null,
     environment: receivedEnvironment,
+    totalHalalas: Number.isFinite(Number(row.total)) ? Math.round(Number(row.total) * 100) : null,
   };
 }
 
@@ -62,6 +64,11 @@ const markUnknown = (env, invoiceId, error) => env.DB.batch([
 ]);
 
 async function finishInvoice(env, job, issued) {
+  const expected = await env.DB.prepare('SELECT total FROM subscription_invoices WHERE id = ? AND state = ?').bind(job.invoice_id, 'pending').first();
+  if (!expected || issued.totalHalalas === null || issued.totalHalalas !== Number(expected.total)) {
+    await markUnknown(env, job.invoice_id, new Error('provider_amount_mismatch'));
+    return false;
+  }
   const t = now();
   await env.DB.batch([
     env.DB.prepare("UPDATE subscription_invoices SET provider = 'simple_fatoora', provider_reference = ?, number = ?, state = 'issued', pdf_url = ?, issued_at = ? WHERE id = ? AND state = 'pending'")
@@ -69,6 +76,7 @@ async function finishInvoice(env, job, issued) {
     env.DB.prepare("UPDATE subscription_invoice_jobs SET state = 'issued', locked_at = NULL, last_error = NULL, updated_at = ? WHERE invoice_id = ?")
       .bind(t, job.invoice_id),
   ]);
+  return true;
 }
 
 function invoicePayload(row, reference) {
