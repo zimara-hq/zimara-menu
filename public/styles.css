@@ -427,3 +427,13 @@ form .error:empty { display: none; }
   .dashboard-page #main > .wrap { padding-block-start: 24px; }
 }
 @media (max-width: 849px) { .dashboard-page .tabs button[aria-selected='true'] { background: var(--cta-bg); color: var(--cta-ink); } }
+/* Pre-delivery checklist (ui-ux-pro-max): smooth hover, visible keyboard focus, reduced motion */
+.more-card, .contact-chip, .place-card, .hero-actions .btn { transition: border-color .2s ease, transform .2s ease, background-color .2s ease; }
+.more-card:hover, .contact-chip:hover { transform: translateY(-1px); }
+.more-card:focus-visible, .contact-chip:focus-visible, .hero-actions .btn:focus-visible, .branch-actions .btn:focus-visible { outline: 3px solid var(--accent-ink, var(--accent)); outline-offset: 3px; }
+.brand-hero .btn:focus-visible { outline-color: var(--solar); }
+@media (prefers-reduced-motion: reduce) { .more-card, .contact-chip, .place-card, .hero-actions .btn { transition: none; } .more-card:hover, .contact-chip:hover { transform: none; } }
+/* Dark mode: brand-coloured solid buttons turn solar so they never sink into the dark surface. */
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .btn:not(.ghost):not(.danger):not(.ok):not(.warn):not(.hero-secondary) { background: var(--cta-bg); color: var(--cta-ink); border-color: transparent; } }
+:root[data-theme='dark'] .btn:not(.ghost):not(.danger):not(.ok):not(.warn):not(.hero-secondary) { background: var(--cta-bg); color: var(--cta-ink); border-color: transparent; }
+.loyalty-band .btn.btn { background: var(--indigo); color: #fff; }

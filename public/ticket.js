@@ -122,7 +122,7 @@ function render() {
         <p class="small muted">${esc(t('enableHint'))}</p>
         ${isIOS && !standalone ? `<p class="small">${esc(t('iosHint'))}</p>` : ''}
         ${notice ? `<p class="msg error small">${esc(notice)}</p>` : ''}
-        ${!state.vapidPublicKey ? `<p class="small muted">${lang === 'ar' ? 'إشعارات الخلفية غير مفعّلة في هذه البيئة. اترك الصفحة مفتوحة.' : 'Background push is not configured in this environment. Keep this page open.'}</p>` : ''}
+        ${!state.vapidPublicKey ? `<p class="small muted">${lang === 'ar' ? 'اترك هذه الصفحة مفتوحة، وننبهك بالصوت والاهتزاز لحظة جاهزية طلبك.' : 'Keep this page open and we will alert you with sound and vibration when your order is ready.'}</p>` : ''}
       </div>${s === 'preparing' && gameType !== 'none' ? '<section class="card wait-game" id="waiting-game"></section>' : ''}`;
   } else if (s === 'collected') {
     body = `

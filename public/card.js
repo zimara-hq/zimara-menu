@@ -30,7 +30,6 @@ async function load() {
         <p><strong>${esc(t('progress', { n: shown, m: need }))}</strong> · ${esc(t('reward', { r: pick(c.program, 'reward') }))}</p>
         <div class="stamps">${Array.from({ length: need }, (_, i) => `<div class="stamp ${i < shown ? 'on' : ''}">${i < shown ? '★' : ''}</div>`).join('')}</div>
         ${c.stamps >= need ? `<p class="msg">${esc(t('earned'))}</p>` : ''}
-        <p class="small muted">${esc(t('wallet'))}</p>
       </div>
       ${c.history.length ? `<div class="card"><h2>${esc(t('history'))}</h2><table>${c.history
         .map((h) => `<tr><td>${esc(t(h.kind))}</td><td>${h.delta > 0 ? '+' : ''}${h.delta}</td><td class="muted small">${new Date(h.created_at).toLocaleString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-GB')}</td></tr>`)

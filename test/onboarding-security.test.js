@@ -63,6 +63,8 @@ test('origin checks reject sibling/cross-site JSON and request size is bounded',
  const r=await c.get('/api/config');
  assert.match(r.headers.get('content-security-policy'),/script-src 'self'/);
  assert.match(r.headers.get('strict-transport-security'),/max-age/);
+ assert.equal(r.json.payments,false);
+ assert.equal(r.json.rewaa,false);
 });
 
 test('privileged MFA gate, encrypted enrollment, TOTP replay rejection and one-time recovery',async()=>{

@@ -21,7 +21,7 @@ const t = makeT({
     readyNow: 'جاهز للاستلام', latest: 'آخر طلب', fullscreen: 'ملء الشاشة', soundOn: 'تفعيل صوت الشاشة',
     cardCode: 'رمز بطاقة العميل', find: 'بحث', scan: 'مسح بالكاميرا', addStamp: 'إضافة ختم', redeemBtn: 'استبدال المكافأة', stampsOf: '{n} أختام · المطلوب {m}', notEnough: 'الأختام غير كافية.', cardNF: 'البطاقة غير موجودة.',
     available: 'متوفر', soldout: 'نفد', current: 'كلمة المرور الحالية', next: 'كلمة المرور الجديدة', changed: 'تم تغيير كلمة المرور',
-    pushOff: 'التنبيه يصل للعميل بالصوت والاهتزاز وصفحته مفتوحة. إشعارات شاشة القفل تتفعّل قريبًا.',
+    pushOff: 'التنبيه يصل للعميل بالصوت والاهتزاز على صفحة طلبه. اطلب من العميل إبقاء الصفحة مفتوحة.',
     walletSoon: 'Apple Wallet وGoogle Wallet غير مفعّلتين. تحتاجان إصدار البطاقات والشهادات واختبار الأجهزة الفعلية.',
   },
   en: {
@@ -42,7 +42,7 @@ const t = makeT({
     readyNow: 'Ready for pickup', latest: 'Latest order', fullscreen: 'Full screen', soundOn: 'Enable display sound',
     cardCode: 'Customer card code', find: 'Find', scan: 'Scan with camera', addStamp: 'Add stamp', redeemBtn: 'Redeem reward', stampsOf: '{n} stamps · {m} needed', notEnough: 'Not enough stamps.', cardNF: 'Card not found.',
     available: 'Available', soldout: 'Sold out', current: 'Current password', next: 'New password', changed: 'Password changed',
-    pushOff: 'Customers are alerted by sound and vibration while their page is open. Lock-screen notifications are coming soon.',
+    pushOff: 'Customers are alerted by sound and vibration on their order page. Ask them to keep it open.',
     walletSoon: 'Apple Wallet and Google Wallet are not enabled. Pass issuance, credentials and real-device tests are still required.',
   },
 });
@@ -296,7 +296,7 @@ async function ownerLoyalty(el) {
       ${field('reward_ar', t('rewardAr'), `required value="${esc(p.reward_ar)}"`)}${field('reward_en', t('rewardEn'), `required value="${esc(p.reward_en)}"`)}
       <label><input type="checkbox" name="active" ${p.active ? 'checked' : ''}> ${esc(t('programOn'))}</label>
       <div id="m"></div><button class="btn">${esc(t('save'))}</button></form>
-    <div class="card">${qrBlock(`${location.origin}/j/${me.org.slug}`, t('joinQr'))}<p class="small muted" style="text-align:center">${esc(t('walletSoon'))}</p></div>`;
+    <div class="card">${qrBlock(`${location.origin}/j/${me.org.slug}`, t('joinQr'))}</div>`;
   el.querySelector('#f').onsubmit = async (e) => {
     e.preventDefault();
     const v = fd(e.target);
@@ -564,7 +564,7 @@ main.before(heading);
 
 const views = {
   admin: [['orgs', t('orgs'), adminOrgs], ['admins', t('admins'), adminAdmins], ['legal', lang === 'ar' ? 'البيانات القانونية' : 'Legal details', adminLegalView], ['account', t('account'), accountView]],
-  owner: [['branches', t('branches'), ownerBranches], ['menu', t('menu'), ownerMenu], ['loyalty', t('loyalty'), ownerLoyalty], ['stats', t('stats'), ownerStats], ['brand', t('brandTab'), ownerBrand], ['profile', lang === 'ar' ? 'صفحتي العامة' : 'Public profile', el => profileView(el, me)], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'تجربة الفروع' : 'Branch experience', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
+  owner: [['branches', t('branches'), ownerBranches], ['menu', t('menu'), ownerMenu], ['loyalty', t('loyalty'), ownerLoyalty], ['stats', t('stats'), ownerStats], ['brand', t('brandTab'), ownerBrand], ['profile', lang === 'ar' ? 'صفحتي العامة' : 'Public profile', el => profileView(el, me)], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'إعدادات الفروع' : 'Branch settings', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
   branch: [['orders', t('orders'), branchOrders], ['display', t('display'), branchDisplay], ['loyalty', t('loyalty'), branchLoyalty], ['availability', t('availability'), branchAvailability], ['inbox', lang === 'ar' ? 'طلبات المنيو' : 'Menu orders', menuOrdersView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['account', t('account'), accountView]],
 }[me.user.role];
 tabs(views.map(([k, l]) => [k, l]), (k, el) => {
