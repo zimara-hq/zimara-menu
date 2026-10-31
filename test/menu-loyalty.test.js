@@ -25,6 +25,29 @@ test('owner builds the menu, branch marks sold out, public sees active items onl
   assert.equal((await anon.get('/api/public/menu/missing')).status, 404);
 });
 
+test('owner adds a sample menu once, deletes items and empty categories', async () => {
+  const env = makeEnv();
+  const { owner, cashier, branchSlug } = await setupOrg(env);
+  const added = await owner.post('/api/owner/menu/sample');
+  assert.equal(added.status, 201, JSON.stringify(added.json));
+  assert.equal((await owner.post('/api/owner/menu/sample')).status, 409);
+  const menu = await client(env).get('/api/public/menu/' + branchSlug);
+  assert.equal(menu.json.items.length, added.json.items);
+  assert.ok(menu.json.categories.length >= 3);
+  assert.ok(menu.json.items.every((i) => i.calories != null && i.desc_ar));
+
+  const first = menu.json.items[0];
+  await cashier.put('/api/branch/availability/' + first.id, { available: false });
+  assert.equal((await owner.del('/api/owner/categories/' + first.category_id)).status, 409);
+  const gone = await owner.del('/api/owner/items/' + first.id);
+  assert.equal(gone.status, 200, JSON.stringify(gone.json));
+  assert.equal((await owner.del('/api/owner/items/' + first.id)).status, 404);
+  const { json: own } = await owner.get('/api/owner/menu');
+  for (const i of own.items.filter((x) => x.category_id === first.category_id))
+    assert.equal((await owner.del('/api/owner/items/' + i.id)).status, 200);
+  assert.equal((await owner.del('/api/owner/categories/' + first.category_id)).status, 200);
+});
+
 test('loyalty: stamps, idempotent retries, atomic redeem, no overdraw', async () => {
   const env = makeEnv();
   const { owner, cashier, orgSlug } = await setupOrg(env);

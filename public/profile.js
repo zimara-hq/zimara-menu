@@ -2,7 +2,7 @@ import { api, esc, lang, makeT, pick, setBrandColor, topbar, applyTenantFont } f
 const a = (ar, en) => (lang === 'ar' ? ar : en);
 const t = makeT({ ar: { title: 'عن المنشأة' }, en: { title: 'About the business' } });
 const main = document.getElementById('main');
-main.className = 'wrap profile-page';
+main.className = 'wrap profile-page menu-wrap';
 
 const icon = (d) => `<svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const ICONS = {
@@ -54,23 +54,21 @@ try {
   const menuLabel = services ? a('استعرض الخدمات', 'Browse services') : a('افتح المنيو', 'Open the menu');
 
   const heroActions = [
-    show('menu') && branches.length ? `<a class="btn hero-primary" href="${single ? '/m/' + esc(single.slug) : '#branches'}">${ICONS.menu}${menuLabel}</a>` : '',
-    show('loyalty') && loyalty ? `<a class="btn hero-secondary" href="/j/${esc(org.slug)}">${ICONS.gift}${a('بطاقة الولاء', 'Loyalty card')}</a>` : '',
+    show('menu') && branches.length ? `<a class="btn" href="${single ? '/m/' + esc(single.slug) : '#branches'}">${ICONS.menu}${menuLabel}</a>` : '',
+    show('loyalty') && loyalty ? `<a class="btn ghost" href="/j/${esc(org.slug)}">${ICONS.gift}${a('بطاقة الولاء', 'Loyalty card')}</a>` : '',
   ].join('');
 
-  const hero = `<section class="brand-hero profile-hero" aria-labelledby="org-name">
-    ${p.banners?.[0] ? `<img class="profile-cover" src="${esc(p.banners[0].image_url)}" alt="${esc(pick(p.banners[0], 'alt'))}" width="1240" height="440">` : ''}
-    <div class="profile-hero-body">
-      ${org.logo_url ? `<img class="hero-mark" src="${esc(org.logo_url)}" alt="" width="88" height="88">` : `<span class="hero-mark hero-monogram" aria-hidden="true">${esc([...name][0] || 'Z')}</span>`}
-      <div class="profile-hero-text">
-        <p class="hero-tags"><span>${esc(sectors[p.sector] || sectors.cafe)}</span>${single ? statusPill(single.settings.hours) : ''}</p>
-        <h1 id="org-name">${esc(name)}</h1>
-        ${pick(p, 'description') ? `<p class="hero-lead">${esc(pick(p, 'description'))}</p>` : ''}
-        ${p.address ? `<p class="hero-address">${ICONS.pin}<span>${esc(p.address)}</span></p>` : ''}
-        ${heroActions ? `<div class="hero-actions">${heroActions}</div>` : ''}
+  const cover = p.banners?.[0];
+  const hero = `<header class="menu-cover ${cover ? 'has-photo' : ''}">${cover ? `<img src="${esc(cover.image_url)}" alt="${esc(pick(cover, 'alt'))}" width="1240" height="440">` : ''}</header>
+    <section class="menu-sheet profile-sheet" aria-labelledby="org-name">
+      <div class="menu-id">
+        ${org.logo_url ? `<img class="menu-logo" src="${esc(org.logo_url)}" alt="" width="84" height="84">` : `<span class="menu-logo menu-monogram" aria-hidden="true">${esc([...name][0] || 'Z')}</span>`}
+        <div><h1 id="org-name">${esc(name)}</h1><p class="menu-branch">${esc(sectors[p.sector] || sectors.cafe)}${branches.length > 1 ? ` · ${branches.length} ${a('فروع', 'branches')}` : ''}</p></div>
       </div>
-    </div>
-  </section>`;
+      ${pick(p, 'description') ? `<p class="menu-about">${esc(pick(p, 'description'))}</p>` : ''}
+      <div class="menu-info">${single ? statusPill(single.settings.hours) : ''}${p.address ? `<span class="info-chip">${ICONS.pin}<span>${esc(p.address)}</span></span>` : ''}</div>
+      ${heroActions ? `<div class="hero-actions">${heroActions}</div>` : ''}
+    </section>`;
 
   const bits = {
     branches: show('branches') && (branches.length > 1 || hasPlaces) ? `<section class="profile-section" id="branches" aria-labelledby="h-branches">

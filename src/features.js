@@ -72,7 +72,7 @@ function text(v, field, max = 600) {
 }
 function https(v, field) {
   const value = url(v, field);
-  if (!value) return null;
+  if (!value || value.startsWith('/api/assets/')) return value;
   const parsed = new URL(value);
   if (parsed.username || parsed.password) throw bad('invalid_' + field);
   return value;
@@ -1106,7 +1106,6 @@ export function registerFeatures(app) {
   );
 
   app.post('/api/owner/assets', requireRole('owner'), async (c) => {
-    if (!c.env.MEDIA) throw new HttpError(503, 'media_storage_not_configured');
     const u = c.get('user');
     const usage = await c.env.DB.prepare(
       'SELECT COUNT(*) AS n,COALESCE(SUM(size),0) AS total FROM tenant_assets WHERE org_id=?',
@@ -1161,20 +1160,28 @@ export function registerFeatures(app) {
     else throw bad('asset_type_mismatch');
     if (
       bytes.length < 16 ||
-      bytes.length > (kind === 'font' ? 500_000 : 2_000_000)
+      bytes.length > (kind === 'font' ? 500_000 : c.env.MEDIA ? 2_000_000 : 1_500_000)
     )
       throw bad('asset_size_limit');
-    const aid = id(),
-      key = u.org_id + '/' + aid;
-    await c.env.MEDIA.put(key, bytes, { httpMetadata: { contentType: mime } });
+    const aid = id();
+    // Without an R2 bucket the bytes live in D1 (rows are capped near 2MB, hence 1.5MB images).
+    const key = c.env.MEDIA ? u.org_id + '/' + aid : 'd1:' + aid;
+    if (c.env.MEDIA)
+      await c.env.MEDIA.put(key, bytes, { httpMetadata: { contentType: mime } });
     try {
-      await c.env.DB.prepare(
+      const insert = c.env.DB.prepare(
         'INSERT INTO tenant_assets(id,org_id,object_key,mime,size,kind,created_at) VALUES(?,?,?,?,?,?,?)',
-      )
-        .bind(aid, u.org_id, key, mime, bytes.length, kind, now())
-        .run();
+      ).bind(aid, u.org_id, key, mime, bytes.length, kind, now());
+      if (c.env.MEDIA) await insert.run();
+      else
+        await c.env.DB.batch([
+          insert,
+          c.env.DB.prepare(
+            'INSERT INTO tenant_asset_blobs(asset_id,data) VALUES(?,?)',
+          ).bind(aid, bytes),
+        ]);
     } catch (e) {
-      await c.env.MEDIA.delete(key);
+      if (c.env.MEDIA) await c.env.MEDIA.delete(key);
       if (String(e.message).includes('asset_storage_limit'))
         throw conflict('asset_storage_limit');
       throw e;
@@ -1190,16 +1197,27 @@ export function registerFeatures(app) {
     );
   });
   app.get('/api/assets/:id', async (c) => {
-    if (!c.env.MEDIA) throw notFound();
     const asset = await c.env.DB.prepare(
       'SELECT a.* FROM tenant_assets a JOIN orgs o ON o.id=a.org_id WHERE a.id=? AND o.active=1',
     )
       .bind(c.req.param('id'))
       .first();
     if (!asset) throw notFound();
-    const object = await c.env.MEDIA.get(asset.object_key);
-    if (!object) throw notFound();
-    return new Response(object.body, {
+    let payload;
+    if (asset.object_key.startsWith('d1:')) {
+      const row = await c.env.DB.prepare(
+        'SELECT data FROM tenant_asset_blobs WHERE asset_id=?',
+      )
+        .bind(asset.id)
+        .first();
+      if (!row) throw notFound();
+      payload = new Uint8Array(row.data);
+    } else {
+      const object = c.env.MEDIA ? await c.env.MEDIA.get(asset.object_key) : null;
+      if (!object) throw notFound();
+      payload = object.body;
+    }
+    return new Response(payload, {
       headers: {
         'content-type': asset.mime,
         'content-length': String(asset.size),

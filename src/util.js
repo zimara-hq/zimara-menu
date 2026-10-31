@@ -79,6 +79,8 @@ export function int(v, field, { min = 0, max = 1e9, optional = false } = {}) {
 export function url(v, field, { optional = true } = {}) {
   const s = str(v, field, { optional, max: 500 });
   if (s === null) return null;
+  // Files uploaded to ZIMARA are stored as same-origin paths, so they work on any domain.
+  if (/^\/api\/assets\/[0-9a-f-]{36}$/.test(s)) return s;
   let u;
   try {
     u = new URL(s);

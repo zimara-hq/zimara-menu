@@ -1,4 +1,5 @@
 import { registerDemo, expireDemo } from './demo.js';
+import { sampleMenuStatements, sampleItemCount } from './sample-menu.js';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { body, requireRole, audit, newUser, isSecure, assertPlanQuota, subscriptionFor, planFor, rateLimit } from './context.js';
@@ -383,6 +384,45 @@ owner.patch('/items/:id', async (c) => {
     .run();
   if (!res.meta.changes) throw notFound();
   return c.json({ ok: true });
+});
+
+owner.delete('/items/:id', async (c) => {
+  const u = c.get('user');
+  try {
+    const item = await c.env.DB.prepare('SELECT id FROM items WHERE id = ? AND org_id = ?').bind(c.req.param('id'), u.org_id).first();
+    if (!item) throw notFound();
+    await c.env.DB.batch([
+      c.env.DB.prepare('DELETE FROM branch_unavailable WHERE item_id = ?').bind(item.id),
+      c.env.DB.prepare('DELETE FROM items WHERE id = ? AND org_id = ?').bind(item.id, u.org_id),
+    ]);
+    return c.json({ ok: true, deleted: true });
+  } catch (e) {
+    if (!/FOREIGN KEY|constraint/i.test(String(e?.message ?? e))) throw e;
+    // Items that appear in past orders stay in the records, hidden from the menu.
+    await c.env.DB.prepare('UPDATE items SET active = 0 WHERE id = ? AND org_id = ?').bind(c.req.param('id'), u.org_id).run();
+    return c.json({ ok: true, deleted: false, hidden: true });
+  }
+});
+
+owner.delete('/categories/:id', async (c) => {
+  const u = c.get('user');
+  const used = await c.env.DB.prepare('SELECT COUNT(*) AS n FROM items WHERE category_id = ? AND org_id = ?').bind(c.req.param('id'), u.org_id).first();
+  if (used.n) throw conflict('category_not_empty');
+  const res = await c.env.DB.prepare('DELETE FROM categories WHERE id = ? AND org_id = ?').bind(c.req.param('id'), u.org_id).run();
+  if (!res.meta.changes) throw notFound();
+  return c.json({ ok: true });
+});
+
+owner.post('/menu/sample', async (c) => {
+  const u = c.get('user');
+  const existing = await c.env.DB.prepare('SELECT COUNT(*) AS n FROM items WHERE org_id = ?').bind(u.org_id).first();
+  if (existing.n) throw conflict('menu_not_empty');
+  const profile = await c.env.DB.prepare('SELECT sector FROM org_profiles WHERE org_id = ?').bind(u.org_id).first();
+  const sector = profile?.sector === 'restaurant' ? 'restaurant' : 'cafe';
+  await assertPlanQuota(c.env, u.org_id, 'items', sampleItemCount(sector));
+  await c.env.DB.batch(sampleMenuStatements(c.env.DB, u.org_id, sector, id));
+  await audit(c.env, u, 'menu.sample', { sector });
+  return c.json({ ok: true, items: sampleItemCount(sector) }, 201);
 });
 
 owner.get('/loyalty', async (c) => {
