@@ -6,6 +6,8 @@ import { registerAccounts, expireSubscriptions } from './accounts.js';
 import { consumeMfa } from './mfa.js';
 import { registerFeatures } from './features.js';
 import { registerIntegrations } from './integrations.js';
+import { registerBilling, reconcileCheckouts } from './billing.js';
+import { registerMail } from './mail.js';
 import {
   checkLoginRate,
   clearCookie,
@@ -81,6 +83,8 @@ app.use('/api/*', async (c, next) => {
 });
 
 registerAccounts(app);
+registerBilling(app);
+registerMail(app);
 
 // ---------- Session ----------
 
@@ -725,6 +729,8 @@ export async function scheduled(env, fetcher) {
   await expireDemo(env);
   const t = now();
   await expireSubscriptions(env);
+  // Lost-webhook fallback, every 5 minutes so abandoned checkouts do not hammer the provider.
+  if (new Date(t).getUTCMinutes() % 5 === 0) await reconcileCheckouts(env);
   const { results } = await env.DB.prepare(
     "SELECT id FROM tickets WHERE status = 'ready' AND seen_at IS NULL AND alerts_sent < ? AND last_alert_at <= ?",
   )

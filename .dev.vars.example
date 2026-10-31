@@ -3,3 +3,13 @@ AUTH_SECRET=change-me-to-48-random-bytes
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
 VAPID_SUBJECT=mailto:you@example.com
+
+# Subscription payments (Moyasar). Leave empty to keep checkout disabled.
+MOYASAR_SECRET_KEY=
+MOYASAR_WEBHOOK_SECRET=
+PUBLIC_BASE_URL=http://localhost:8787
+# Only after ZIMARA is VAT-registered: 1500 = 15%
+VAT_RATE_BPS=0
+# Transactional email (Resend). Leave empty to keep email disabled.
+RESEND_API_KEY=
+MAIL_FROM=ZIMARA <no-reply@zimara.co>

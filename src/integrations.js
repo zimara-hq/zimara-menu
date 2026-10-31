@@ -3,6 +3,8 @@ import { HttpError, bad, conflict, id, int, notFound, now, randomToken, str } fr
 import { encryptionConfigured, encryptSigningSecret, decryptSigningSecret, verifyBridgeSignature, payloadHash } from './providers/pos-bridge.js';
 import { paymentProvider } from './providers/contracts.js';
 import { pushConfigured } from './push.js';
+import { billingConfigured } from './billing.js';
+import { mailConfigured } from './mail.js';
 
 const INVOICE_COLS = 'id, provider, provider_reference, number, state, currency, subtotal, vat, total, pdf_url, issued_at, created_at';
 const POS_COLS = 'id, branch_id, provider, label, active, created_at, revoked_at';
@@ -10,8 +12,10 @@ const POS_COLS = 'id, branch_id, provider, label, active, created_at, revoked_at
 export function integrationReadiness(env) {
   const entry = (id, label_ar, label_en, state, implemented, configured, reason_ar, reason_en) => ({ id, label_ar, label_en, state, implemented, configured, verified: false, reason_ar, reason_en });
   return [
-    entry('payments', 'الدفع والاشتراكات', 'Subscription payments', 'not_built', false, false,
-      'لم تُربط بوابة دفع. لا يتم خصم أي مبلغ أو تفعيل اشتراك مدفوع.', 'A payment provider is not connected. No charges or paid activations are performed.'),
+    entry('payments', 'الدفع والاشتراكات (ميسر)', 'Subscription payments (Moyasar)', billingConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, billingConfigured(env),
+      'الدفع عبر صفحة ميسر المستضافة مبني. الاشتراك يتفعّل فقط بعد تأكيد الدفع من واجهة ميسر نفسها. يحتاج مفاتيح الحساب واختبار دفعة حقيقية.', 'Moyasar hosted checkout is built. A plan activates only after Moyasar\'s API confirms the payment. Needs account keys and a real test payment.'),
+    entry('email', 'البريد (تأكيد الحساب واستعادة كلمة المرور)', 'Email (verification and password reset)', mailConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, mailConfigured(env),
+      'الإرسال عبر Resend مبني. يحتاج مفتاح Resend ونطاق مرسل موثّق.', 'Sending through Resend is built. Needs a Resend key and a verified sender domain.'),
     entry('simple_fatoora', 'الفوترة الإلكترونية', 'Electronic invoicing', 'needs_api_contract', false, false,
       'ربط حساب Simple Fatoora بالمحادثة لا يربط خادم المنصة. يلزم عقد API وتفويض تشغيل مستقل.', 'The chat connector does not connect the application server. A runtime API contract and authorization are required.'),
     entry('rewaa', 'رواء', 'Rewaa', 'not_built', false, false,

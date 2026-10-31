@@ -2,6 +2,8 @@ import { createSession, sessionCookie, hashPassword, verifyPassword } from './au
 import { body, requireRole, audit, newUser, isSecure, rateLimit, PLANS, subscriptionFor, adminMfaRequired } from './context.js';
 import { bad, HttpError, conflict, id, now, randomToken, hmac, slugify, str } from './util.js';
 import { newMfaSecret, sealSecret, openSecret, verifyTotp } from './mfa.js';
+import { sendVerification } from './mail.js';
+import { billingConfigured } from './billing.js';
 
 export function registerAccounts(app) {
   app.post('/api/register', async (c) => {
@@ -32,17 +34,18 @@ export function registerAccounts(app) {
       if (/UNIQUE|constraint/i.test(String(e.message))) throw conflict('slug_or_email_taken');
       throw e;
     }
-    // No verification claim is made before a real outbound-email provider is connected.
-    // The selected sector is handed to the tenant setup screen; settings are owned by features.js.
+    // Verification is "sent" only when the email provider accepted the message.
+    let emailStatus='needs_provider';
+    try { emailStatus=await sendVerification(c.env,{id:user.id,email:user.email,name:user.name}); } catch { emailStatus='send_failed'; }
     await audit(c.env,{id:user.id,org_id:orgId},'org.signup',{slug,sector,requested_plan:requestedPlan});
     const token = await createSession(c.env,user.id);
     c.header('Set-Cookie',sessionCookie(token,isSecure(c)));
-    return c.json({ok:true,org:{id:orgId,slug},branch:{id:branchId,slug:branchSlug},user:{role:'owner'},subscription:{plan:'pro',status:'trial',trial_ends_at:trialEnd,requested_plan:requestedPlan},emailVerification:{status:'needs_provider'}},201);
+    return c.json({ok:true,org:{id:orgId,slug},branch:{id:branchId,slug:branchSlug},user:{role:'owner'},subscription:{plan:'pro',status:'trial',trial_ends_at:trialEnd,requested_plan:requestedPlan},emailVerification:{status:emailStatus}},201);
   });
 
   app.get('/api/owner/subscription', requireRole('owner'), async (c) => {
     const subscription = await subscriptionFor(c.env,c.get('user').org_id);
-    return c.json({subscription,plans:Object.values(PLANS),pricesStatus:'proposed',currency:'SAR',pricesIncludeVat:false,payment:{status:'needs_provider'}});
+    return c.json({subscription,plans:Object.values(PLANS),pricesStatus:'proposed',currency:'SAR',pricesIncludeVat:false,payment:{status:billingConfigured(c.env)?'available':'needs_provider'}});
   });
   app.post('/api/owner/subscription/cancel', requireRole('owner'), async (c) => {
     const u=c.get('user'),t=now(),s=await subscriptionFor(c.env,u.org_id);

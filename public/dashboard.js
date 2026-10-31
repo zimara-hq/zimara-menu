@@ -67,6 +67,9 @@ function tabs(list, onPick) {
   body.className = 'wrap';
   let current = list[0][0];
   try { current = sessionStorage.getItem('zm_tab_' + me.user.role) || current; } catch {}
+  // Returning from the payment page, or a deep link like /app#subscription, opens that tab.
+  const wanted = new URLSearchParams(location.search).has('billing') ? 'subscription' : location.hash.slice(1);
+  if (wanted && list.some(([k]) => k === wanted)) current = wanted;
   if (!list.some(([k]) => k === current)) current = list[0][0];
   function show(k) {
     current = k;

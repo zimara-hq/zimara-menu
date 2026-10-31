@@ -27,7 +27,8 @@ async function signed(guest, connection, data, options = {}) {
 
 test('integration readiness distinguishes missing implementation, keys, and actual verification', () => {
   const rows = integrationReadiness({});
-  assert.equal(rows.find((r) => r.id === 'payments').state, 'not_built');
+  assert.equal(rows.find((r) => r.id === 'payments').state, 'needs_configuration');
+  assert.equal(rows.find((r) => r.id === 'payments').implemented, true);
   assert.equal(rows.find((r) => r.id === 'apple_wallet').implemented, false);
   assert.equal(rows.find((r) => r.id === 'apple_wallet').state, 'needs_credentials');
   assert.ok(rows.every((r) => r.verified === false));
