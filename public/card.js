@@ -1,8 +1,8 @@
 import { api, esc, lang, makeT, pick, qrSvg, setBrandColor, topbar, applyTenantFont, requestValue, announce } from './common.js';
 
 const t = makeT({
-  ar: { title: 'بطاقة الولاء', code: 'رمز البطاقة', show: 'وري الرمز للكاشير عشان يضيف ختم.', progress: '{n} من {m} أختام', reward: 'المكافأة: {r}', earned: 'عندك مكافأة جاهزة! اطلبها من الكاشير.', history: 'آخر الحركات', stamp: 'ختم', redeem: 'استبدال مكافأة', adjust: 'تعديل', notFound: 'ما لقينا البطاقة.', wallet: 'الإضافة لمحفظة Apple وGoogle قريبًا.' },
-  en: { title: 'Loyalty card', code: 'Card code', show: 'Show this code at the counter to get a stamp.', progress: '{n} of {m} stamps', reward: 'Reward: {r}', earned: 'You have a reward ready! Ask the cashier.', history: 'Recent activity', stamp: 'Stamp', redeem: 'Reward redeemed', adjust: 'Adjustment', notFound: 'Card not found.', wallet: 'Add to Apple and Google Wallet is coming soon.' },
+  ar: { title: 'بطاقة الولاء', code: 'رمز البطاقة', show: 'وري الرمز للكاشير عشان يضيف ختم.', progress: '{n} من {m} أختام', reward: 'المكافأة: {r}', earned: 'عندك مكافأة جاهزة! اطلبها من الكاشير.', history: 'آخر الحركات', stamp: 'ختم', redeem: 'استبدال مكافأة', adjust: 'تعديل', notFound: 'ما لقينا البطاقة.' },
+  en: { title: 'Loyalty card', code: 'Card code', show: 'Show this code at the counter to get a stamp.', progress: '{n} of {m} stamps', reward: 'Reward: {r}', earned: 'You have a reward ready! Ask the cashier.', history: 'Recent activity', stamp: 'Stamp', redeem: 'Reward redeemed', adjust: 'Adjustment', notFound: 'Card not found.' },
 });
 const token = location.pathname.split('/')[2];
 let revoked = false;
