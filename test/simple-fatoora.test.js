@@ -8,6 +8,7 @@ import { integrationReadiness } from '../src/integrations.js';
 const configured = {
   SIMPLE_FATOORA_API_KEY: 'sandbox-test-key',
   SIMPLE_FATOORA_ENABLED: 'true',
+  SIMPLE_FATOORA_SELLER_PROFILE_APPROVED: 'true',
   SIMPLE_FATOORA_ENV: 'sandbox',
 };
 
