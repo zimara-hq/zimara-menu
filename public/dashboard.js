@@ -1,11 +1,16 @@
-import { ApiError, api, chime, esc, lang, makeT, money, pick, qrSvg, relTime, setBrandColor, topbar, unlockAudio, requestValue, announce } from './common.js';
+import {branchesView} from './branches.js';
+import {canLeaveWorkspace} from './forms.js';
+import {identityView,fontEditor} from './identity.js';
+import {profileEditor} from './profile-editor.js';
+import {overviewView,workspaceIcon} from './workspace.js';
+import { ApiError, api, chime, esc, lang, makeT, money, pick, qrSvg, relTime, setBrandColor, topbar, unlockAudio, requestValue, announce, toggleLang } from './common.js';
 
 import { imageField, wireImageFields } from './uploads.js';
-import { profileView, importView, subscriptionView, integrationsView, devicesView, menuOrdersView, branchSettingsView, mfaView, assetUploadView, dataControlsView, adminLegalView } from './dashboard-panels.js';
+import { importView, subscriptionView, integrationsView, devicesView, menuOrdersView, branchSettingsView, mfaView, dataControlsView, adminLegalView } from './dashboard-panels.js';
 
 const t = makeT({
   ar: {
-    admin: 'إدارة زيمارا', owner: 'إدارة المنشأة', branch: 'الفرع',
+    admin: 'إدارة زيمارا', owner: 'إدارة المنشأة', branch: 'الكاشير',
     orgs: 'المنشآت', admins: 'المدراء', account: 'حسابي', branches: 'الفروع', menu: 'المنيو', loyalty: 'الولاء', stats: 'الإحصائيات', brandTab: 'الهوية',
     orders: 'الطلبات', display: 'شاشة العرض', availability: 'التوفر',
     nameAr: 'الاسم بالعربي', nameEn: 'الاسم بالإنجليزي', email: 'البريد', password: 'كلمة المرور (10 أحرف على الأقل)', name: 'الاسم',
@@ -26,7 +31,7 @@ const t = makeT({
     walletSoon: 'Apple Wallet وGoogle Wallet غير مفعّلتين. تحتاجان إصدار البطاقات والشهادات واختبار الأجهزة الفعلية.',
   },
   en: {
-    admin: 'ZIMARA admin', owner: 'Business admin', branch: 'Branch',
+    admin: 'ZIMARA admin', owner: 'Business admin', branch: 'Cashier',
     orgs: 'Businesses', admins: 'Admins', account: 'My account', branches: 'Branches', menu: 'Menu', loyalty: 'Loyalty', stats: 'Stats', brandTab: 'Branding',
     orders: 'Orders', display: 'Display', availability: 'Availability',
     nameAr: 'Arabic name', nameEn: 'English name', email: 'Email', password: 'Password (10+ characters)', name: 'Name',
@@ -54,7 +59,7 @@ let me;
 
 const fd = (form) => Object.fromEntries(new FormData(form).entries());
 const field = (name, label, attrs = '', prefix = 'f') => `<div><label for="${prefix}-${name}">${esc(label)}</label><input id="${prefix}-${name}" name="${name}" ${attrs}></div>`;
-const errMsg = (e) => (e instanceof ApiError ? `${t('error')} (${e.message})` : t('error'));
+const errMsg=e=>e?.status===401?(lang==='ar'?'انتهت الجلسة. سجّل الدخول مجددًا.':'Your session expired. Sign in again.'):e?.status===403?(lang==='ar'?'قد لا تسمح باقتك أو صلاحيتك بهذا الإجراء.':'Your plan or role may not permit this action.'):t('error');
 function flash(el, text, error = false) {
   el.innerHTML = `<p class="msg ${error ? 'error' : ''}" role="status">${esc(text)}</p>`;
 }
@@ -65,6 +70,9 @@ function tabs(list, onPick) {
   const nav = document.createElement('nav');
   nav.className = 'tabs';
   nav.setAttribute('role', 'tablist');
+  nav.setAttribute('aria-label', lang==='ar'?'أقسام لوحة التحكم':'Workspace sections');
+  const vertical=matchMedia('(min-width:850px)');
+  const orient=()=>{nav.setAttribute('aria-orientation',vertical.matches?'vertical':'horizontal');requestAnimationFrame(()=>nav.querySelector('[aria-selected=true]')?.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'}));};orient();vertical.addEventListener('change',orient);
   const body = document.createElement('div');
   body.className = 'wrap';
   let current = list[0][0];
@@ -73,7 +81,11 @@ function tabs(list, onPick) {
   const wanted = new URLSearchParams(location.search).has('billing') ? 'subscription' : location.hash.slice(1);
   if (wanted && list.some(([k]) => k === wanted)) current = wanted;
   if (!list.some(([k]) => k === current)) current = list[0][0];
-  function show(k) {
+  let navigating=false;
+  async function show(k,force=false) {
+    if(navigating||(!force&&k===current&&body.firstChild))return;
+    navigating=true;
+    if(!force&&!await canLeaveWorkspace()){history.replaceState(null,'',location.pathname+location.search+'#'+current);navigating=false;return;}
     current = k;
     try { sessionStorage.setItem('zm_tab_' + me.user.role, k); } catch {}
     if (location.hash.slice(1) !== k) history.replaceState(null, '', location.pathname + location.search + '#' + k);
@@ -85,6 +97,9 @@ function tabs(list, onPick) {
     body.replaceChildren(panel);
     panel.setAttribute('aria-labelledby', 'tab-' + k);
     onPick(k, panel);
+    document.title=list.find(([key])=>key===k)[1]+' · '+t('brand');
+    nav.querySelector('[aria-selected=true]')?.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
+    navigating=false;
   }
   for (const [k, label] of list) {
     const b = document.createElement('button');
@@ -93,13 +108,13 @@ function tabs(list, onPick) {
     b.dataset.k = k;
     b.id = 'tab-' + k;
     b.setAttribute('aria-controls', 'panel-' + k);
-    b.textContent = label;
+    b.innerHTML = workspaceIcon(k) + `<span>${esc(label)}</span>`;
     b.onclick = () => show(k);
     b.addEventListener('keydown', (e) => {
       const buttons = [...nav.querySelectorAll('button')];
       let index = buttons.indexOf(b);
-      if (e.key === 'ArrowRight') index = (index + 1) % buttons.length;
-      else if (e.key === 'ArrowLeft') index = (index - 1 + buttons.length) % buttons.length;
+      if (e.key === 'ArrowDown' || e.key === (lang==='ar'?'ArrowLeft':'ArrowRight')) index = (index + 1) % buttons.length;
+      else if (e.key === 'ArrowUp' || e.key === (lang==='ar'?'ArrowRight':'ArrowLeft')) index = (index - 1 + buttons.length) % buttons.length;
       else if (e.key === 'Home') index = 0;
       else if (e.key === 'End') index = buttons.length - 1;
       else return;
@@ -108,12 +123,12 @@ function tabs(list, onPick) {
     nav.append(b);
   }
   main.replaceChildren(nav, body);
-  show(current);
+  show(current,true);
 }
 
 // ---------- shared: my account ----------
 function accountView(el) {
-  el.innerHTML = `<form class="card stack narrow" id="pw"><h2>${esc(t('account'))}</h2><p class="muted">${esc(me.user.email)}</p>
+  el.innerHTML = `<form novalidate class="card stack narrow" id="pw"><h2>${esc(t('account'))}</h2><p class="muted">${esc(me.user.email)}</p>
     ${field('current', t('current'), 'type="password" autocomplete="current-password" required')}
     ${field('next', t('next'), 'type="password" autocomplete="new-password" minlength="10" required')}
     <div id="m"></div><button class="btn">${esc(t('save'))}</button></form><div class="card narrow" id="account-security"></div>${me.user.role === 'owner' ? '<div class="card" id="account-data"></div>' : ''}`;
@@ -135,7 +150,7 @@ function accountView(el) {
 async function adminOrgs(el) {
   const { orgs } = await api('/api/admin/orgs');
   el.innerHTML = `
-    <form class="card stack" id="new"><h2>${esc(t('newOrg'))}</h2>
+    <form novalidate class="card stack" id="new"><h2>${esc(t('newOrg'))}</h2>
       <div class="row">${field('name_ar', t('nameAr'), 'required')}${field('name_en', t('nameEn'), 'required')}</div>
       <h3>${esc(t('ownerAcc'))}</h3>
       <div class="row">${field('o_name', t('name'), 'required')}${field('o_email', t('email'), 'type="email" required')}${field('o_password', t('password'), 'type="password" minlength="10" required autocomplete="new-password"')}</div>
@@ -165,7 +180,7 @@ async function adminAdmins(el) {
   el.innerHTML = `
     <div class="card"><h2>${esc(t('admins'))}</h2><p class="muted">${esc(t('adminsMax', { m: max, n: admins.length }))}</p>
       <table>${admins.map((a) => `<tr><td>${esc(a.name)}</td><td>${esc(a.email)}</td><td>${a.id === me.user.id ? '' : `<button class="btn ghost sm" data-u="${esc(a.id)}" data-d="${a.disabled}" type="button">${esc(t(a.disabled ? 'enable' : 'disable'))}</button>`}</td></tr>`).join('')}</table></div>
-    ${admins.length < max ? `<form class="card stack" id="new"><h2>${esc(t('newAdmin'))}</h2><div class="row">${field('name', t('name'), 'required')}${field('email', t('email'), 'type="email" required')}${field('password', t('password'), 'type="password" minlength="10" required autocomplete="new-password"')}</div><div id="m"></div><button class="btn">${esc(t('create'))}</button></form>` : ''}`;
+    ${admins.length < max ? `<form novalidate class="card stack" id="new"><h2>${esc(t('newAdmin'))}</h2><div class="row">${field('name', t('name'), 'required')}${field('email', t('email'), 'type="email" required')}${field('password', t('password'), 'type="password" minlength="10" required autocomplete="new-password"')}</div><div id="m"></div><button class="btn">${esc(t('create'))}</button></form>` : ''}`;
   el.querySelector('#new')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
@@ -186,56 +201,7 @@ function qrBlock(link, title) {
   return `<div class="stack" style="text-align:center"><div class="qr">${qrSvg(link, 6)}</div><p class="small"><a href="${esc(link)}" target="_blank" rel="noopener">${esc(title)}</a></p></div>`;
 }
 
-async function ownerBranches(el) {
-  const { branches } = await api('/api/owner/branches');
-  el.innerHTML = `
-    <div class="section-intro"><h2>${esc(t('branches'))}</h2><p>${lang === 'ar' ? 'رابط منيو ثابت لكل فرع، وحساب كاشير مستقل. رموز النداء تظهر في شاشات العرض الخاصة فقط.' : 'A stable menu link and a separate cashier account for each branch. Pager codes appear only on private counter displays.'}</p></div>
-    <div class="branch-grid">${branches
-      .map((b) => `<div class="card branch-card"><div class="branch-copy"><span class="pill">${esc(t(b.active ? 'active' : 'inactive'))}</span><h3>${esc(pick(b, 'name'))}</h3>
-        <p class="small muted">${esc(b.account_email || (lang === 'ar' ? 'حساب الكاشير لم يُضبط بعد.' : 'Cashier account not set up yet.'))}</p>
-        <div class="row">${!b.account_email ? `<button class="btn" data-setup="${esc(b.id)}" type="button">${lang === 'ar' ? 'إعداد حساب الكاشير' : 'Set up cashier account'}</button>` : `<button class="btn ghost sm" data-acc="${esc(b.id)}" data-d="${b.account_disabled}" type="button">${esc(t(b.account_disabled ? 'enable' : 'disable'))}</button><button class="btn ghost sm" data-pw="${esc(b.id)}" type="button">${esc(t('resetPw'))}</button>`}</div></div>
-        ${qrBlock(`${location.origin}/m/${b.slug}`, t('menuQr'))}</div>`)
-      .join('')}</div>
-    <form class="card stack" id="new"><h2>${esc(t('newBranch'))}</h2>
-      <div class="row">${field('name_ar', t('nameAr'), 'required')}${field('name_en', t('nameEn'), 'required')}</div>
-      ${field('google_review_url', t('review'), 'type="url" placeholder="https://g.page/r/..."')}
-      <h3>${esc(t('branchAcc'))}</h3>
-      <div class="row">${field('a_name', t('name'), 'required')}${field('a_email', t('email'), 'type="email" required')}${field('a_password', t('password'), 'type="password" minlength="10" required autocomplete="new-password"')}</div>
-      <div id="m"></div><button class="btn">${esc(t('create'))}</button></form>`;
-  el.querySelector('#new').onsubmit = async (e) => {
-    e.preventDefault();
-    const v = fd(e.target);
-    try {
-      await api('/api/owner/branches', { method: 'POST', body: { name_ar: v.name_ar, name_en: v.name_en, google_review_url: v.google_review_url || null, account: { name: v.a_name, email: v.a_email, password: v.a_password } } });
-      ownerBranches(el);
-    } catch (err) {
-      flash(el.querySelector('#m'), errMsg(err), true);
-    }
-  };
-  el.querySelectorAll('[data-setup]').forEach(btn => btn.onclick = async () => {
-    const email = await requestValue({ title: t('branchAcc'), label: t('email'), type: 'email', confirmLabel: lang === 'ar' ? 'متابعة' : 'Continue' });
-    if (!email) return;
-    const password = await requestValue({ title: t('branchAcc'), label: t('password'), type: 'password', confirmLabel: t('create') });
-    if (!password) return;
-    btn.disabled = true;
-    try { await api(`/api/owner/branches/${btn.dataset.setup}/account`, { method: 'PATCH', body: { email, name: lang === 'ar' ? 'الكاشير' : 'Cashier', password } }); await ownerBranches(el); }
-    catch (error) { announce(errMsg(error), true); btn.disabled = false; }
-  });
-  el.querySelectorAll('[data-acc]').forEach((b) => (b.onclick = async () => {
-    await api(`/api/owner/branches/${b.dataset.acc}/account`, { method: 'PATCH', body: { disabled: b.dataset.d !== '1' } });
-    ownerBranches(el);
-  }));
-  el.querySelectorAll('[data-pw]').forEach((b) => (b.onclick = async () => {
-    const pw = await requestValue({ title: t('resetPw'), label: t('password'), type: 'password', confirmLabel: t('save') });
-    if (!pw) return;
-    try {
-      await api(`/api/owner/branches/${b.dataset.pw}/account`, { method: 'PATCH', body: { password: pw } });
-      announce(t('saved'));
-    } catch (err) {
-      announce(errMsg(err), true);
-    }
-  }));
-}
+const ownerBranches=el=>branchesView(el,me);
 
 const ICON = {
   edit: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m14 6 4 4"/></svg>',
@@ -268,14 +234,14 @@ async function ownerMenu(el) {
     el.innerHTML = `${intro}<div class="card empty-hero"><span class="empty-ico">${ICON.menu}</span><h3>${A('منيوك فاضي حاليًا', 'Your menu is empty')}</h3>
       <p class="muted">${A('ابدأ بمنيو نموذجي جاهز فيه أقسام وأصناف بالأسعار والسعرات، ثم عدّله أو احذف ما لا تحتاجه. أو أضف أول قسم بنفسك.', 'Start from a ready sample with sections, prices and calories, then edit or delete what you don’t need. Or add your first section yourself.')}</p>
       <div class="row center"><button class="btn" type="button" id="sample">${A('أضف منيو نموذجي', 'Add a sample menu')}</button><a class="btn ghost" href="#import">${A('استيراد من ملف', 'Import from a file')}</a></div><div id="sm" role="status"></div></div>
-      <form class="card stack narrow" id="cat"><h3>${A('أو أضف أول قسم', 'Or add your first section')}</h3><div class="row">${field('c_ar', t('nameAr'), 'required placeholder="مثال: القهوة الساخنة"')}${field('c_en', t('nameEn'), 'required placeholder="Hot coffee"')}</div><button class="btn ghost" type="submit">${ICON.plus}${esc(t('newCat'))}</button></form>`;
+      <form novalidate class="card stack narrow" id="cat"><h3>${A('أو أضف أول قسم', 'Or add your first section')}</h3><div class="row">${field('c_ar', t('nameAr'), 'required placeholder="مثال: القهوة الساخنة"')}${field('c_en', t('nameEn'), 'required placeholder="Hot coffee"')}</div><button class="btn ghost" type="submit">${ICON.plus}${esc(t('newCat'))}</button></form>`;
   } else {
     el.innerHTML = `${intro}
       <div class="menu-toolbar">
         <details class="card add-card" ${categories.length && !items.length ? 'open' : ''}><summary class="btn">${ICON.plus}${esc(t('newItem'))}</summary>
-          ${categories.length ? `<form class="stack" id="item">${itemForm()}<div id="m"></div><button class="btn" type="submit">${esc(t('add'))}</button></form>` : `<p class="muted">${A('أضف قسمًا أولًا.', 'Add a section first.')}</p>`}</details>
+          ${categories.length ? `<form novalidate class="stack" id="item">${itemForm()}<div id="m"></div><button class="btn" type="submit">${esc(t('add'))}</button></form>` : `<p class="muted">${A('أضف قسمًا أولًا.', 'Add a section first.')}</p>`}</details>
         <details class="card add-card"><summary class="btn ghost">${ICON.plus}${esc(t('newCat'))}</summary>
-          <form class="row" id="cat">${field('c_ar', t('nameAr'), 'required')}${field('c_en', t('nameEn'), 'required')}<button class="btn" type="submit">${esc(t('add'))}</button></form></details>
+          <form novalidate class="row" id="cat">${field('c_ar', t('nameAr'), 'required')}${field('c_en', t('nameEn'), 'required')}<button class="btn" type="submit">${esc(t('add'))}</button></form></details>
       </div>
       ${categories.map((c, ci) => {
         const list = items.filter((i) => i.category_id === c.id);
@@ -286,7 +252,7 @@ async function ownerMenu(el) {
               <button type="button" class="btn ghost sm" data-cat-edit="${esc(c.id)}">${ICON.edit}<span>${A('تعديل', 'Edit')}</span></button>
               <button type="button" class="btn ghost sm danger-text" data-cat-del="${esc(c.id)}" ${list.length ? `aria-disabled="true" title="${esc(A('احذف أصناف القسم أو انقلها أولًا', 'Move or delete its items first'))}"` : ''}>${ICON.trash}<span>${A('حذف', 'Delete')}</span></button>
             </div></header>
-          <form class="row cat-edit" data-cat-form="${esc(c.id)}" hidden>${field('name_ar', t('nameAr'), `required value="${esc(c.name_ar)}"`, 'c' + ci)}${field('name_en', t('nameEn'), `required value="${esc(c.name_en)}"`, 'c' + ci)}${field('sort', t('sort'), `type="number" min="0" value="${c.sort ?? ci}"`, 'c' + ci)}<button class="btn sm" type="submit">${esc(t('save'))}</button></form>
+          <form novalidate class="row cat-edit" data-cat-form="${esc(c.id)}" hidden>${field('name_ar', t('nameAr'), `required value="${esc(c.name_ar)}"`, 'c' + ci)}${field('name_en', t('nameEn'), `required value="${esc(c.name_en)}"`, 'c' + ci)}${field('sort', t('sort'), `type="number" min="0" value="${c.sort ?? ci}"`, 'c' + ci)}<button class="btn sm" type="submit">${esc(t('save'))}</button></form>
           <ul class="admin-items" role="list">${list.map((i) => {
             const n = items.indexOf(i);
             return `<li class="admin-item ${i.active ? '' : 'is-hidden'}">
@@ -300,7 +266,7 @@ async function ownerMenu(el) {
                   <button type="button" class="btn ghost sm icon-only danger-text" data-item-del="${esc(i.id)}" data-name="${esc(pick(i, 'name'))}" aria-label="${esc(A('حذف', 'Delete') + ' ' + pick(i, 'name'))}">${ICON.trash}</button>
                 </div>
               </div>
-              <form class="stack item-edit" data-item="${esc(i.id)}" data-n="${n}" hidden>${itemForm(i, 'i' + n)}<div class="row"><button class="btn sm" type="submit">${esc(t('save'))}</button><button class="btn ghost sm" type="button" data-item-cancel="${n}">${esc(t('cancel'))}</button></div></form>
+              <form novalidate class="stack item-edit" data-item="${esc(i.id)}" data-n="${n}" hidden>${itemForm(i, 'i' + n)}<div class="row"><button class="btn sm" type="submit">${esc(t('save'))}</button><button class="btn ghost sm" type="button" data-item-cancel="${n}">${esc(t('cancel'))}</button></div></form>
             </li>`;
           }).join('') || `<li class="muted small admin-empty">${A('لا توجد أصناف في هذا القسم بعد.', 'No items in this section yet.')}</li>`}</ul>
         </section>`;
@@ -363,41 +329,13 @@ async function ownerMenu(el) {
   }));
 }
 
-async function ownerOverview(el) {
-  const [{ branches }, { categories, items }, { profile }, loyalty] = await Promise.all([
-    api('/api/owner/branches'), api('/api/owner/menu'), api('/api/owner/profile'), api('/api/owner/loyalty').catch(() => ({ program: null })),
-  ]);
-  const branch = branches[0];
-  const steps = [
-    [Boolean(me.org.logo_url), A('أضف شعارك ولون هويتك', 'Add your logo and brand colour'), A('يظهر أعلى المنيو وفي صفحتك العامة.', 'Shown at the top of your menu and public page.'), 'brand'],
-    [items.length > 0, A('جهّز المنيو', 'Build your menu'), items.length ? A(`${items.length} صنف في ${categories.length} قسم.`, `${items.length} items in ${categories.length} sections.`) : A('ابدأ بمنيو نموذجي أو أضف أصنافك.', 'Start from a sample or add your items.'), 'menu'],
-    [Boolean(profile.banners?.[0] || profile.description_ar), A('أكمل صفحة المنشأة', 'Complete your business page'), A('صورة الغلاف، الوصف، العنوان ورقم التواصل.', 'Cover photo, description, address and phone.'), 'brand'],
-    [branches.some((b) => b.account_email), A('جهّز حساب الكاشير', 'Set up the cashier account'), A('ليستقبل الطلبات وينادي العملاء.', 'To take orders and call customers.'), 'branches'],
-    [Boolean(loyalty.program?.active), A('فعّل بطاقة الولاء', 'Turn on the loyalty card'), A('أختام رقمية تعيد العميل لك.', 'Digital stamps that bring customers back.'), 'loyalty'],
-  ];
-  const done = steps.filter((s) => s[0]).length;
-  el.innerHTML = `<div class="section-intro"><h2>${A('أهلًا', 'Welcome')} ${esc(me.user.name || '')}</h2><p>${done === steps.length ? A('كل شيء جاهز. شارك رابط المنيو مع عملائك.', 'Everything is ready. Share your menu link with customers.') : A(`أكملت ${done} من ${steps.length} خطوات لتجهيز منشأتك.`, `${done} of ${steps.length} setup steps done.`)}</p></div>
-    <div class="overview-grid">
-      <section class="card setup-card" aria-labelledby="setup-h"><h3 id="setup-h">${A('خطوات التجهيز', 'Setup steps')}</h3>
-        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${steps.length}" aria-valuenow="${done}"><span style="width:${(done / steps.length) * 100}%"></span></div>
-        <ol class="setup-list">${steps.map(([ok, title, desc, tab]) => `<li class="${ok ? 'done' : ''}"><span class="step-dot" aria-hidden="true">${ok ? '✓' : ''}</span><div><strong>${esc(title)}</strong><p class="small muted">${esc(desc)}</p></div>${ok ? `<span class="small muted">${A('تم', 'Done')}</span>` : `<a class="btn ghost sm" href="#${tab}">${A('ابدأ', 'Start')}</a>`}</li>`).join('')}</ol>
-      </section>
-      ${branch ? `<section class="card share-card" aria-labelledby="share-h"><h3 id="share-h">${A('رابط المنيو', 'Menu link')}</h3><div class="qr">${qrSvg(`${location.origin}/m/${branch.slug}`, 5)}</div>
-        <p class="device-link"><a href="/m/${esc(branch.slug)}" target="_blank" rel="noopener" dir="ltr">${esc(location.host)}/m/${esc(branch.slug)}</a></p>
-        <div class="row center"><button class="btn sm" type="button" id="copy-link">${A('نسخ الرابط', 'Copy link')}</button><a class="btn ghost sm" href="/m/${esc(branch.slug)}" target="_blank" rel="noopener">${A('فتح المنيو', 'Open menu')} ↗</a></div>
-        <p class="small muted">${A('اطبع الرمز وضعه على الطاولات أو عند الكاشير. لكل فرع رمز في تبويب الفروع.', 'Print it for tables or the counter. Each branch has its own code in Branches.')}</p></section>` : ''}
-    </div>`;
-  el.querySelectorAll('a[href^="#"]').forEach((a2) => a2.addEventListener('click', (e) => { e.preventDefault(); document.getElementById('tab-' + a2.getAttribute('href').slice(1))?.click(); }));
-  el.querySelector('#copy-link')?.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(`${location.origin}/m/${branch.slug}`); announce(A('نُسخ الرابط.', 'Link copied.')); } catch { announce(`${location.origin}/m/${branch.slug}`); }
-  });
-}
+const ownerOverview=el=>overviewView(el,me);
 
 async function ownerLoyalty(el) {
   const { program: p } = await api('/api/owner/loyalty');
   el.innerHTML = `<div class="section-intro"><h2>${esc(t('loyalty'))}</h2><p>${A('بطاقة أختام رقمية: العميل يمسح الرمز مرة واحدة، والكاشير يضيف ختمًا مع كل زيارة.', 'A digital stamp card: customers scan once, the cashier adds a stamp each visit.')}</p></div>
     <div class="overview-grid">
-    <form class="card stack" id="f"><h3>${A('إعدادات البرنامج', 'Programme settings')}</h3>
+    <form novalidate class="card stack" id="f"><h3>${A('إعدادات البرنامج', 'Programme settings')}</h3>
       ${field('stamps_required', t('stampsReq'), `type="number" min="2" max="50" required value="${p.stamps_required}"`)}
       ${field('reward_ar', t('rewardAr'), `required value="${esc(p.reward_ar)}"`)}${field('reward_en', t('rewardEn'), `required value="${esc(p.reward_en)}"`)}
       <label><input type="checkbox" name="active" ${p.active ? 'checked' : ''}> ${esc(t('programOn'))}</label>
@@ -435,31 +373,8 @@ async function ownerStats(el) {
 }
 
 async function ownerBrand(el) {
-  const o = me.org;
-  el.innerHTML = `<div class="section-intro"><h2>${A('هويتك', 'Your brand')}</h2><p>${A('الاسم والشعار واللون تظهر في المنيو وصفحتك العامة وشاشة النداء.', 'Name, logo and colour appear on your menu, public page and pager screen.')}</p></div>
-    <form class="card stack" id="f">
-      <div class="row">${field('name_ar', t('nameAr'), `required value="${esc(o.name_ar)}"`)}${field('name_en', t('nameEn'), `required value="${esc(o.name_en)}"`)}</div>
-      ${imageField('logo_url', A('الشعار', 'Logo'), o.logo_url || '', 'f', A('صورة مربعة بخلفية فاتحة أو شفافة تعطي أفضل نتيجة.', 'A square image on a light or transparent background works best.'))}
-      <div class="color-field">${field('brand_color', t('color'), `type="color" value="${esc(o.brand_color || '#23003f')}"`)}<p class="small muted">${A('يُستخدم للأزرار والعناوين في المنيو.', 'Used for buttons and headings on your menu.')}</p></div>
-      <div id="m"></div><button class="btn" type="submit">${esc(t('save'))}</button></form>
-    <div id="profile-slot"></div>`;
-  wireImageFields(el.querySelector('#f'));
-  el.querySelector('#f').onsubmit = async (e) => {
-    e.preventDefault();
-    const v = fd(e.target);
-    v.logo_url = v.logo_url.trim() || null;
-    try {
-      await api('/api/owner/org', { method: 'PATCH', body: v });
-      Object.assign(me.org, v);
-      setBrandColor(v.brand_color);
-      flash(el.querySelector('#m'), t('saved'));
-    } catch (err) {
-      flash(el.querySelector('#m'), errMsg(err), true);
-    }
-  };
-  const slot = el.querySelector('#profile-slot');
-  await profileView(slot, me);
-  const uploads = document.createElement('section'); uploads.className = 'card'; assetUploadView(uploads); el.append(uploads);
+  await identityView(el,me);
+  const uploads=document.createElement('section');uploads.className='card';el.append(uploads);await fontEditor(uploads,el);
 }
 
 // ---------- branch: cashier & prep board ----------
@@ -472,7 +387,7 @@ async function branchOrders(el) {
     ${me.pushConfigured ? '' : `<p class="msg small">${esc(t('pushOff'))}</p>`}
     <div class="board">
       <div class="card stack"><h2>${esc(t('newTicket'))}</h2>
-        <form class="row" id="nt"><div><label for="num">${esc(t('number'))}</label><input id="num" name="number" maxlength="64" autocomplete="off"></div><button class="btn big">${esc(t('newTicket'))}</button></form>
+        <form novalidate class="row" id="nt"><div><label for="num">${esc(t('number'))}</label><input id="num" name="number" maxlength="64" autocomplete="off"></div><button class="btn big">${esc(t('newTicket'))}</button></form>
         <div id="m"></div><div id="issued"></div></div>
       <div class="card"><h2>${esc(t('ready'))}</h2><div class="tickets" id="ready"></div></div>
     </div>
@@ -596,7 +511,7 @@ function branchDisplay(el) {
 
 function branchLoyalty(el) {
   el.innerHTML = `<div class="card stack narrow"><h2>${esc(t('loyalty'))}</h2>
-    <form class="row" id="f"><div><label for="code">${esc(t('cardCode'))}</label><input id="code" name="code" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:3px"></div><button class="btn">${esc(t('find'))}</button></form>
+    <form novalidate class="row" id="f"><div><label for="code">${esc(t('cardCode'))}</label><input id="code" name="code" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:3px"></div><button class="btn">${esc(t('find'))}</button></form>
     ${'BarcodeDetector' in window ? `<button class="btn ghost" id="scan" type="button">${esc(t('scan'))}</button><video id="v" playsinline hidden style="width:100%;border-radius:12px"></video>` : ''}
     <div id="out"></div></div>`;
   const out = el.querySelector('#out');
@@ -670,10 +585,15 @@ try {
   location.replace('/login');
   throw new Error('redirect');
 }
-if (me.org) setBrandColor(me.org.brand_color);
+// Platform workspace keeps ZIMARA identity; tenant branding is previewed in the studio.
+if (me.user.role === 'owner') setBrandColor('#23003f');
+else if (me.org) setBrandColor(me.org.brand_color);
 const subtitle = me.user.role === 'admin' ? t('admin') : me.user.role === 'owner' ? pick(me.org, 'name') : `${pick(me.org, 'name')} · ${pick(me.branch, 'name')}`;
 topbar(top, t, { subtitle, extra: `<button class="btn ghost sm" id="out" type="button">${esc(t('logout'))}</button>` });
+top.querySelector('[data-act=lang]').onclick=async()=>{if(await canLeaveWorkspace())toggleLang();};
+top.querySelector('.brandmark').onclick=async e=>{e.preventDefault();if(await canLeaveWorkspace())location.assign('/');};
 top.querySelector('#out').onclick = async () => {
+  if(!await canLeaveWorkspace())return;
   await api('/api/logout', { method: 'POST', body: {} }).catch(() => {});
   location.replace('/login');
 };
@@ -686,7 +606,7 @@ main.before(heading);
 
 const views = {
   admin: [['orgs', t('orgs'), adminOrgs], ['admins', t('admins'), adminAdmins], ['legal', lang === 'ar' ? 'البيانات القانونية' : 'Legal details', adminLegalView], ['account', t('account'), accountView]],
-  owner: [['overview', lang === 'ar' ? 'نظرة عامة' : 'Overview', ownerOverview], ['menu', t('menu'), ownerMenu], ['brand', lang === 'ar' ? 'الهوية وصفحتي' : 'Brand & page', ownerBrand], ['branches', t('branches'), ownerBranches], ['loyalty', t('loyalty'), ownerLoyalty], ['stats', t('stats'), ownerStats], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'إعدادات الفروع' : 'Branch settings', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
+  owner: [['overview', lang === 'ar' ? 'نظرة عامة' : 'Overview', ownerOverview], ['menu', t('menu'), ownerMenu], ['brand', lang === 'ar' ? 'استوديو الهوية' : 'Brand studio', ownerBrand], ['profile',lang === 'ar' ? 'صفحة المنشأة' : 'Business page',el=>profileEditor(el,me)], ['branches', t('branches'), ownerBranches], ['loyalty', t('loyalty'), ownerLoyalty], ['stats', t('stats'), ownerStats], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'إعدادات الفروع' : 'Branch settings', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
   branch: [['orders', t('orders'), branchOrders], ['display', t('display'), branchDisplay], ['loyalty', t('loyalty'), branchLoyalty], ['availability', t('availability'), branchAvailability], ['inbox', lang === 'ar' ? 'طلبات المنيو' : 'Menu orders', menuOrdersView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['account', t('account'), accountView]],
 }[me.user.role];
 tabs(views.map(([k, l]) => [k, l]), (k, el) => {

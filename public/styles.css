@@ -1,5 +1,6 @@
 :root {
   --indigo: #23003f;
+  --violet: #8447f2;
   --lavender: #bcacce;
   --solar: #fffdb4;
   --bg: #f7f5fa;
@@ -576,3 +577,19 @@ form .error:empty { display: none; }
 .kpi-row { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 16px; }
 .kpi { display: grid; gap: 6px; padding: 18px; }
 .kpi strong { font-size: 1.8rem; font-family: 'Plus Jakarta Sans', 'Tajawal', sans-serif; }
+
+/* Validated tenant presentation choices apply to customer pages only. */
+:root[data-tenant-layout=cards] .dish-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; }
+:root[data-tenant-layout=cards] .dish { flex-direction:column-reverse; align-items:stretch; border:1px solid var(--line); border-radius:18px; overflow:hidden; padding:0; }
+:root[data-tenant-layout=cards] .dish-text { padding:18px; }
+:root[data-tenant-layout=cards] .dish-photo { width:100%; height:180px; }
+:root[data-tenant-layout=cards] .dish-photo img { width:100%; height:100%; border-radius:0; }
+:root[data-tenant-layout=cards] .dish-photo.no-photo { height:56px; }
+:root[data-tenant-corners=square] .dish,:root[data-tenant-corners=square] .dish-photo,:root[data-tenant-corners=square] .dish-photo img,:root[data-tenant-corners=square] .menu-sheet,:root[data-tenant-corners=square] .menu-logo,:root[data-tenant-corners=square] .btn { border-radius:3px; }
+:root[data-tenant-cover=compact] .menu-cover { height:140px; }
+:root[data-tenant-cover=compact] .menu-cover img { height:100%; }
+.tenant-gallery { display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x proximity; margin-block:22px; padding-block-end:10px; }
+.tenant-gallery>a,.tenant-gallery>div { flex:0 0 min(78%,420px); scroll-snap-align:start; border-radius:16px; overflow:hidden; border:1px solid var(--line); }
+.tenant-gallery img { width:100%; height:220px; object-fit:cover; }
+
+.menu-cover > a { display:block; width:100%; height:100%; }

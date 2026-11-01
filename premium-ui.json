@@ -1,0 +1,11 @@
+{
+  "profile":"product-admin",
+  "sourceRoots":["public"],
+  "locale":"ar-SA",
+  "canonicalMap":"UX-CONTRACT.md",
+  "requiredCapabilities":["Select/Listbox","Date","Form","Scrollbar","Toast","CRUD"],
+  "ownership":{"Select/Listbox":"native","Date":"native"},
+  "requiredCommands":["unit","workspace","resilience","build"],
+  "commands":{"unit":"npm test","workspace":"npm run test:workspace","resilience":"npm run test:resilience","build":"npm run build"},
+  "evidence":{"crudFullFlow":"test/e2e/resilience.mjs","failurePaths":"test/e2e/resilience.mjs"}
+}

@@ -79,23 +79,24 @@ export function wireImageFields(root) {
       clear.hidden = !v;
     };
     input.addEventListener('change', () => show(input.value.trim()));
-    clear.onclick = () => { input.value = ''; show(''); status.textContent = ''; };
+    clear.onclick = () => { input.value = ''; show(''); status.textContent = ''; input.dispatchEvent(new Event('input',{bubbles:true})); };
     file.onchange = async () => {
       const f = file.files[0];
       if (!f) return;
       const label = box.querySelector('.upload-btn');
-      label.classList.add('busy');
+      label.classList.add('busy');box.dataset.uploading='true';
       status.textContent = a('جارٍ رفع الصورة…', 'Uploading…');
       try {
         input.value = await uploadImage(f);
         show(input.value);
+        input.dispatchEvent(new Event('input',{bubbles:true}));
         status.textContent = a('تم رفع الصورة. اضغط حفظ لتطبيقها.', 'Photo uploaded. Press Save to apply it.');
       } catch (err) {
         status.textContent = err?.message === 'asset_storage_limit'
           ? a('امتلأت مساحة الملفات في حسابك. احذف صورًا قديمة أو تواصل معنا.', 'Your file storage is full.')
           : a('تعذر رفع الصورة. جرّب صورة PNG أو JPG أو WebP أصغر.', 'Could not upload. Try a smaller PNG, JPG or WebP.');
       } finally {
-        label.classList.remove('busy');
+        label.classList.remove('busy');delete box.dataset.uploading;
         file.value = '';
       }
     };

@@ -1,4 +1,5 @@
-import { api, esc, lang, makeT, money, pick, setBrandColor, topbar, announce, applyTenantFont } from './common.js';
+import {applyTenantTheme,bannerGallery,coverImage} from './tenant-theme.js';
+import { api, esc, lang, makeT, money, pick, setBrandColor, topbar, announce } from './common.js';
 
 const a = (ar, en) => (lang === 'ar' ? ar : en);
 const t = makeT({
@@ -40,13 +41,14 @@ function openNow(hours) {
 function itemCard(i) {
   const inCart = cart.get(i.id) || 0;
   const canAdd = settings.orders_enabled && i.available;
-  return `<article class="dish ${i.available ? '' : 'soldout'} ${i.image_url ? 'has-photo' : ''}">
+  const photo=profile?.theme?.show_images!==false&&i.image_url;
+  return `<article class="dish ${i.available ? '' : 'soldout'} ${photo ? 'has-photo' : ''}">
     <div class="dish-text">
       <h3>${esc(pick(i, 'name'))}</h3>
       ${pick(i, 'desc') ? `<p class="dish-desc">${esc(pick(i, 'desc'))}</p>` : ''}
-      <p class="dish-meta"><span class="dish-price">${esc(money(i.price))}</span>${i.calories != null ? `<span class="dish-kcal">${esc(t('kcal', { n: i.calories }))}</span>` : ''}${i.available ? '' : `<span class="dish-out">${esc(t('soldout'))}</span>`}</p>
+      <p class="dish-meta"><span class="dish-price">${esc(money(i.price))}</span>${profile?.theme?.show_calories!==false && i.calories != null ? `<span class="dish-kcal">${esc(t('kcal', { n: i.calories }))}</span>` : ''}${i.available ? '' : `<span class="dish-out">${esc(t('soldout'))}</span>`}</p>
     </div>
-    ${i.image_url ? `<div class="dish-photo"><img src="${esc(i.image_url)}" alt="" loading="lazy" width="112" height="112">${canAdd ? addBtn(i, inCart) : ''}</div>` : canAdd ? `<div class="dish-photo no-photo">${addBtn(i, inCart)}</div>` : ''}
+    ${photo ? `<div class="dish-photo"><img src="${esc(i.image_url)}" alt="" loading="lazy" width="112" height="112">${canAdd ? addBtn(i, inCart) : ''}</div>` : canAdd ? `<div class="dish-photo no-photo">${addBtn(i, inCart)}</div>` : ''}
   </article>`;
 }
 const addBtn = (i, n) => `<button class="dish-add" type="button" data-add="${esc(i.id)}" aria-label="${esc(a('إضافة', 'Add') + ' ' + pick(i, 'name'))}">${n ? `<span>${n}</span>` : ICON.plus}</button>`;
@@ -149,7 +151,7 @@ try {
   try {
     const p = await api('/api/public/profile/' + data.branch.org_slug);
     profile = p.profile;
-    applyTenantFont(p.profile.font_url);
+    applyTenantTheme(profile);
     settings = p.branches.find((b) => b.slug === slug)?.settings || settings;
     loyalty = p.loyalty;
   } catch {}
@@ -158,7 +160,7 @@ try {
   main.className = 'wrap menu-wrap';
   document.body.classList.add('menu-page');
 
-  const cover = profile?.banners?.[0]?.image_url;
+  const cover = profile?.banners?.[0];
   const status = openNow(settings.hours);
   const address = settings.address || profile?.address;
   const hasItems = data.items.length > 0;
@@ -169,7 +171,7 @@ try {
   ].join('');
 
   main.innerHTML = `
-    <header class="menu-cover ${cover ? 'has-photo' : ''}">${cover ? `<img src="${esc(cover)}" alt="${esc(pick(profile.banners[0], 'alt'))}" width="1200" height="420">` : ''}</header>
+    <header class="menu-cover ${cover ? 'has-photo' : ''}">${coverImage(cover)}</header>
     <section class="menu-sheet" aria-labelledby="menu-title">
       <div class="menu-id">
         ${data.branch.logo_url ? `<img class="menu-logo" src="${esc(data.branch.logo_url)}" alt="" width="84" height="84">` : `<span class="menu-logo menu-monogram" aria-hidden="true">${esc([...name][0] || 'Z')}</span>`}
@@ -178,6 +180,7 @@ try {
       ${profile && pick(profile, 'description') ? `<p class="menu-about">${esc(pick(profile, 'description'))}</p>` : ''}
       ${info ? `<div class="menu-info">${info}</div>` : ''}
     </section>
+    ${bannerGallery(profile?.banners)}
     ${hasItems ? `
     <div class="menu-sticky">
       <div class="search-field"><span class="search-ico">${ICON.search}</span><label class="visually-hidden" for="q">${esc(t('search'))}</label><input id="q" type="search" placeholder="${esc(t('search'))}" autocomplete="off"><button id="clear-q" type="button" class="btn ghost sm" hidden>${esc(t('clear'))}</button></div>

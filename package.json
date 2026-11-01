@@ -11,7 +11,9 @@
     "test:e2e": "node test/e2e/connected.mjs",
     "build:preview": "node scripts/build-preview.mjs",
     "build": "wrangler deploy --dry-run --outdir .wrangler/build",
-    "test:onboarding": "node test/e2e/onboarding.mjs"
+    "test:onboarding": "node test/e2e/onboarding.mjs",
+    "test:workspace": "node test/e2e/workspace.mjs",
+    "test:resilience": "node test/e2e/resilience.mjs"
   },
   "repository": {
     "type": "git",
