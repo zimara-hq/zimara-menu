@@ -17,7 +17,11 @@ self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 
 self.addEventListener('message', (e) => {
   if (e.data?.type === 'track' && typeof e.data.token === 'string') {
-    e.waitUntil(readTokens().then((t) => writeTokens([...t.filter((x) => x.token !== e.data.token), { token: e.data.token, lang: e.data.lang }])));
+    e.waitUntil((async () => {
+      const tokens = await readTokens();
+      await writeTokens([...tokens.filter((x) => x.token !== e.data.token), { token: e.data.token, lang: e.data.lang }]);
+      e.ports[0]?.postMessage({ type: 'tracked' });
+    })());
   }
 });
 
