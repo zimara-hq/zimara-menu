@@ -1,5 +1,5 @@
 /* ZIMARA workspace: quiet surfaces, clear hierarchy, colour where it helps. */
-.dashboard-page { --workspace-purple:#8447f2; }
+.dashboard-page { --workspace-purple:var(--violet); }
 .dashboard-page .workspace-heading { margin-top:24px; padding-block-end:10px; align-items:center; }
 .workspace-heading h1 { font-size:1.05rem; font-weight:600; }
 .workspace-heading p { color:var(--muted); font-size:.8rem; }
@@ -111,3 +111,41 @@
 @media(prefers-reduced-motion:reduce){.workspace-shortcuts>a{transition:none}.workspace-shortcuts>a:hover{transform:none}}
 
 .preview-dish strong { display:block; margin-bottom:6px; }
+.field-error { display:block; color:var(--danger); font-size:.8rem; line-height:1.6; margin-top:5px; }
+[aria-invalid=true] { border-color:var(--danger); outline-color:var(--danger); }
+form[aria-busy=true] { cursor:progress; }
+.branch-summary { display:flex; flex-wrap:wrap; gap:16px; border-block:1px solid var(--line); padding-block:20px; margin-bottom:24px; }
+.branch-summary>span { display:flex; align-items:center; gap:10px; padding-inline-end:20px; color:var(--muted); font-size:.85rem; }
+.branch-summary strong { font:800 1.8rem 'Plus Jakarta Sans','Tajawal',sans-serif; color:var(--ink); }
+.branch-workspace { margin:0; }
+.branch-workspace h3 { margin:12px 0 5px; }
+.branch-tools { display:flex; flex-wrap:wrap; gap:10px; margin-block:20px; }
+.branch-qr { padding:18px; background:#fff; color:#23003f; border-radius:14px; text-align:center; max-width:300px; margin-block:16px; border:1px solid var(--line); }
+.branch-qr svg { display:block; width:170px; height:auto; margin:auto; }
+.branch-edit { border-block-start:1px solid var(--line); padding-block:16px; }
+.branch-edit summary,.branch-add summary { cursor:pointer; font-weight:800; min-height:44px; padding-block:10px; }
+.branch-edit[open] summary { margin-bottom:12px; }
+.branch-edit label,.branch-add label { display:grid; gap:7px; }
+.branch-edit label.check { display:flex; }
+.branch-account { border-top:1px solid var(--line); padding-top:20px; }
+.branch-account h4 { margin:0 0 6px; }
+.branch-add summary { display:flex; align-items:center; justify-content:space-between; }
+.branch-add summary span { font-size:1.5rem; color:var(--workspace-purple); }
+.inbox-toolbar { display:flex; gap:20px; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+.inbox-toolbar p { margin-bottom:0; }
+.connection-status { display:inline-flex; align-items:center; gap:8px; font-size:.9rem; font-weight:700; }
+.connection-status:before { content:''; width:8px; height:8px; border-radius:50%; background:var(--warn); }
+.connection-status[data-state=connected]:before { background:var(--ok); }
+.connection-status[data-state=error]:before { background:var(--danger); }
+.inbox-filters { display:flex; gap:10px; flex-wrap:wrap; margin-block:24px 14px; }
+.inbox-filters button[aria-pressed=true] { border-color:var(--accent-ink,var(--accent)); background:var(--surface); color:var(--accent-ink,var(--accent)); }
+.inbox-filters [data-count] { border-radius:6px; background:var(--bg); min-width:24px; padding:1px 6px; font-family:'Plus Jakarta Sans',sans-serif; }
+.inbox-orders { display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr)); align-items:start; }
+.inbox-order { margin:0; }
+.inbox-order h3 { font:800 1.5rem 'Plus Jakarta Sans','Tajawal',sans-serif; margin-block:22px 12px; }
+.order-lines { list-style:none; padding:0; margin:0 0 20px; }
+.order-lines li { display:flex; justify-content:space-between; gap:18px; padding:12px 0; border-bottom:1px solid var(--line); }
+.invoice-field { display:grid; gap:8px; margin-block:16px; }
+.pill.rejected { color:var(--danger); border:1px solid var(--danger); background:var(--surface); }
+.app-dialog { max-height:calc(100dvh - 32px); overflow:auto; }
+@media(max-width:600px){.branch-summary{gap:14px}.branch-summary>span{font-size:.75rem}.branch-workspace>.editor-heading{align-items:start}.branch-tools .btn{flex:1}.branch-account .row{gap:8px}.inbox-toolbar>.row{width:100%}.inbox-toolbar .btn{flex:1}.inbox-order>.row{align-items:stretch}.inbox-order>.row>.btn{flex:1}}

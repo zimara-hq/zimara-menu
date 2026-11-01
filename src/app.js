@@ -297,6 +297,7 @@ owner.patch('/branches/:id', async (c) => {
     .bind(str(b.name_ar, 'name_ar', { max: 80 }), str(b.name_en, 'name_en', { max: 80 }), url(b.google_review_url, 'google_review_url'), b.active === false ? 0 : 1, c.req.param('id'), u.org_id)
     .run();
   if (!res.meta.changes) throw notFound();
+  await audit(c.env,u,'branch.update',{branch:c.req.param('id'),active:b.active!==false});
   return c.json({ ok: true });
 });
 

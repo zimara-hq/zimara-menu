@@ -1,6 +1,7 @@
 import {api,esc,lang,qrSvg,announce,relTime} from './common.js';
 const a=(ar,en)=>lang==='ar'?ar:en;
 const paths={overview:'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',menu:'M4 5h16M4 12h16M4 19h10',brand:'m12 3 9 5-9 5-9-5 9-5zM3 12l9 5 9-5M3 16l9 5 9-5',profile:'M4 3h16v18H4zM8 7h8M8 12h8M8 16h5',branches:'M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6',loyalty:'M3 8h18v13H3zM12 8v13M3 12h18M12 8S5 9 5 5s7 3 7 3 7-7 7-3-7 3-7 3',stats:'M4 20V10M12 20V4M20 20v-7',import:'M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5',settings:'M4 6h16M4 12h16M4 18h16M8 3v6M16 9v6M10 15v6',devices:'M3 4h18v13H3zM8 21h8M12 17v4',subscription:'M3 5h18v14H3zM3 9h18M7 15h3',integrations:'M8 3v5M16 3v5M6 8h12v4a6 6 0 0 1-12 0V8zM12 18v4',account:'M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 22a9 9 0 0 1 18 0'};
+Object.assign(paths,{orders:'M4 4h16v16H4zM8 8h8M8 12h8M8 16h5',inbox:'M3 4h18v15H3zM3 12h5l2 3h4l2-3h5',display:'M3 4h18v13H3zM8 21h8M12 17v4',availability:'M9 11l3 3L22 4M21 12v8H3V2h14'});
 export const workspaceIcon=k=>`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[k]||paths.menu}"/></svg>`;
 
 export async function overviewView(el,me){
