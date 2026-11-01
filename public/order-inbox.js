@@ -92,9 +92,10 @@ export async function orderInbox(el) {
         node
           .querySelector("input")
           ?.addEventListener("input", (e) => drafts.set(o.id, e.target.value));
-        node
-          .querySelectorAll("[data-action]")
-          .forEach((button) => (button.onclick = () => act(o, button)));
+        node.querySelectorAll("[data-action]").forEach((button) => {
+          button.disabled = queued;
+          button.onclick = () => act(o, button);
+        });
         if (card) card.replaceWith(node);
         card = node;
         cards.set(o.id, card);
@@ -106,6 +107,8 @@ export async function orderInbox(el) {
   async function act(order, button) {
     if (queued) return;
     queued = true;
+    list.setAttribute("aria-busy", "true");
+    list.querySelectorAll("[data-action]").forEach((b) => (b.disabled = true));
     clearTimeout(timer);
     const card = button.closest("article");
     card.setAttribute("aria-busy", "true");
@@ -161,6 +164,10 @@ export async function orderInbox(el) {
     } finally {
       busy = false;
       queued = false;
+      list.removeAttribute("aria-busy");
+      list
+        .querySelectorAll("[data-action]")
+        .forEach((b) => (b.disabled = false));
       card.removeAttribute("aria-busy");
       card
         .querySelectorAll("button,input")
