@@ -30,3 +30,5 @@ Guarded forms retain unsaved values in memory only. Tab changes, header navigati
 Invalid fields expose a localized message, aria-invalid and aria-describedby; submit focuses the first invalid field. Existing native selects and time pickers keep OS interaction. Branch disabling is reversible and does not delete data or alter slugs. Account access changes end old staff sessions according to the existing API contract.
 
 The cashier order inbox polls while mounted, preserves invoice input while unchanged orders refresh, distinguishes connection failure from an empty inbox and re-reads server state after mutations or stale conflicts. New-order audio requires an explicit user action and an open page; no lock-screen or delivery guarantee is implied. The server still owns price, order version and pager creation.
+
+Cashier accept/reject waits for an in-flight read, prevents duplicate gestures and rechecks that the view is still mounted before dispatch. This is in-memory coordination, not offline queuing or background submission.

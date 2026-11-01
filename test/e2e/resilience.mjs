@@ -276,28 +276,51 @@ try {
     await orderCard.locator("input").inputValue(),
     "INV-RESILIENCE-12",
   );
+  let startPoll;
+  const started = new Promise((resolve) => (startPoll = resolve));
+  const delayedPoll = async (route) => {
+    if (route.request().method() === "GET") {
+      startPoll();
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+    }
+    await route.continue();
+  };
+  await cashier.route("**/api/branch/orders", delayedPoll);
+  await cashier.click("#refresh-inbox");
+  await started;
   await orderCard.locator("[data-action=accept]").click();
   await cashier
     .locator("#inbox-message")
     .getByText("قُبل الطلب وأنشئ النداء", { exact: false })
     .waitFor();
+  await cashier.unrouteAll({ behavior: "wait" });
   const stored = (await json(cashier, "/api/branch/tickets")).tickets.find(
     (t) => t.invoice_number === "INV-RESILIENCE-12",
   );
   assert.ok(stored);
   pass(
-    "cashier receives new orders automatically and invoice drafts survive polling until acceptance",
+    "cashier receives orders automatically; acceptance waits for a slow poll and preserves its invoice",
   );
   const second = await createOrder();
   const secondCard = cashier.locator(`[data-order-id="${second.order.id}"]`);
   await secondCard.waitFor({ timeout: 20000 });
-  await json(cashier, `/api/branch/orders/${second.order.id}/reject`, "POST", {
-    version: 1,
-  });
+  await cashier.route(
+    "**/api/branch/orders/" + second.order.id + "/accept",
+    async (route) => {
+      await json(
+        cashier,
+        `/api/branch/orders/${second.order.id}/reject`,
+        "POST",
+        { version: 1 },
+      );
+      await route.continue();
+    },
+  );
   await secondCard.locator("[data-action=accept]").click();
   await cashier
     .getByText("تغيّر الطلب من جهاز آخر.", { exact: false })
     .waitFor();
+  await cashier.unrouteAll({ behavior: "wait" });
   assert.equal(
     (await json(guest, "/api/public/order/" + second.order.token)).order.status,
     "rejected",

@@ -21,10 +21,12 @@ export async function orderInbox(el) {
     filter = "pending",
     timer = null,
     busy = false,
+    queued = false,
     stopped = false,
     armed = false,
     initialized = false,
     seen = new Set();
+  const refreshWaiters = [];
   const cards = new Map(),
     drafts = new Map();
   el.innerHTML = `<div class="section-intro"><span class="eyebrow">${a("من المنيو إلى الكاشير", "MENU TO COUNTER")}</span><h2>${a("طلبات المنيو", "Menu orders")}</h2><p>${a("راجع الطلب واقبله لإنشاء النداء. الدفع عند الكاشير.", "Review and accept each order to create a pager. Payment is at the counter.")}</p></div><section class="inbox-toolbar card"><div><span class="connection-status" role="status" id="inbox-connection">${a("جارٍ الاتصال…", "Connecting…")}</span><p class="small muted">${a("تحديث تلقائي كل 5 ثوانٍ أثناء فتح الصفحة.", "Refreshes every 5 seconds while this page is open.")} <time id="inbox-updated"></time></p></div><div class="row"><button id="inbox-sound" class="btn ghost sm" type="button" aria-pressed="false">${a("تفعيل صوت الطلبات", "Enable order sound")}</button><button id="refresh-inbox" class="btn ghost sm" type="button">${a("تحديث الآن", "Refresh now")}</button></div></section><p class="small muted" id="inbox-sound-note">${a("الصوت يحتاج ضغطة تفعيل وهذه الصفحة مفتوحة؛ يخضع للوضع الصامت وإعدادات الجهاز.", "Sound needs your activation and this page open; silent mode and device settings apply.")}</p><div class="inbox-filters" aria-label="${a("تصفية الطلبات", "Filter orders")}">${[
@@ -102,35 +104,30 @@ export async function orderInbox(el) {
     });
   }
   async function act(order, button) {
-    if (busy) {
-      announce(
-        a(
-          "جارٍ تحديث الطلبات. أعد المحاولة بعد لحظة.",
-          "Orders are refreshing. Try again in a moment.",
-        ),
-      );
-      return;
-    }
-    if (
-      button.dataset.action === "reject" &&
-      !(await confirmAction({
-        title: a("رفض طلب المنيو؟", "Reject menu order?"),
-        description: a(
-          "سيظهر للعميل أن طلبه مرفوض، ولن يُنشأ له نداء.",
-          "The customer will see the order as rejected. No pager will be created.",
-        ),
-        confirmLabel: a("رفض الطلب", "Reject order"),
-      }))
-    )
-      return;
-    if (busy) return;
-    busy = true;
+    if (queued) return;
+    queued = true;
     clearTimeout(timer);
     const card = button.closest("article");
     card.setAttribute("aria-busy", "true");
     card.querySelectorAll("button,input").forEach((b) => (b.disabled = true));
-    message.textContent = "";
     try {
+      if (busy) await new Promise((resolve) => refreshWaiters.push(resolve));
+      if (!el.isConnected) return;
+      if (
+        button.dataset.action === "reject" &&
+        !(await confirmAction({
+          title: a("رفض طلب المنيو؟", "Reject menu order?"),
+          description: a(
+            "سيظهر للعميل أن طلبه مرفوض، ولن يُنشأ له نداء.",
+            "The customer will see the order as rejected. No pager will be created.",
+          ),
+          confirmLabel: a("رفض الطلب", "Reject order"),
+        }))
+      )
+        return;
+      if (!el.isConnected) return;
+      busy = true;
+      message.textContent = "";
       const result = await api(
         `/api/branch/orders/${order.id}/${button.dataset.action}`,
         {
@@ -163,6 +160,7 @@ export async function orderInbox(el) {
             );
     } finally {
       busy = false;
+      queued = false;
       card.removeAttribute("aria-busy");
       card
         .querySelectorAll("button,input")
@@ -176,8 +174,8 @@ export async function orderInbox(el) {
       stopped = true;
       return;
     }
-    if (busy) {
-      timer = setTimeout(refresh, 5000);
+    if (busy || queued) {
+      if (!queued) timer = setTimeout(refresh, 5000);
       return;
     }
     busy = true;
@@ -228,7 +226,9 @@ export async function orderInbox(el) {
     } finally {
       busy = false;
       refreshButton.disabled = false;
-      if (!stopped && el.isConnected) timer = setTimeout(refresh, 5000);
+      refreshWaiters.splice(0).forEach((resolve) => resolve());
+      if (!queued && !stopped && el.isConnected)
+        timer = setTimeout(refresh, 5000);
     }
   }
   el.querySelectorAll("[data-filter]").forEach(

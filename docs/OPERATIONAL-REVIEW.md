@@ -8,6 +8,7 @@ Builds on the subscriber workspace in PR #19 (`0b9e391`). The existing identity 
 - The owner can rename branches, change review links, deactivate/reactivate without changing slugs, change cashier passwords and enable/disable cashier access. Existing server permissions remain authoritative. Branch updates now create audit records. Account access changes still invalidate existing sessions.
 - Creating an additional branch updates the directory without discarding edits in other branch forms. Demo-room account creation explains the existing `@demo.invalid` restriction.
 - Cashier menu orders refresh every five seconds while the view is mounted. The inbox preserves invoice-number input during refresh, distinguishes connection failure from empty state, supports retry/filtering and re-reads authoritative state after accept/reject/conflict. The server bounds the list to 200 recent orders over twelve hours. In-memory tracking is bounded to the current response; no draft is written to localStorage.
+- Accept/reject waits for an in-flight refresh instead of dropping the gesture; leaving the view before dispatch cancels that pending gesture. The browser test deliberately delays a poll and verifies the resulting single acceptance.
 - New-order audio requires an explicit action and an open page. It does not activate Web Push/Wallet or promise delivery/sound on locked devices.
 - Operational branch/inbox screens inherit the existing ZIMARA palette. Narrow navigation retains the selected tab when the layout changes. Public customer pages keep tenant branding.
 
