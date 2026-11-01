@@ -118,6 +118,8 @@ form[aria-busy=true] { cursor:progress; }
 .branch-summary>span { display:flex; align-items:center; gap:10px; padding-inline-end:20px; color:var(--muted); font-size:.85rem; }
 .branch-summary strong { font:800 1.8rem 'Plus Jakarta Sans','Tajawal',sans-serif; color:var(--ink); }
 .branch-workspace { margin:0; }
+#branch-directory { display:grid; gap:18px; }
+#branch-directory>.branch-workspace { margin:0; }
 .branch-workspace h3 { margin:12px 0 5px; }
 .branch-tools { display:flex; flex-wrap:wrap; gap:10px; margin-block:20px; }
 .branch-qr { padding:18px; background:#fff; color:#23003f; border-radius:14px; text-align:center; max-width:300px; margin-block:16px; border:1px solid var(--line); }
@@ -149,3 +151,4 @@ form[aria-busy=true] { cursor:progress; }
 .pill.rejected { color:var(--danger); border:1px solid var(--danger); background:var(--surface); }
 .app-dialog { max-height:calc(100dvh - 32px); overflow:auto; }
 @media(max-width:600px){.branch-summary{gap:14px}.branch-summary>span{font-size:.75rem}.branch-workspace>.editor-heading{align-items:start}.branch-tools .btn{flex:1}.branch-account .row{gap:8px}.inbox-toolbar>.row{width:100%}.inbox-toolbar .btn{flex:1}.inbox-order>.row{align-items:stretch}.inbox-order>.row>.btn{flex:1}}
+@media(max-width:600px){.dashboard-page .topbar .brandmark{min-width:0;flex:1}.dashboard-page .brandmark>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dashboard-page .brandmark small{max-width:100%}.dashboard-page .topbar>.tools{flex:none;flex-wrap:nowrap}.dashboard-page #main>.tabs{top:76px}.branch-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.branch-tools>a:last-child{grid-column:1/-1}}
