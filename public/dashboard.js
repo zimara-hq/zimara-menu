@@ -212,6 +212,46 @@ const ICON = {
 };
 const A = (ar, en) => (lang === 'ar' ? ar : en);
 
+const ALLERGENS = [
+  ['gluten', 'غلوتين (قمح)', 'Gluten'], ['crustaceans', 'قشريات', 'Crustaceans'], ['eggs', 'بيض', 'Eggs'], ['fish', 'سمك', 'Fish'],
+  ['peanuts', 'فول سوداني', 'Peanuts'], ['soy', 'صويا', 'Soy'], ['milk', 'حليب', 'Milk'], ['tree_nuts', 'مكسرات', 'Tree nuts'],
+  ['celery', 'كرفس', 'Celery'], ['mustard', 'خردل', 'Mustard'], ['sesame', 'سمسم', 'Sesame'], ['sulphites', 'كبريتيت', 'Sulphites'],
+  ['lupin', 'ترمس', 'Lupin'], ['molluscs', 'رخويات', 'Molluscs'],
+];
+let groupSerial = 0;
+function groupEditor(g = {}) {
+  const n = ++groupSerial;
+  const kind = g.multi ? 'multi' : g.required === false ? 'one' : 'required';
+  const lines = (g.choices || []).map((c) => [c.name_ar, c.name_en, c.price ? c.price / 100 : 0].join(' | ')).join('\n');
+  const ids = esc(JSON.stringify(Object.fromEntries((g.choices || []).map((c) => [c.name_ar, c.id]))));
+  return `<div class="option-group-editor" data-group-id="${esc(g.id || '')}" data-choice-ids="${ids}">
+    <div class="row"><div><label for="og${n}-ar">${A('اسم المجموعة', 'Group name')}</label><input id="og${n}-ar" data-g="name_ar" maxlength="60" value="${esc(g.name_ar || '')}" placeholder="${A('الحجم', 'Size')}"></div>
+    <div><label for="og${n}-en">${A('بالإنجليزي', 'In English')}</label><input id="og${n}-en" data-g="name_en" maxlength="60" dir="ltr" value="${esc(g.name_en || '')}" placeholder="Size"></div>
+    <div><label for="og${n}-kind">${A('طريقة الاختيار', 'Selection')}</label><select id="og${n}-kind" data-g="kind"><option value="required" ${kind === 'required' ? 'selected' : ''}>${A('اختيار واحد مطلوب', 'One, required')}</option><option value="one" ${kind === 'one' ? 'selected' : ''}>${A('اختيار واحد اختياري', 'One, optional')}</option><option value="multi" ${kind === 'multi' ? 'selected' : ''}>${A('أكثر من اختيار', 'Several')}</option></select></div>
+    <div><label for="og${n}-max">${A('الحد الأعلى', 'Max picks')}</label><input id="og${n}-max" data-g="max" type="number" min="1" max="20" value="${g.max || ''}"></div></div>
+    <label for="og${n}-choices">${A('الخيارات (سطر لكل خيار)', 'Choices (one per line)')}</label>
+    <textarea id="og${n}-choices" data-g="choices" rows="3" placeholder="${A('صغير | Small | 0', 'صغير | Small | 0')}">${esc(lines)}</textarea>
+    <button class="btn ghost sm" type="button" data-del-group>${A('حذف المجموعة', 'Remove group')}</button></div>`;
+}
+function readGroups(form) {
+  return [...form.querySelectorAll('.option-group-editor')].map((box) => {
+    const get = (k) => box.querySelector(`[data-g="${k}"]`).value.trim();
+    const kind = get('kind');
+    let known = {};
+    try { known = JSON.parse(box.dataset.choiceIds || '{}'); } catch {}
+    const choices = get('choices').split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
+      const [ar, en, price] = l.split('|').map((x) => x.trim());
+      const c = { name_ar: ar, name_en: en || ar, price: Math.round(Number(String(price || '0').replace(/[^\d.]/g, '') || 0) * 100) };
+      if (known[ar]) c.id = known[ar];
+      return c;
+    });
+    const g = { name_ar: get('name_ar'), name_en: get('name_en') || get('name_ar'), required: kind === 'required', multi: kind === 'multi', choices };
+    if (box.dataset.groupId) g.id = box.dataset.groupId;
+    if (kind === 'multi' && get('max')) g.max = Math.min(Number(get('max')), choices.length);
+    return g;
+  }).filter((g) => g.name_ar && g.choices.length);
+}
+
 async function ownerMenu(el) {
   const [{ categories, items }, { branches }] = await Promise.all([api('/api/owner/menu'), api('/api/owner/branches')]);
   const branch = branches[0];
@@ -222,11 +262,29 @@ async function ownerMenu(el) {
     <div class="row">${field('name_ar', t('nameAr'), `required value="${esc(i.name_ar || '')}"`, p)}${field('name_en', t('nameEn'), `required value="${esc(i.name_en || '')}"`, p)}</div>
     <div class="row">${field('desc_ar', t('descAr'), `value="${esc(i.desc_ar || '')}"`, p)}${field('desc_en', t('descEn'), `value="${esc(i.desc_en || '')}"`, p)}</div>
     ${imageField('image_url', A('صورة الصنف', 'Item photo'), i.image_url || '', p)}
+    <details class="item-more"${i.compare_price || i.allergens?.length || i.options?.length || i.caffeine_mg != null || i.sodium_mg != null ? ' open' : ''}><summary>${A('عرض وأحجام ومعلومات غذائية', 'Offer, sizes and nutrition')}</summary><div class="stack">
+      <div class="row">${field('compare_price', A('السعر قبل الخصم (اختياري)', 'Price before discount (optional)'), `type="number" min="0" step="0.01" inputmode="decimal" value="${i.compare_price != null ? i.compare_price / 100 : ''}"`, p)}${field('caffeine_mg', A('الكافيين (ملغ)', 'Caffeine (mg)'), `type="number" min="0" inputmode="numeric" value="${i.caffeine_mg ?? ''}"`, p)}${field('sodium_mg', A('الصوديوم (ملغ)', 'Sodium (mg)'), `type="number" min="0" inputmode="numeric" value="${i.sodium_mg ?? ''}"`, p)}</div>
+      <fieldset class="opt-group"><legend>${A('مسببات الحساسية', 'Allergens')}</legend><div class="allergen-grid">${ALLERGENS.map(([k, ar, en]) => `<label class="check"><input type="checkbox" data-allergen value="${k}" ${i.allergens?.includes(k) ? 'checked' : ''}> ${esc(A(ar, en))}</label>`).join('')}</div></fieldset>
+      <div class="stack" data-option-groups>${(i.options || []).map(groupEditor).join('')}</div>
+      <button class="btn ghost sm" type="button" data-add-group>${A('+ إضافة أحجام أو إضافات', '+ Add sizes or extras')}</button>
+      <p class="small muted">${A('مثال: مجموعة "الحجم" مطلوبة باختيار واحد، ومجموعة "إضافات" اختيارية بأكثر من اختيار. اكتب كل خيار في سطر: الاسم بالعربي | بالإنجليزي | السعر الإضافي.', 'Example: a required single-choice "Size" group and an optional multi-choice "Extras" group. One choice per line: Arabic | English | extra price.')}</p>
+    </div></details>
     <div class="row form-foot">${field('sort', t('sort'), `type="number" min="0" value="${i.sort ?? 0}"`, p)}<label class="check"><input type="checkbox" name="hidden" ${i.active === 0 ? 'checked' : ''}> ${esc(A('إخفاء من المنيو', 'Hide from menu'))}</label></div>`;
-  const toItem = (v) => ({
+  const toItem = (v, form) => ({
     category_id: v.category_id, name_ar: v.name_ar, name_en: v.name_en, desc_ar: v.desc_ar, desc_en: v.desc_en,
     price: Math.round(Number(v.price) * 100), calories: v.calories === '' ? null : Number(v.calories), image_url: v.image_url.trim() || null,
+    compare_price: v.compare_price ? Math.round(Number(v.compare_price) * 100) : null,
+    caffeine_mg: v.caffeine_mg === '' || v.caffeine_mg == null ? null : Number(v.caffeine_mg),
+    sodium_mg: v.sodium_mg === '' || v.sodium_mg == null ? null : Number(v.sodium_mg),
+    allergens: [...form.querySelectorAll('[data-allergen]:checked')].map((x) => x.value),
+    options: readGroups(form),
     sort: Number(v.sort || 0), active: !v.hidden,
+  });
+  el.addEventListener('click', (e) => {
+    const add = e.target.closest('[data-add-group]');
+    if (add) { add.previousElementSibling.insertAdjacentHTML('beforeend', groupEditor()); return; }
+    const del = e.target.closest('[data-del-group]');
+    if (del) del.closest('.option-group-editor').remove();
   });
   const intro = `<div class="section-intro row-between"><div><h2>${esc(t('menu'))}</h2><p>${A('أقسامك وأصنافك كما يراها العميل. أي تعديل يظهر فورًا في كل الفروع.', 'Your sections and items as customers see them. Changes appear instantly in every branch.')}</p></div>${branch ? `<a class="btn ghost sm" href="/m/${esc(branch.slug)}" target="_blank" rel="noopener">${A('معاينة المنيو', 'Preview menu')} ↗</a>` : ''}</div>`;
 
@@ -287,7 +345,7 @@ async function ownerMenu(el) {
   };
   el.querySelector('#item')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    try { await api('/api/owner/items', { method: 'POST', body: toItem(fd(e.target)) }); announce(A('أضيف الصنف.', 'Item added.')); reload(); }
+    try { await api('/api/owner/items', { method: 'POST', body: toItem(fd(e.target), e.target) }); announce(A('أضيف الصنف.', 'Item added.')); reload(); }
     catch (err) { flash(el.querySelector('#m'), errMsg(err), true); }
   });
   const catBy = (id) => categories.find((c) => c.id === id);
@@ -318,7 +376,7 @@ async function ownerMenu(el) {
   el.querySelectorAll('[data-item-cancel]').forEach((b) => (b.onclick = () => { el.querySelector(`form[data-n="${b.dataset.itemCancel}"]`).hidden = true; }));
   el.querySelectorAll('form[data-item]').forEach((f) => (f.onsubmit = async (e) => {
     e.preventDefault();
-    try { await api('/api/owner/items/' + f.dataset.item, { method: 'PATCH', body: toItem(fd(f)) }); announce(t('saved')); reload(); }
+    try { await api('/api/owner/items/' + f.dataset.item, { method: 'PATCH', body: toItem(fd(f), f) }); announce(t('saved')); reload(); }
     catch (err) { announce(errMsg(err), true); }
   }));
   el.querySelectorAll('[data-item-del]').forEach((b) => (b.onclick = async () => {

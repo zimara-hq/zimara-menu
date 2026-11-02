@@ -1,3 +1,4 @@
+import { itemExtras, itemView } from './menu-extras.js';
 import { registerDemo, expireDemo } from './demo.js';
 import { sampleMenuStatements, sampleItemCount } from './sample-menu.js';
 import { Hono } from 'hono';
@@ -356,6 +357,7 @@ function itemFields(b) {
     int(b.calories, 'calories', { optional: true, max: 10000 }),
     url(b.image_url, 'image_url'),
     int(b.sort ?? 0, 'sort', { max: 10000 }),
+    ...itemExtras(b, int(b.price, 'price', { max: 10_000_000 })),
   ];
 }
 
@@ -367,7 +369,7 @@ owner.post('/items', async (c) => {
   if (!cat) throw bad('invalid_category_id');
   const iid = id();
   await c.env.DB.prepare(
-    'INSERT INTO items (id, org_id, category_id, name_ar, name_en, desc_ar, desc_en, price, calories, image_url, sort) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO items (id, org_id, category_id, name_ar, name_en, desc_ar, desc_en, price, calories, image_url, sort, compare_price, allergens, caffeine_mg, sodium_mg, options_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
   )
     .bind(iid, u.org_id, cat.id, ...itemFields(b))
     .run();
@@ -380,7 +382,7 @@ owner.patch('/items/:id', async (c) => {
   const cat = await c.env.DB.prepare('SELECT id FROM categories WHERE id = ? AND org_id = ?').bind(b.category_id, u.org_id).first();
   if (!cat) throw bad('invalid_category_id');
   const res = await c.env.DB.prepare(
-    'UPDATE items SET category_id = ?, name_ar = ?, name_en = ?, desc_ar = ?, desc_en = ?, price = ?, calories = ?, image_url = ?, sort = ?, active = ? WHERE id = ? AND org_id = ?',
+    'UPDATE items SET category_id = ?, name_ar = ?, name_en = ?, desc_ar = ?, desc_en = ?, price = ?, calories = ?, image_url = ?, sort = ?, compare_price = ?, allergens = ?, caffeine_mg = ?, sodium_mg = ?, options_json = ?, active = ? WHERE id = ? AND org_id = ?',
   )
     .bind(cat.id, ...itemFields(b), b.active === false ? 0 : 1, c.req.param('id'), u.org_id)
     .run();
@@ -632,14 +634,14 @@ async function orgMenu(env, orgId, { branchId = null, includeHidden = false } = 
   const active = includeHidden ? '' : 'AND active = 1';
   const { results: categories } = await env.DB.prepare(`SELECT id, name_ar, name_en, sort, active FROM categories WHERE org_id = ? ${active} ORDER BY sort, rowid`).bind(orgId).all();
   const { results: items } = await env.DB.prepare(
-    `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.calories, i.image_url, i.sort, i.active,
+    `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.compare_price, i.calories, i.caffeine_mg, i.sodium_mg, i.allergens, i.options_json, i.image_url, i.sort, i.active,
             CASE WHEN bu.item_id IS NULL THEN 1 ELSE 0 END AS available
        FROM items i JOIN categories category ON category.id = i.category_id AND category.org_id = i.org_id LEFT JOIN branch_unavailable bu ON bu.item_id = i.id AND bu.branch_id = ?
       WHERE i.org_id = ? ${includeHidden ? '' : 'AND i.active = 1 AND category.active = 1'} ORDER BY i.sort, i.rowid`,
   )
     .bind(branchId, orgId)
     .all();
-  return { categories, items };
+  return { categories, items: items.map(itemView) };
 }
 
 app.get('/api/public/menu/:branchSlug', async (c) => {

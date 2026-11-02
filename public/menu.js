@@ -19,7 +19,7 @@ const ICON = {
 
 const slug = decodeURIComponent(location.pathname.split('/')[2] || '');
 const main = document.getElementById('main');
-let loyalty = null, data, profile = null, q = '', settings = { orders_enabled: false }, cart = new Map(), orderToken = null, orderTimer = null, orderKey = crypto.randomUUID();
+let loyalty = null, data, profile = null, q = '', settings = { orders_enabled: false }, cart = new Map(), orderToken = null, orderTimer = null, orderKey = crypto.randomUUID(), orderNote = '';
 try {
   cart = new Map(JSON.parse(sessionStorage.getItem('zm_cart_' + slug) || '[]'));
   orderToken = sessionStorage.getItem('zm_order_' + slug);
@@ -39,18 +39,40 @@ function openNow(hours) {
 }
 
 function itemCard(i) {
-  const inCart = cart.get(i.id) || 0;
+  const inCart = countFor(i.id);
   const canAdd = settings.orders_enabled && i.available;
   const photo=profile?.theme?.show_images!==false&&i.image_url;
   return `<article class="dish ${i.available ? '' : 'soldout'} ${photo ? 'has-photo' : ''}">
     <div class="dish-text">
       <h3>${esc(pick(i, 'name'))}</h3>
       ${pick(i, 'desc') ? `<p class="dish-desc">${esc(pick(i, 'desc'))}</p>` : ''}
-      <p class="dish-meta"><span class="dish-price">${esc(money(i.price))}</span>${profile?.theme?.show_calories!==false && i.calories != null ? `<span class="dish-kcal">${esc(t('kcal', { n: i.calories }))}</span>` : ''}${i.available ? '' : `<span class="dish-out">${esc(t('soldout'))}</span>`}</p>
+      <p class="dish-meta"><span class="dish-price">${i.options?.length && i.options[0].required ? a('من ', 'From ') : ''}${esc(money(i.price))}</span>${i.compare_price > i.price ? `<s class="dish-was">${esc(money(i.compare_price))}</s><span class="dish-off">${a('خصم', 'Save')} ${Math.round((1 - i.price / i.compare_price) * 100)}٪</span>` : ''}${profile?.theme?.show_calories!==false && i.calories != null ? `<span class="dish-kcal">${esc(t('kcal', { n: i.calories }))}</span>` : ''}${i.caffeine_mg != null ? `<span class="dish-kcal">${a('كافيين', 'Caffeine')} ${i.caffeine_mg} ${a('ملغ', 'mg')}</span>` : ''}${i.sodium_mg != null ? `<span class="dish-kcal">${a('صوديوم', 'Sodium')} ${i.sodium_mg} ${a('ملغ', 'mg')}</span>` : ''}${i.available ? '' : `<span class="dish-out">${esc(t('soldout'))}</span>`}</p>
+      ${i.allergens?.length ? `<p class="dish-allergens"><span class="visually-hidden">${a('مسببات الحساسية:', 'Allergens:')}</span>${i.allergens.map((k) => `<span class="allergen">${esc(allergenName(k))}</span>`).join('')}</p>` : ''}
     </div>
     ${photo ? `<div class="dish-photo"><img src="${esc(i.image_url)}" alt="" loading="lazy" width="112" height="112">${canAdd ? addBtn(i, inCart) : ''}</div>` : canAdd ? `<div class="dish-photo no-photo">${addBtn(i, inCart)}</div>` : ''}
   </article>`;
 }
+const ALLERGEN = {
+  gluten: ['غلوتين', 'Gluten'], crustaceans: ['قشريات', 'Crustaceans'], eggs: ['بيض', 'Eggs'], fish: ['سمك', 'Fish'],
+  peanuts: ['فول سوداني', 'Peanuts'], soy: ['صويا', 'Soy'], milk: ['حليب', 'Milk'], tree_nuts: ['مكسرات', 'Tree nuts'],
+  celery: ['كرفس', 'Celery'], mustard: ['خردل', 'Mustard'], sesame: ['سمسم', 'Sesame'], sulphites: ['كبريتيت', 'Sulphites'],
+  lupin: ['ترمس', 'Lupin'], molluscs: ['رخويات', 'Molluscs'],
+};
+const allergenName = (k) => a(...(ALLERGEN[k] || [k, k]));
+// A cart line is "itemId" or "itemId|choiceA,choiceB" so the same dish with different options stays separate.
+const lineKey = (id, opts = []) => (opts.length ? id + '|' + [...opts].sort().join(',') : id);
+const splitKey = (k) => { const [id, o = ''] = k.split('|'); return { id, opts: o ? o.split(',') : [] }; };
+function lineOf(k) {
+  const { id, opts } = splitKey(k);
+  const item = data.items.find((i) => i.id === id);
+  if (!item) return null;
+  const picked = [];
+  let unit = item.price;
+  for (const g of item.options || []) for (const ch of g.choices) if (opts.includes(ch.id)) { picked.push({ g, ch }); unit += ch.price; }
+  if (picked.length !== opts.length) return null;
+  return { item, opts, picked, unit };
+}
+const countFor = (id) => [...cart].reduce((n, [k, q]) => (splitKey(k).id === id ? n + q : n), 0);
 const addBtn = (i, n) => `<button class="dish-add" type="button" data-add="${esc(i.id)}" aria-label="${esc(a('إضافة', 'Add') + ' ' + pick(i, 'name'))}">${n ? `<span>${n}</span>` : ICON.plus}</button>`;
 
 function render() {
@@ -60,15 +82,67 @@ function render() {
     ? cats.map((c) => `<section class="menu-section" id="c-${esc(c.id)}" aria-labelledby="h-${esc(c.id)}"><h2 id="h-${esc(c.id)}">${esc(pick(c, 'name'))}</h2><div class="dish-list">${items.filter((i) => i.category_id === c.id).map(itemCard).join('')}</div></section>`).join('')
     : `<p class="empty">${esc(t('empty'))}</p>`;
   main.querySelectorAll('[data-add]').forEach((b) => (b.onclick = () => {
-    const n = cart.get(b.dataset.add) || 0;
-    if (n >= 20) return;
-    cart.set(b.dataset.add, n + 1);
-    saveCart();
-    render();
-    announce(a('أضيف إلى الطلب', 'Added to order'));
+    const item = data.items.find((i) => i.id === b.dataset.add);
+    if (item?.options?.length) return openOptions(item, b);
+    addLine(lineKey(b.dataset.add));
   }));
   main.querySelector('#clear-q').hidden = !q;
   renderCart();
+}
+
+function addLine(key) {
+  const n = cart.get(key) || 0;
+  if (n >= 20) return;
+  cart.set(key, n + 1);
+  saveCart();
+  render();
+  announce(a('أضيف إلى الطلب', 'Added to order'));
+}
+
+// Size and extras picker. Prices shown here are a preview; the server prices the order.
+function openOptions(item, opener) {
+  const dlg = document.createElement('dialog');
+  dlg.className = 'options-sheet';
+  dlg.setAttribute('aria-labelledby', 'opt-title');
+  const groups = item.options;
+  dlg.innerHTML = `<form method="dialog" class="stack">
+    <header class="row-between"><h2 id="opt-title">${esc(pick(item, 'name'))}</h2><button class="btn ghost sm" value="cancel" type="submit" aria-label="${a('إغلاق', 'Close')}">✕</button></header>
+    ${groups.map((g, gi) => `<fieldset class="opt-group"><legend>${esc(pick(g, 'name'))} <small class="muted">${g.required ? a('مطلوب', 'Required') : a('اختياري', 'Optional')}${g.multi ? ' · ' + a(`حتى ${g.max}`, `up to ${g.max}`) : ''}</small></legend>
+      ${g.choices.map((ch, ci) => `<label class="opt-choice"><input type="${g.multi ? 'checkbox' : 'radio'}" name="g${gi}" value="${esc(ch.id)}" ${!g.multi && g.required && ci === 0 ? 'checked' : ''}><span>${esc(pick(ch, 'name'))}</span><b>${ch.price ? '+' + esc(money(ch.price)) : ''}</b></label>`).join('')}</fieldset>`).join('')}
+    <p class="msg error" id="opt-error" hidden></p>
+    <button class="btn" type="submit" value="add" id="opt-add"></button>
+  </form>`;
+  document.body.append(dlg);
+  const form = dlg.querySelector('form');
+  const chosen = () => [...form.querySelectorAll('input:checked')].map((x) => x.value);
+  const update = () => {
+    groups.forEach((g, gi) => {
+      if (!g.multi) return;
+      const boxes = [...form.querySelectorAll(`[name=g${gi}]`)];
+      const n = boxes.filter((x) => x.checked).length;
+      boxes.forEach((x) => (x.disabled = !x.checked && n >= g.max));
+    });
+    const line = lineOf(lineKey(item.id, chosen()));
+    dlg.querySelector('#opt-add').textContent = `${a('أضف للطلب', 'Add to order')} · ${money(line ? line.unit : item.price)}`;
+  };
+  form.addEventListener('change', update);
+  update();
+  dlg.addEventListener('close', () => {
+    if (dlg.returnValue === 'add') {
+      const missing = groups.find((g, gi) => g.required && !form.querySelector(`[name=g${gi}]:checked`));
+      if (missing) {
+        const err = dlg.querySelector('#opt-error');
+        err.hidden = false;
+        err.textContent = a(`اختر ${pick(missing, 'name')} أولاً.`, `Choose a ${pick(missing, 'name')} first.`);
+        dlg.showModal();
+        return;
+      }
+      addLine(lineKey(item.id, chosen()));
+    }
+    dlg.remove();
+    opener?.focus();
+  });
+  dlg.showModal();
 }
 
 function saveCart() {
@@ -79,23 +153,27 @@ function saveCart() {
 function renderCart() {
   const box = main.querySelector('#cart');
   if (!settings.orders_enabled) { box.hidden = true; return; }
-  const selected = [...cart].map(([id, quantity]) => ({ item: data.items.find((i) => i.id === id), quantity })).filter((x) => x.item && x.item.available);
+  const selected = [...cart].map(([key, quantity]) => ({ key, line: lineOf(key), quantity })).filter((x) => x.line && x.line.item.available);
   box.hidden = !selected.length;
   if (!selected.length) return;
-  const total = selected.reduce((sum, x) => sum + x.item.price * x.quantity, 0);
-  box.innerHTML = `<h2>${a('طلبك', 'Your order')}</h2>${selected.map(({ item: i, quantity: n }) => `<div class="cart-row"><div><strong>${esc(pick(i, 'name'))}</strong><p class="small muted">${esc(money(i.price * n))}</p></div><div class="quantity-controls"><button class="btn ghost sm" type="button" data-minus="${esc(i.id)}" aria-label="${esc(a('تقليل', 'Decrease') + ' ' + pick(i, 'name'))}">−</button><span>${n}</span><button class="btn ghost sm" type="button" data-plus="${esc(i.id)}" aria-label="${esc(a('زيادة', 'Increase') + ' ' + pick(i, 'name'))}">+</button></div></div>`).join('')}
+  const total = selected.reduce((sum, x) => sum + x.line.unit * x.quantity, 0);
+  box.innerHTML = `<h2>${a('طلبك', 'Your order')}</h2>${selected.map(({ key, line: { item: i, picked, unit }, quantity: n }) => `<div class="cart-row"><div><strong>${esc(pick(i, 'name'))}</strong>${picked.length ? `<p class="small muted">${picked.map((p) => esc(pick(p.ch, 'name'))).join('، ')}</p>` : ''}<p class="small muted">${esc(money(unit * n))}</p></div><div class="quantity-controls"><button class="btn ghost sm" type="button" data-minus="${esc(key)}" aria-label="${esc(a('تقليل', 'Decrease') + ' ' + pick(i, 'name'))}">−</button><span>${n}</span><button class="btn ghost sm" type="button" data-plus="${esc(key)}" aria-label="${esc(a('زيادة', 'Increase') + ' ' + pick(i, 'name'))}">+</button></div></div>`).join('')}
     <div class="cart-row"><strong>${a('الإجمالي', 'Total')}</strong><strong>${esc(money(total))}</strong></div>
+    <label for="order-note">${a('ملاحظة للكاشير (اختياري)', 'Note for the cashier (optional)')}</label>
+    <textarea id="order-note" rows="2" maxlength="300" placeholder="${a('مثال: بدون سكر', 'e.g. no sugar')}">${esc(orderNote)}</textarea>
     <p class="small muted">${a('الدفع عند الكاشير.', 'Pay at the counter.')}</p>
     <button type="button" class="btn" id="send-order">${a('إرسال الطلب للكاشير', 'Send order to cashier')}</button><div id="order-message" role="status"></div>`;
+  box.querySelector('#order-note').oninput = (e) => { orderNote = e.target.value; orderKey = crypto.randomUUID(); };
   box.querySelectorAll('[data-minus]').forEach((b) => (b.onclick = () => { const n = cart.get(b.dataset.minus) || 0; if (n <= 1) cart.delete(b.dataset.minus); else cart.set(b.dataset.minus, n - 1); saveCart(); render(); }));
   box.querySelectorAll('[data-plus]').forEach((b) => (b.onclick = () => { cart.set(b.dataset.plus, Math.min(20, (cart.get(b.dataset.plus) || 0) + 1)); saveCart(); render(); }));
   box.querySelector('#send-order').addEventListener('click', async (e) => {
     e.target.disabled = true;
     try {
-      const d = await api('/api/public/orders/' + slug, { method: 'POST', body: { idem_key: orderKey, items: selected.map((x) => ({ item_id: x.item.id, quantity: x.quantity })) } });
+      const d = await api('/api/public/orders/' + slug, { method: 'POST', body: { idem_key: orderKey, note: orderNote.trim() || undefined, items: selected.map((x) => ({ item_id: x.line.item.id, quantity: x.quantity, options: x.line.opts })) } });
       orderToken = d.order.token;
       try { sessionStorage.setItem('zm_order_' + slug, orderToken); } catch {}
       cart.clear();
+      orderNote = '';
       saveCart();
       render();
       pollOrder();
