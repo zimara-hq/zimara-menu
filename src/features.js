@@ -1,3 +1,4 @@
+import { itemView, priceWithOptions } from './menu-extras.js';
 import { DEFAULT_THEME, validateTheme } from './identity.js';
 import { loadUser, verifyPassword } from './auth.js';
 import {
@@ -200,11 +201,11 @@ async function menuFor(env, orgId, branchId) {
     .bind(orgId)
     .all();
   const { results: items } = await env.DB.prepare(
-    `SELECT i.id,i.category_id,i.name_ar,i.name_en,i.desc_ar,i.desc_en,i.price,i.calories,i.image_url,i.sort,CASE WHEN u.item_id IS NULL THEN 1 ELSE 0 END AS available FROM items i JOIN categories c ON c.id=i.category_id LEFT JOIN branch_unavailable u ON u.item_id=i.id AND u.branch_id=? WHERE i.org_id=? AND i.active=1 AND c.active=1 ORDER BY i.sort,i.name_ar`,
+    `SELECT i.id,i.category_id,i.name_ar,i.name_en,i.desc_ar,i.desc_en,i.price,i.compare_price,i.calories,i.caffeine_mg,i.sodium_mg,i.allergens,i.options_json,i.image_url,i.sort,CASE WHEN u.item_id IS NULL THEN 1 ELSE 0 END AS available FROM items i JOIN categories c ON c.id=i.category_id LEFT JOIN branch_unavailable u ON u.item_id=i.id AND u.branch_id=? WHERE i.org_id=? AND i.active=1 AND c.active=1 ORDER BY i.sort,i.name_ar`,
   )
     .bind(branchId, orgId)
     .all();
-  return { categories, items };
+  return { categories, items: items.map(itemView) };
 }
 
 // Bounded RFC-4180 parser: quoted fields, embedded line breaks, BOM; no code evaluation.
@@ -394,13 +395,13 @@ const EXPORT_DATASETS = {
     sql: 'SELECT id,name_ar,name_en,sort,active FROM categories WHERE org_id=? AND id>? ORDER BY id LIMIT ?',
   },
   items: {
-    sql: 'SELECT id,category_id,name_ar,name_en,desc_ar,desc_en,price,calories,image_url,sort,active FROM items WHERE org_id=? AND id>? ORDER BY id LIMIT ?',
+    sql: 'SELECT id,category_id,name_ar,name_en,desc_ar,desc_en,price,compare_price,calories,caffeine_mg,sodium_mg,allergens,options_json,image_url,sort,active FROM items WHERE org_id=? AND id>? ORDER BY id LIMIT ?',
   },
   tickets: {
     sql: 'SELECT id,branch_id,number,invoice_number,status,linked_at,ready_at,seen_at,collected_at,rating,rating_comment,created_at,version FROM tickets WHERE org_id=? AND id>? ORDER BY id LIMIT ?',
   },
   orders: {
-    sql: 'SELECT id,branch_id,status,total,items_json,ticket_id,version,created_at FROM customer_orders WHERE org_id=? AND id>? ORDER BY id LIMIT ?',
+    sql: 'SELECT id,branch_id,status,total,items_json,note,ticket_id,version,created_at FROM customer_orders WHERE org_id=? AND id>? ORDER BY id LIMIT ?',
   },
   loyalty_cards: {
     sql: 'SELECT id,created_at,revoked_at FROM loyalty_cards WHERE org_id=? AND id>? ORDER BY id LIMIT ?',
@@ -968,29 +969,38 @@ export function registerFeatures(app) {
     const lines = [];
     for (const line of requested) {
       const itemId = str(line?.item_id, 'item_id', { max: 60 });
-      if (ids.has(itemId)) throw bad('duplicate_item');
-      ids.add(itemId);
+      const picked = line.options ?? [];
+      if (!Array.isArray(picked) || picked.some((x) => typeof x !== 'string')) throw bad('invalid_options');
+      const lineKey = itemId + '|' + [...picked].sort().join(',');
+      if (ids.has(lineKey)) throw bad('duplicate_item');
+      ids.add(lineKey);
       const quantity = int(line.quantity, 'quantity', { min: 1, max: 20 });
       const item = await c.env.DB.prepare(
-        'SELECT i.id,i.name_ar,i.name_en,i.price FROM items i JOIN categories c ON c.id=i.category_id WHERE i.id=? AND i.org_id=? AND i.active=1 AND c.active=1 AND NOT EXISTS(SELECT 1 FROM branch_unavailable u WHERE u.branch_id=? AND u.item_id=i.id)',
+        'SELECT i.id,i.name_ar,i.name_en,i.price,i.options_json FROM items i JOIN categories c ON c.id=i.category_id WHERE i.id=? AND i.org_id=? AND i.active=1 AND c.active=1 AND NOT EXISTS(SELECT 1 FROM branch_unavailable u WHERE u.branch_id=? AND u.item_id=i.id)',
       )
         .bind(itemId, branch.org_id, branch.id)
         .first();
       if (!item) throw bad('item_unavailable');
-      lines.push({ ...item, quantity, total: item.price * quantity });
+      const { unit, options } = priceWithOptions(item, picked);
+      const { options_json, ...base } = item;
+      lines.push({ ...base, price: unit, options, quantity, total: unit * quantity });
     }
+    const note = str(b.note, 'note', { optional: true, max: 300 });
     const total = lines.reduce((n, l) => n + l.total, 0);
     if (total > 100_000_000) throw bad('order_total_limit');
     const fingerprint = await hmac(
       c.env.AUTH_SECRET,
       JSON.stringify(
-        lines
-          .map((l) => [l.id, l.quantity])
-          .sort((a, b) => a[0].localeCompare(b[0])),
+        [
+          lines
+            .map((l) => [l.id + '|' + l.options.map((o) => o.id).sort().join(','), l.quantity])
+            .sort((a, b) => a[0].localeCompare(b[0])),
+          note,
+        ],
       ),
     );
     await c.env.DB.prepare(
-      'INSERT INTO customer_orders(id,org_id,branch_id,token,idem_key,fingerprint,total,items_json,created_at) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(branch_id,idem_key) DO NOTHING',
+      'INSERT INTO customer_orders(id,org_id,branch_id,token,idem_key,fingerprint,total,items_json,note,created_at) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(branch_id,idem_key) DO NOTHING',
     )
       .bind(
         id(),
@@ -1001,6 +1011,7 @@ export function registerFeatures(app) {
         fingerprint,
         total,
         JSON.stringify(lines),
+        note,
         now(),
       )
       .run();
