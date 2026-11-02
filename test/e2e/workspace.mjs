@@ -16,7 +16,7 @@ try{
  const room=await owner.evaluate(async()=>{const r=await fetch('/api/demo',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});if(!r.ok)throw new Error('demo '+r.status);return r.json();});
  await owner.evaluate(async token=>{const r=await fetch('/api/demo/'+token+'/session',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({role:'owner'})});if(!r.ok)throw new Error('session '+r.status);},room.token);
  await owner.goto(base+'/app');await owner.locator('.workspace-welcome').waitFor();
- assert.equal(await owner.locator('[role=tab]').count(),13);assert.equal(await owner.locator('.workspace-metrics article').count(),4);
+ assert.equal(await owner.locator('[role=tab]').count(),14);assert.equal(await owner.locator('.workspace-metrics article').count(),4);
  await shot(owner,{path:out+'/overview-desktop.png',fullPage:true});pass('owner workspace uses actual menu, branch, subscription and stats APIs');
  await tab('brand');const f=owner.locator('#identity-form');await f.waitFor();
  await f.locator('[name=name_ar]').fill('مقهى التفاصيل');await f.locator('[name=name_en]').fill('Details Cafe');await f.locator('[name=layout]').selectOption('cards');await f.locator('[name=corners]').selectOption('square');await f.locator('[name=cover]').selectOption('compact');await f.locator('[name=show_calories]').uncheck();await f.locator('[data-color="#185345"]').click();
