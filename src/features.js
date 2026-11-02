@@ -202,7 +202,7 @@ async function menuFor(env, orgId, branchId) {
     .bind(orgId)
     .all();
   const { results: items } = await env.DB.prepare(
-    `SELECT i.id,i.category_id,i.name_ar,i.name_en,i.desc_ar,i.desc_en,i.price,i.compare_price,i.calories,i.caffeine_mg,i.sodium_mg,i.allergens,i.options_json,i.image_url,i.sort,CASE WHEN u.item_id IS NULL THEN 1 ELSE 0 END AS available FROM items i JOIN categories c ON c.id=i.category_id LEFT JOIN branch_unavailable u ON u.item_id=i.id AND u.branch_id=? WHERE i.org_id=? AND i.active=1 AND c.active=1 ORDER BY i.sort,i.name_ar`,
+    `SELECT i.id,i.category_id,i.name_ar,i.name_en,i.desc_ar,i.desc_en,i.price,i.compare_price,i.calories,i.caffeine_mg,i.sodium_mg,i.allergens,i.options_json,i.image_url,i.sort,CASE WHEN u.item_id IS NULL THEN 1 ELSE 0 END AS available FROM items i JOIN categories c ON c.id=i.category_id LEFT JOIN branch_unavailable u ON u.item_id=i.id AND u.branch_id=? WHERE i.org_id=? AND i.active=1 AND i.is_sample=0 AND c.active=1 ORDER BY i.sort,i.name_ar`,
   )
     .bind(branchId, orgId)
     .all();
@@ -978,7 +978,7 @@ export function registerFeatures(app) {
       ids.add(lineKey);
       const quantity = int(line.quantity, 'quantity', { min: 1, max: 20 });
       const item = await c.env.DB.prepare(
-        'SELECT i.id,i.name_ar,i.name_en,i.price,i.options_json FROM items i JOIN categories c ON c.id=i.category_id WHERE i.id=? AND i.org_id=? AND i.active=1 AND c.active=1 AND NOT EXISTS(SELECT 1 FROM branch_unavailable u WHERE u.branch_id=? AND u.item_id=i.id)',
+        'SELECT i.id,i.name_ar,i.name_en,i.price,i.options_json FROM items i JOIN categories c ON c.id=i.category_id WHERE i.id=? AND i.org_id=? AND i.active=1 AND i.is_sample=0 AND c.active=1 AND NOT EXISTS(SELECT 1 FROM branch_unavailable u WHERE u.branch_id=? AND u.item_id=i.id)',
       )
         .bind(itemId, branch.org_id, branch.id)
         .first();
@@ -1024,7 +1024,7 @@ export function registerFeatures(app) {
       .first();
     if (order.fingerprint !== fingerprint) throw conflict('idem_key_reused');
     if (inserted.meta?.changes) {
-      const pending = later(c, notifyTelegram(c.env, branch.org_id, branch.id, 'orders', orderMessage(order, branch.name_ar, c.env.PUBLIC_BASE_URL)));
+      const pending = later(c, notifyTelegram(c.env, branch.org_id, branch.id, 'orders', (format) => orderMessage(order, branch.name_ar, c.env.PUBLIC_BASE_URL, format)));
       if (pending) await pending;
     }
     return c.json({ order: orderView(order) }, 201);

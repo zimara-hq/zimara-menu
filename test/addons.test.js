@@ -113,3 +113,32 @@ test('Telegram stays off without bot secrets', async () => {
   assert.equal((await s.owner.post('/api/owner/telegram/code', { events: ['orders'] })).status, 403);
   assert.equal((await hook(env, { message: { chat: { id: 1 }, text: 'x' } })).status, 403);
 });
+
+test('Telegram messages follow the parts and heading the owner picks per chat', async () => {
+  const env = makeEnv(TG), s = await setupOrg(env);
+  const cap = captureFetch();
+  try {
+    const preview = await s.owner.post('/api/owner/telegram/preview', { format: { fields: ['items', 'total'], title: 'طلب يا شباب' } });
+    assert.equal(preview.status, 200);
+    assert.match(preview.json.text, /^طلب يا شباب\n• 2× لاتيه\n• 1× كروسان\nالإجمالي: 46\.00/);
+    assert.doesNotMatch(preview.json.text, /كبير|ملاحظة|افتح/);
+    assert.equal((await s.owner.post('/api/owner/telegram/preview', { format: { fields: ['note'] } })).status, 400, 'needs items or total');
+
+    const code = await s.owner.post('/api/owner/telegram/code', { events: ['orders'], format: { fields: ['items', 'prices', 'total'], title: 'طلب جديد 🔥' } });
+    await hook(env, { message: { chat: { id: 7 }, text: code.json.code } });
+    const cat = (await s.owner.post('/api/owner/categories', { name_ar: 'قهوة', name_en: 'Coffee' })).json.id;
+    const item = await s.owner.post('/api/owner/items', { category_id: cat, name_ar: 'لاتيه', name_en: 'Latte', price: 1600 });
+    await s.owner.patch('/api/owner/branches/' + s.branchId + '/settings', { orders_enabled: true });
+    await client(env).post('/api/public/orders/' + s.branchSlug, { idem_key: crypto.randomUUID(), items: [{ item_id: item.json.id, quantity: 2 }], note: 'سري' });
+    assert.equal(cap.sent.at(-1).text, 'طلب جديد 🔥\n• 2× لاتيه · 32.00 ر.س\nالإجمالي: 32.00 ر.س');
+
+    // The owner changes it later without relinking.
+    const link = (await s.owner.get('/api/owner/telegram')).json.links[0];
+    assert.deepEqual(link.format.fields, ['items', 'prices', 'total']);
+    assert.equal((await s.owner.patch('/api/owner/telegram/' + link.id, { events: ['orders'], format: { fields: ['total', 'note'] } })).status, 200);
+    await client(env).post('/api/public/orders/' + s.branchSlug, { idem_key: crypto.randomUUID(), items: [{ item_id: item.json.id, quantity: 1 }], note: 'سري' });
+    assert.equal(cap.sent.at(-1).text, '🛎️ طلب جديد\nملاحظة: سري\nالإجمالي: 16.00 ر.س');
+  } finally {
+    cap.restore();
+  }
+});

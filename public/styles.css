@@ -636,3 +636,24 @@ body.menu-page .wa-float { inset-block-end: 88px; }
 .addon-card .actions { display: flex; gap: 8px; margin-top: auto; flex-wrap: wrap; }
 .addon-group-title { margin: 24px 0 10px; }
 .tg-code { font-family: ui-monospace, monospace; font-size: 1.4rem; letter-spacing: .15em; direction: ltr; }
+/* Ready pages (templates) and own domain */
+.template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+.template-card { display: flex; flex-direction: column; gap: 8px; }
+.template-card h3 { margin: 0; }
+.template-card .btn { margin-top: auto; }
+.tpl-phone { border: 6px solid var(--ink); border-radius: 26px; overflow: hidden; background: #faf8fb; color: #1d1426; height: 300px; padding-bottom: 10px; }
+.tpl-cover { height: 70px; background: linear-gradient(135deg, var(--tpl), color-mix(in srgb, var(--tpl) 55%, #fff)); }
+.tpl-id { display: flex; align-items: center; gap: 8px; margin: -20px 12px 8px; }
+.tpl-logo { display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--tpl-r); background: #fff; color: var(--tpl); font-weight: 800; box-shadow: 0 2px 8px rgb(0 0 0 / 15%); }
+.tpl-id strong { font-size: 13px; margin-top: 18px; }
+.tpl-cat { margin: 8px 12px 4px; font-size: 11px; font-weight: 800; color: var(--tpl); }
+.tpl-item { display: flex; justify-content: space-between; gap: 6px; margin: 0 12px 4px; padding: 6px 8px; font-size: 11px; border-bottom: 1px solid #ece6f1; }
+.tpl-item.is-card { background: #fff; border: 0; border-radius: var(--tpl-r); box-shadow: 0 1px 4px rgb(0 0 0 / 8%); }
+.tpl-item b { color: var(--tpl); white-space: nowrap; }
+.sample-banner { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; border-inline-start: 4px solid var(--warn); }
+.sample-banner p { margin: 0; }
+#dom-form .row input { flex: 1 1 240px; }
+.tg-format { display: grid; gap: 10px; }
+.check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px 12px; }
+.tg-preview { margin: 0; padding: 12px 14px; border-radius: 14px; background: #e6f3fb; color: #12324a; white-space: pre-wrap; font: inherit; font-size: .95rem; min-height: 3em; }
+.tg-edit { flex-basis: 100%; display: grid; gap: 10px; padding-top: 8px; }

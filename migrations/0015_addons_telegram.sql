@@ -15,6 +15,8 @@ CREATE TABLE telegram_links (
   chat_id TEXT NOT NULL,
   chat_title TEXT NOT NULL DEFAULT '',
   events_json TEXT NOT NULL DEFAULT '["orders"]',
+  -- What an order message shows, and an optional heading the owner writes.
+  format_json TEXT NOT NULL DEFAULT '{}',
   created_at INTEGER NOT NULL,
   UNIQUE (org_id, chat_id)
 );
@@ -26,5 +28,6 @@ CREATE TABLE telegram_codes (
   org_id TEXT NOT NULL REFERENCES orgs(id),
   branch_id TEXT REFERENCES branches(id),
   events_json TEXT NOT NULL,
+  format_json TEXT NOT NULL DEFAULT '{}',
   expires_at INTEGER NOT NULL
 );

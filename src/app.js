@@ -8,6 +8,8 @@ import { registerAccounts, expireSubscriptions } from './accounts.js';
 import { consumeMfa } from './mfa.js';
 import { registerFeatures } from './features.js';
 import { registerAddons, publicAddons } from './addons.js';
+import { registerTemplates } from './templates.js';
+import { registerDomains, customHostRedirect } from './domains.js';
 import { registerIntegrations } from './integrations.js';
 import { registerBilling, reconcileCheckouts, subscriptionCheckoutConfigured } from './billing.js';
 import { registerMail } from './mail.js';
@@ -388,7 +390,7 @@ owner.patch('/items/:id', async (c) => {
   const cat = await c.env.DB.prepare('SELECT id FROM categories WHERE id = ? AND org_id = ?').bind(b.category_id, u.org_id).first();
   if (!cat) throw bad('invalid_category_id');
   const res = await c.env.DB.prepare(
-    'UPDATE items SET category_id = ?, name_ar = ?, name_en = ?, desc_ar = ?, desc_en = ?, price = ?, calories = ?, image_url = ?, sort = ?, compare_price = ?, allergens = ?, caffeine_mg = ?, sodium_mg = ?, options_json = ?, active = ? WHERE id = ? AND org_id = ?',
+    'UPDATE items SET category_id = ?, name_ar = ?, name_en = ?, desc_ar = ?, desc_en = ?, price = ?, calories = ?, image_url = ?, sort = ?, compare_price = ?, allergens = ?, caffeine_mg = ?, sodium_mg = ?, options_json = ?, active = ?, is_sample = 0 WHERE id = ? AND org_id = ?',
   )
     .bind(cat.id, ...itemFields(b), b.active === false ? 0 : 1, c.req.param('id'), u.org_id)
     .run();
@@ -640,10 +642,10 @@ async function orgMenu(env, orgId, { branchId = null, includeHidden = false } = 
   const active = includeHidden ? '' : 'AND active = 1';
   const { results: categories } = await env.DB.prepare(`SELECT id, name_ar, name_en, sort, active FROM categories WHERE org_id = ? ${active} ORDER BY sort, rowid`).bind(orgId).all();
   const { results: items } = await env.DB.prepare(
-    `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.compare_price, i.calories, i.caffeine_mg, i.sodium_mg, i.allergens, i.options_json, i.image_url, i.sort, i.active,
+    `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.compare_price, i.calories, i.caffeine_mg, i.sodium_mg, i.allergens, i.options_json, i.image_url, i.sort, i.active, i.is_sample,
             CASE WHEN bu.item_id IS NULL THEN 1 ELSE 0 END AS available
        FROM items i JOIN categories category ON category.id = i.category_id AND category.org_id = i.org_id LEFT JOIN branch_unavailable bu ON bu.item_id = i.id AND bu.branch_id = ?
-      WHERE i.org_id = ? ${includeHidden ? '' : 'AND i.active = 1 AND category.active = 1'} ORDER BY i.sort, i.rowid`,
+      WHERE i.org_id = ? ${includeHidden ? '' : 'AND i.active = 1 AND i.is_sample = 0 AND category.active = 1'} ORDER BY i.sort, i.rowid`,
   )
     .bind(branchId, orgId)
     .all();
@@ -817,6 +819,8 @@ export async function scheduled(env, fetcher) {
 // Asset paths without .html: the assets layer redirects *.html to the clean URL.
 registerFeatures(app);
 registerAddons(app);
+registerTemplates(app);
+registerDomains(app);
 registerIntegrations(app, { onTicketReady: (env, ticketId) => alertTicket(env, ticketId) });
 
 registerDemo(app);
@@ -826,6 +830,8 @@ const PAGES = { '/p/': '/profile', '/m/': '/menu', '/t/': '/ticket', '/c/': '/ca
 app.get('*', async (c) => {
   const path = new URL(c.req.url).pathname;
   if (path.startsWith('/api/')) throw notFound();
+  const own = await customHostRedirect(c);
+  if (own) return own;
   for (const [prefix, page] of Object.entries(PAGES)) {
     if (path.startsWith(prefix) && path.length > prefix.length) {
       return c.env.ASSETS.fetch(new Request(new URL(page, c.req.url), c.req.raw));

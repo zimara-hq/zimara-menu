@@ -106,17 +106,35 @@ export async function tgSend(env, chatId, message, fetcher = fetch) {
 
 const sar = (h) => (h / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ر.س';
 
-export function orderMessage(order, branchName, base) {
-  const lines = JSON.parse(order.items_json || '[]').map((l) => {
-    const opts = (l.options || []).map((o) => o.name_ar).join('، ');
-    return `• ${l.quantity}× ${l.name_ar || l.name_en}${opts ? ` (${opts})` : ''}`;
-  });
+// Parts an order message can show. The owner picks any of them per chat.
+export const ORDER_FIELDS = ['branch', 'items', 'options', 'prices', 'note', 'total', 'time', 'link'];
+const DEFAULT_FIELDS = ['branch', 'items', 'options', 'note', 'total', 'link'];
+
+export function normalizeFormat(f) {
+  if (f === undefined || f === null) return { fields: DEFAULT_FIELDS, title: null };
+  if (typeof f !== 'object' || Array.isArray(f)) throw bad('invalid_format');
+  const fields = Array.isArray(f.fields) ? ORDER_FIELDS.filter((x) => f.fields.includes(x)) : DEFAULT_FIELDS;
+  if (!fields.includes('items') && !fields.includes('total')) throw bad('invalid_format');
+  return { fields, title: text(f.title, 'format', 60) };
+}
+
+const storedFormat = (s) => { try { const f = JSON.parse(s || '{}'); return f.fields ? f : normalizeFormat(null); } catch { return normalizeFormat(null); } };
+
+export function orderMessage(order, branchName, base, format = {}) {
+  const fields = new Set(format.fields || DEFAULT_FIELDS);
+  const title = format.title || '🛎️ طلب جديد';
+  const lines = fields.has('items') ? JSON.parse(order.items_json || '[]').map((l) => {
+    const opts = fields.has('options') ? (l.options || []).map((o) => o.name_ar).join('، ') : '';
+    return `• ${l.quantity}× ${l.name_ar || l.name_en}${opts ? ` (${opts})` : ''}${fields.has('prices') ? ` · ${sar(l.total)}` : ''}`;
+  }) : [];
+  const time = new Date(order.created_at || Date.now()).toLocaleTimeString('ar-SA-u-nu-latn', { timeZone: 'Asia/Riyadh', hour: '2-digit', minute: '2-digit' });
   return [
-    `🛎️ طلب جديد · ${branchName}`,
+    fields.has('branch') ? `${title} · ${branchName}` : title,
     ...lines,
-    order.note ? `ملاحظة: ${order.note}` : null,
-    `الإجمالي: ${sar(order.total)}`,
-    base ? `افتح الطلبات: ${base.replace(/\/$/, '')}/app#inbox` : null,
+    fields.has('note') && order.note ? `ملاحظة: ${order.note}` : null,
+    fields.has('total') ? `الإجمالي: ${sar(order.total)}` : null,
+    fields.has('time') ? `الوقت: ${time}` : null,
+    fields.has('link') && base ? `افتح الطلبات: ${base.replace(/\/$/, '')}/app#inbox` : null,
   ].filter(Boolean).join('\n');
 }
 
@@ -124,12 +142,13 @@ export function orderMessage(order, branchName, base) {
 export async function notifyTelegram(env, orgId, branchId, event, message, fetcher = fetch) {
   if (!telegramConfigured(env)) return 0;
   const { results } = await env.DB.prepare(
-    'SELECT chat_id, events_json FROM telegram_links WHERE org_id=? AND (branch_id IS NULL OR branch_id=?)',
+    'SELECT chat_id, events_json, format_json FROM telegram_links WHERE org_id=? AND (branch_id IS NULL OR branch_id=?)',
   ).bind(orgId, branchId ?? '').all();
   let sent = 0;
   for (const r of results) {
     if (!JSON.parse(r.events_json || '[]').includes(event)) continue;
-    try { if (await tgSend(env, r.chat_id, message, fetcher)) sent++; } catch { /* one chat failing never blocks the rest */ }
+    const text = typeof message === 'function' ? message(JSON.parse(r.format_json || '{}')) : message;
+    try { if (await tgSend(env, r.chat_id, text, fetcher)) sent++; } catch { /* one chat failing never blocks the rest */ }
   }
   return sent;
 }
@@ -165,8 +184,8 @@ async function handleUpdate(env, update, fetcher) {
   await env.DB.batch([
     env.DB.prepare('DELETE FROM telegram_codes WHERE code=?').bind(code),
     env.DB.prepare(
-      'INSERT INTO telegram_links(id,org_id,branch_id,chat_id,chat_title,events_json,created_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(org_id,chat_id) DO UPDATE SET branch_id=excluded.branch_id, events_json=excluded.events_json, chat_title=excluded.chat_title',
-    ).bind(id(), row.org_id, row.branch_id, String(chatId), title, row.events_json, now()),
+      'INSERT INTO telegram_links(id,org_id,branch_id,chat_id,chat_title,events_json,format_json,created_at) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(org_id,chat_id) DO UPDATE SET branch_id=excluded.branch_id, events_json=excluded.events_json, format_json=excluded.format_json, chat_title=excluded.chat_title',
+    ).bind(id(), row.org_id, row.branch_id, String(chatId), title, row.events_json, row.format_json || '{}', now()),
   ]);
   const org = await env.DB.prepare('SELECT name_ar FROM orgs WHERE id=?').bind(row.org_id).first();
   await tgSend(env, chatId, `✅ تم الربط مع ${org?.name_ar || 'منشأتك'}. ستصلك الإشعارات هنا. لإيقافها أرسل /stop`, fetcher);
@@ -209,12 +228,13 @@ export function registerAddons(app, { fetcher } = {}) {
 
   app.get('/api/owner/telegram', owner, async (c) => {
     const { results } = await c.env.DB.prepare(
-      'SELECT l.id,l.branch_id,l.chat_title,l.events_json,l.created_at,b.name_ar AS branch_ar,b.name_en AS branch_en FROM telegram_links l LEFT JOIN branches b ON b.id=l.branch_id WHERE l.org_id=? ORDER BY l.created_at',
+      'SELECT l.id,l.branch_id,l.chat_title,l.events_json,l.format_json,l.created_at,b.name_ar AS branch_ar,b.name_en AS branch_en FROM telegram_links l LEFT JOIN branches b ON b.id=l.branch_id WHERE l.org_id=? ORDER BY l.created_at',
     ).bind(c.get('user').org_id).all();
     return c.json({
       configured: telegramConfigured(c.env),
       bot: c.env.TELEGRAM_BOT_USERNAME || null,
-      links: results.map(({ events_json, ...r }) => ({ ...r, events: JSON.parse(events_json || '[]') })),
+      links: results.map(({ events_json, format_json, ...r }) => ({ ...r, events: JSON.parse(events_json || '[]'), format: storedFormat(format_json) })),
+      fields: ORDER_FIELDS,
     });
   });
 
@@ -231,16 +251,39 @@ export function registerAddons(app, { fetcher } = {}) {
       if (!br) throw bad('invalid_branch_id');
       branchId = br.id;
     }
+    const format = normalizeFormat(b.format);
     const code = shortCode(8);
     const expires = now() + CODE_TTL;
     await c.env.DB.batch([
       c.env.DB.prepare('DELETE FROM telegram_codes WHERE expires_at<?').bind(now()),
-      c.env.DB.prepare('INSERT INTO telegram_codes(code,org_id,branch_id,events_json,expires_at) VALUES(?,?,?,?,?)').bind(code, user.org_id, branchId, JSON.stringify(events), expires),
+      c.env.DB.prepare('INSERT INTO telegram_codes(code,org_id,branch_id,events_json,format_json,expires_at) VALUES(?,?,?,?,?,?)').bind(code, user.org_id, branchId, JSON.stringify(events), JSON.stringify(format), expires),
       c.env.DB.prepare(
         "INSERT INTO org_addons(org_id,addon,config_json,updated_at) VALUES(?,'telegram','{}',?) ON CONFLICT(org_id,addon) DO NOTHING",
       ).bind(user.org_id, now()),
     ]);
     return c.json({ code, expires_at: expires, link: `https://t.me/${c.env.TELEGRAM_BOT_USERNAME}?start=${code}` }, 201);
+  });
+
+  // Change what a linked chat receives, without linking it again.
+  app.patch('/api/owner/telegram/:id', owner, async (c) => {
+    const b = await body(c);
+    const events = Array.isArray(b.events) ? [...new Set(b.events)].filter((e) => EVENTS.includes(e)) : [];
+    if (!events.length) throw bad('invalid_events');
+    const format = normalizeFormat(b.format);
+    const r = await c.env.DB.prepare('UPDATE telegram_links SET events_json=?, format_json=? WHERE id=? AND org_id=?')
+      .bind(JSON.stringify(events), JSON.stringify(format), c.req.param('id'), c.get('user').org_id).run();
+    if (!r.meta?.changes) throw notFound();
+    return c.json({ ok: true, events, format });
+  });
+
+  // Shows the owner exactly what a message will look like with the chosen parts.
+  app.post('/api/owner/telegram/preview', owner, async (c) => {
+    const format = normalizeFormat((await body(c)).format);
+    const sample = { total: 4600, note: 'بدون سكر', created_at: now(), items_json: JSON.stringify([
+      { quantity: 2, name_ar: 'لاتيه', total: 3400, options: [{ name_ar: 'كبير' }, { name_ar: 'حليب شوفان' }] },
+      { quantity: 1, name_ar: 'كروسان', total: 1200, options: [] },
+    ]) };
+    return c.json({ text: orderMessage(sample, 'الفرع الرئيسي', c.env.PUBLIC_BASE_URL || 'https://menu.zimara.co', format) });
   });
 
   app.delete('/api/owner/telegram/:id', owner, async (c) => {
