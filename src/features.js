@@ -1,5 +1,6 @@
 import { itemView, priceWithOptions } from './menu-extras.js';
 import { DEFAULT_THEME, validateTheme } from './identity.js';
+import { publicAddons, notifyTelegram, orderMessage, later } from './addons.js';
 import { loadUser, verifyPassword } from './auth.js';
 import {
   requireRole,
@@ -693,6 +694,7 @@ export function registerFeatures(app) {
       org: info,
       profile,
       loyalty: program || null,
+      addons: await publicAddons(c.env, org.id),
       branches: branches.map((b) => ({
         ...branchPublic(b),
         settings:
@@ -999,7 +1001,7 @@ export function registerFeatures(app) {
         ],
       ),
     );
-    await c.env.DB.prepare(
+    const inserted = await c.env.DB.prepare(
       'INSERT INTO customer_orders(id,org_id,branch_id,token,idem_key,fingerprint,total,items_json,note,created_at) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(branch_id,idem_key) DO NOTHING',
     )
       .bind(
@@ -1021,6 +1023,10 @@ export function registerFeatures(app) {
       .bind(branch.id, key)
       .first();
     if (order.fingerprint !== fingerprint) throw conflict('idem_key_reused');
+    if (inserted.meta?.changes) {
+      const pending = later(c, notifyTelegram(c.env, branch.org_id, branch.id, 'orders', orderMessage(order, branch.name_ar, c.env.PUBLIC_BASE_URL)));
+      if (pending) await pending;
+    }
     return c.json({ order: orderView(order) }, 201);
   });
   app.get('/api/public/order/:token', async (c) => {

@@ -611,3 +611,28 @@ form .error:empty { display: none; }
 .order-lines small { display: block; color: var(--muted); }
 .allergen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
 .option-group-editor { border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 10px; }
+
+/* Add-ons: announcement bar, FAQ, WhatsApp button, pixel consent */
+.announce-bar { display: block; padding: 10px 16px; text-align: center; font-weight: 700; background: var(--accent); color: var(--on-accent); text-decoration: none; }
+.announce-bar.tone-offer { background: #f94500; color: #fff; }
+.announce-bar.tone-notice { background: var(--solar); color: var(--indigo); }
+a.announce-bar:hover { text-decoration: underline; }
+.faq-block details { border-top: 1px solid var(--line); padding: 12px 0; }
+.faq-block details:first-of-type { border-top: 0; }
+.faq-block summary { cursor: pointer; font-weight: 700; }
+.faq-block details p { margin: 8px 0 0; color: var(--muted); }
+.wa-float { position: fixed; inset-inline-end: 16px; inset-block-end: 16px; z-index: 40; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: #1f9d55; color: #fff; box-shadow: 0 6px 20px rgb(0 0 0 / 22%); }
+.wa-float:focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; }
+body.menu-page .wa-float { inset-block-end: 88px; }
+.consent-bar { position: fixed; inset-inline: 12px; inset-block-end: 12px; z-index: 50; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: var(--radius); background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 10px 30px rgb(0 0 0 / 18%); max-width: 640px; margin-inline: auto; }
+.consent-bar p { margin: 0; flex: 1 1 260px; }
+.consent-bar div { display: flex; gap: 8px; }
+/* Add-on store (owner) */
+.addon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.addon-card { display: flex; flex-direction: column; gap: 10px; }
+.addon-card header { display: flex; gap: 12px; align-items: center; }
+.addon-ico { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--line); color: var(--ink); font-weight: 800; font-size: 13px; flex: none; }
+.addon-card h3 { margin: 0; font-size: 1.05rem; }
+.addon-card .actions { display: flex; gap: 8px; margin-top: auto; flex-wrap: wrap; }
+.addon-group-title { margin: 24px 0 10px; }
+.tg-code { font-family: ui-monospace, monospace; font-size: 1.4rem; letter-spacing: .15em; direction: ltr; }

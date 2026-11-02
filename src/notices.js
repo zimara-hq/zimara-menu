@@ -1,6 +1,7 @@
 import { mailConfigured, send } from './mail.js';
 import { PLANS } from './context.js';
 import { now } from './util.js';
+import { notifyTelegram } from './addons.js';
 
 // Billing emails. Each (org, kind, period_end) is sent at most once, recorded before sending so a
 // retry never double-mails; a failed send is logged by removing the record so the next run retries.
@@ -59,6 +60,7 @@ export async function sendBillingNotices(env) {
               : `ينتهي اشتراكك في باقة ${planName(s.plan)} في ${date}. جدّد الآن حتى لا يتوقف المنيو والتنبيه.`,
           ], `${base(env)}/app#subscription`, trial ? 'اختر باقتك' : 'جدّد الآن', 'وصلتك هذه الرسالة لأنك مالك حساب في زيمارا منيو.');
         }
+        await notifyTelegram(env, s.org_id, null, 'billing', trial ? `⏳ تجربتك في زيمارا منيو تنتهي في ${date}. ${base(env)}/app#subscription` : `🔁 موعد تجديد اشتراكك في ${date}. ${base(env)}/app#subscription`).catch(() => {});
       });
     } catch { /* retried next hour */ }
   }
