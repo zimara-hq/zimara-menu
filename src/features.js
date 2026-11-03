@@ -1,4 +1,5 @@
 import { activeDesign } from './design.js';
+import { publish } from './realtime.js';
 import { itemView, priceWithOptions } from './menu-extras.js';
 import { DEFAULT_THEME, validateTheme } from './identity.js';
 import { publicAddons, notifyTelegram, orderMessage, orderButtons, later } from './addons.js';
@@ -1035,6 +1036,7 @@ export function registerFeatures(app) {
       )
       .run();
     if (inserted.meta?.changes && extra.statements.length) await c.env.DB.batch(extra.statements);
+    if (inserted.meta?.changes) await publish(c.env, branch.id, 'order', { status: 'pending' });
     const order = await c.env.DB.prepare(
       'SELECT * FROM customer_orders WHERE branch_id=? AND idem_key=?',
     )

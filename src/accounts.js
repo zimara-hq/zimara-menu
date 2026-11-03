@@ -1,4 +1,4 @@
-import { createSession, sessionCookie, hashPassword, verifyPassword } from './auth.js';
+import { createSession, sessionCookie, hashPassword, verifyPassword, deviceLabel } from './auth.js';
 import { body, requireRole, audit, newUser, isSecure, rateLimit, PLANS, subscriptionFor, adminMfaRequired } from './context.js';
 import { bad, HttpError, conflict, id, now, randomToken, hmac, slugify, str } from './util.js';
 import { newMfaSecret, sealSecret, openSecret, verifyTotp } from './mfa.js';
@@ -39,7 +39,7 @@ export function registerAccounts(app) {
     let emailStatus='needs_provider';
     try { emailStatus=await sendVerification(c.env,{id:user.id,email:user.email,name:user.name}); } catch { emailStatus='send_failed'; }
     await audit(c.env,{id:user.id,org_id:orgId},'org.signup',{slug,sector,requested_plan:requestedPlan});
-    const token = await createSession(c.env,user.id);
+    const token = await createSession(c.env,user.id,false,{label:deviceLabel(c.req.header('user-agent')),via:'signup'});
     c.header('Set-Cookie',sessionCookie(token,isSecure(c)));
     return c.json({ok:true,org:{id:orgId,slug},branch:{id:branchId,slug:branchSlug},user:{role:'owner'},subscription:{plan:'pro',status:'trial',trial_ends_at:trialEnd,requested_plan:requestedPlan},emailVerification:{status:emailStatus}},201);
   });

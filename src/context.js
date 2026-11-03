@@ -62,7 +62,8 @@ export function requireRole(...roles) {
       if (!['GET', 'HEAD'].includes(c.req.method) && !c.req.path.endsWith('/subscription/cancel') && !c.req.path.startsWith('/api/me/')) await assertOrgWritable(c.env, user);
     }
     if (user.role === 'admin' && adminMfaRequired(c.env) && !c.req.path.startsWith('/api/me')) {
-      if (!user.mfa_enabled) throw forbidden('mfa_enrollment_required');
+      // A passkey sign-in is phishing-resistant and verified on the device, so it counts as MFA.
+      if (!user.mfa_enabled && user.via !== 'passkey') throw forbidden('mfa_enrollment_required');
       if (!user.mfa_verified) throw forbidden('mfa_required');
     }
     c.set('user', user);

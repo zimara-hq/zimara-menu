@@ -1,6 +1,7 @@
 // Accepting and rejecting a guest order. Shared by the cashier inbox and the
 // Telegram buttons, so both follow the same version check and ticket numbering.
 import { conflict, notFound, id, now, randomToken } from './util.js';
+import { publish } from './realtime.js';
 
 export const ORDER_TTL = 12 * 3600 * 1000;
 
@@ -22,6 +23,8 @@ export async function acceptOrder(env, { orgId, branchId, orderId, version, invo
   if (!result[0].meta.changes) throw conflict('stale_order');
   const ticket = await env.DB.prepare('SELECT id,number,token FROM tickets WHERE id=?').bind(ticketId).first();
   const updated = await env.DB.prepare('SELECT * FROM customer_orders WHERE id=? AND branch_id=?').bind(orderId, branchId).first();
+  await publish(env, branchId, 'order', { id: orderId, status: 'accepted' });
+  await publish(env, branchId, 'ticket', { id: ticket.id });
   return { ticket, order: updated };
 }
 
@@ -35,4 +38,5 @@ export async function rejectOrder(env, { branchId, orderId, version }) {
     "UPDATE customer_orders SET status='rejected',version=version+1 WHERE id=? AND branch_id=? AND status='pending' AND version=?",
   ).bind(orderId, branchId, version).run();
   if (!result.meta.changes) throw conflict('stale_order');
+  await publish(env, branchId, 'order', { id: orderId, status: 'rejected' });
 }

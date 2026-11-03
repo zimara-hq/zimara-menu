@@ -31,17 +31,38 @@ export function validPassword(p) {
   return typeof p === 'string' && p.length >= 10 && p.length <= 200;
 }
 
-export async function createSession(env, userId, mfaVerified = false) {
+const APP_SESSION_MS = 1000 * 60 * 60 * 24 * 60;
+const SEEN_EVERY_MS = 5 * 60 * 1000;
+
+// kind: 'web' (cookie) or 'app' (bearer token for the phone apps, 60 days).
+// label: a short device name the owner sees in "your devices".
+export async function createSession(env, userId, mfaVerified = false, { kind = 'web', label = null, via = 'password' } = {}) {
   const token = randomToken(32);
   const sid = await hmac(env.AUTH_SECRET, 'session:' + token);
   const t = now();
   const demo = await env.DB.prepare('SELECT d.expires_at FROM demo_rooms d JOIN users u ON u.org_id = d.org_id WHERE u.id = ?').bind(userId).first();
   if (demo && demo.expires_at <= t) throw new HttpError(410, 'demo_expired');
-  const expiresAt = demo ? Math.min(t + SESSION_MS, demo.expires_at) : t + SESSION_MS;
-  await env.DB.prepare('INSERT INTO sessions (id, user_id, expires_at, created_at, mfa_verified) VALUES (?, ?, ?, ?, ?)')
-    .bind(sid, userId, expiresAt, t, mfaVerified ? 1 : 0)
+  const ttl = kind === 'app' ? APP_SESSION_MS : SESSION_MS;
+  const expiresAt = demo ? Math.min(t + ttl, demo.expires_at) : t + ttl;
+  await env.DB.prepare('INSERT INTO sessions (id, user_id, expires_at, created_at, mfa_verified, kind, label, last_seen_at, via) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(sid, userId, expiresAt, t, mfaVerified ? 1 : 0, kind, label ? String(label).slice(0, 80) : null, t, via)
     .run();
   return token;
+}
+
+// A readable device name from the browser's user agent, never stored raw.
+export function deviceLabel(ua = '') {
+  const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Mac OS X/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : '';
+  const br = /Edg\//.test(ua) ? 'Edge' : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /FxiOS|Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '';
+  return [os, br].filter(Boolean).join(' · ') || null;
+}
+
+function sessionToken(req) {
+  const cookie = readCookie(req, COOKIE);
+  if (cookie) return cookie;
+  const auth = req.headers.get('authorization') || '';
+  const m = auth.match(/^Bearer ([A-Za-z0-9_-]{20,100})$/);
+  return m ? m[1] : null;
 }
 
 export function sessionCookie(token, secure) {
@@ -64,22 +85,23 @@ export function readCookie(req, name) {
 }
 
 export async function loadUser(env, req) {
-  const token = readCookie(req, COOKIE);
+  const token = sessionToken(req);
   if (!token) return null;
   const sid = await hmac(env.AUTH_SECRET, 'session:' + token);
   const row = await env.DB.prepare(
-    `SELECT u.id, u.email, u.name, u.role, u.org_id, u.branch_id, u.email_verified, CASE WHEN u.mfa_secret IS NULL THEN 0 ELSE 1 END AS mfa_enabled, s.mfa_verified, s.id AS sid
+    `SELECT u.id, u.email, u.name, u.role, u.org_id, u.branch_id, u.email_verified, CASE WHEN u.mfa_secret IS NULL THEN 0 ELSE 1 END AS mfa_enabled, s.mfa_verified, s.id AS sid, s.via, s.kind AS session_kind
        FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.id = ? AND s.expires_at > ? AND u.disabled = 0
         AND NOT EXISTS (SELECT 1 FROM demo_rooms d WHERE d.org_id = u.org_id AND d.expires_at <= ?)`,
   )
     .bind(sid, now(), now())
     .first();
+  if (row) await env.DB.prepare('UPDATE sessions SET last_seen_at = ? WHERE id = ? AND (last_seen_at IS NULL OR last_seen_at < ?)').bind(now(), sid, now() - SEEN_EVERY_MS).run();
   return row || null;
 }
 
 export async function destroySession(env, req) {
-  const token = readCookie(req, COOKIE);
+  const token = sessionToken(req);
   if (!token) return;
   const sid = await hmac(env.AUTH_SECRET, 'session:' + token);
   await env.DB.prepare('DELETE FROM sessions WHERE id = ?').bind(sid).run();

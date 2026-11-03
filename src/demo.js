@@ -1,5 +1,5 @@
 import { sampleMenuStatements } from './sample-menu.js';
-import { createSession, sessionCookie, hashPassword } from './auth.js';
+import { createSession, sessionCookie, hashPassword,deviceLabel} from './auth.js';
 import { body, isSecure, rateLimit } from './context.js';
 import { id, randomToken, hmac, now, HttpError, bad, notFound } from './util.js';
 const HOUR = 3600000;
@@ -54,7 +54,7 @@ export function registerDemo(app) {
   const room=await findRoom(c),b=await body(c);
   if(!['owner','branch'].includes(b.role))throw bad('invalid_role');
   const userId=b.role==='owner'?room.owner_id:room.cashier_id;
-  const token=await createSession(c.env,userId);
+  const token=await createSession(c.env,userId,false,{label:deviceLabel(c.req.header('user-agent')),via:'demo'});
   await c.env.DB.prepare('UPDATE sessions SET expires_at=? WHERE id=?').bind(room.expires_at,await hmac(c.env.AUTH_SECRET,'session:'+token)).run();
   c.header('Set-Cookie',sessionCookie(token,isSecure(c)));
   return c.json({ok:true,role:b.role,expires_at:room.expires_at,redirect:'/app'});

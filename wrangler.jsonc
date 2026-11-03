@@ -23,6 +23,9 @@
     }
   ],
   "triggers": { "crons": ["* * * * *"] },
+  // Live updates: one hub per branch for cashier screens, dashboards and apps.
+  "durable_objects": { "bindings": [{ "name": "HUB", "class_name": "BranchHub" }] },
+  "migrations": [{ "tag": "v1-branch-hub", "new_sqlite_classes": ["BranchHub"] }],
   "vars": { "ENVIRONMENT": "production" },
   // VAPID_PUBLIC_KEY is not secret, but keeping all four together lets .dev.vars and
   // `wrangler secret put` configure push the same way.

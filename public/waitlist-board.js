@@ -1,6 +1,7 @@
 // Waitlist screens: the branch's live list (call, seat, no-show, walk-ins) and the
 // owner's per-branch settings with a printable "join the waitlist" QR code.
 import { api, esc, lang, pick, qrSvg, announce, chime, relTime } from './common.js';
+import { onLive } from './realtime.js';
 const a = (ar, en) => (lang === 'ar' ? ar : en);
 let gen = 0;
 
@@ -73,6 +74,7 @@ export async function waitlistBoard(el) {
   };
   const refresh = async () => { try { data = await api('/api/branch/waitlist'); if (my === gen && el.querySelector('#wl-board')) draw(); } catch {} };
   draw();
+  onLive(el.querySelector('#wl-board'), ['waitlist'], () => refresh());
   const loop = async () => { if (my !== gen || !el.querySelector('#wl-board')) return; await refresh(); setTimeout(loop, 5000); };
   setTimeout(loop, 5000);
 }

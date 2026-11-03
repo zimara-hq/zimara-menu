@@ -1,4 +1,5 @@
 import {branchesView} from './branches.js';
+import { startLive, onLive } from './realtime.js';
 import {canLeaveWorkspace} from './forms.js';
 import {identityView,fontEditor} from './identity.js';
 import {profileEditor} from './profile-editor.js';
@@ -12,6 +13,7 @@ import { designStudio } from './design-studio.js';
 import { couponsView } from './ordering-admin.js';
 import { waitlistBoard } from './waitlist-board.js';
 import { loyaltyAdmin } from './loyalty-admin.js';
+import { securityPanel } from './security-ui.js';
 import { importView, subscriptionView, integrationsView, devicesView, menuOrdersView, branchSettingsView, mfaView, dataControlsView, adminLegalView } from './dashboard-panels.js';
 
 const t = makeT({
@@ -137,9 +139,10 @@ function accountView(el) {
   el.innerHTML = `<form novalidate class="card stack narrow" id="pw"><h2>${esc(t('account'))}</h2><p class="muted">${esc(me.user.email)}</p>
     ${field('current', t('current'), 'type="password" autocomplete="current-password" required')}
     ${field('next', t('next'), 'type="password" autocomplete="new-password" minlength="10" required')}
-    <div id="m"></div><button class="btn">${esc(t('save'))}</button></form><div class="card narrow" id="account-security"></div>${me.user.role === 'owner' ? '<div class="card" id="account-data"></div>' : ''}`;
+    <div id="m"></div><button class="btn">${esc(t('save'))}</button></form><div class="card narrow" id="account-security"></div><div class="card narrow stack" id="account-devices"></div>${me.user.role === 'owner' ? '<div class="card" id="account-data"></div>' : ''}`;
   if (me.user.role === 'owner') dataControlsView(el.querySelector('#account-data')).catch(e => flash(el.querySelector('#account-data'), errMsg(e), true));
   mfaView(el.querySelector('#account-security')).catch(e => flash(el.querySelector('#account-security'), errMsg(e), true));
+  securityPanel(el.querySelector('#account-devices')).catch(e => flash(el.querySelector('#account-devices'), errMsg(e), true));
   el.querySelector('#pw').onsubmit = async (e) => {
     e.preventDefault();
     try {
@@ -517,6 +520,7 @@ async function branchOrders(el) {
     if (el.isConnected) boardTimer = setTimeout(refresh, 4000);
   }
   refresh();
+  onLive(el.querySelector('#prep'), ['ticket', 'order'], () => refresh());
 }
 
 function printTicket(tk, link) {
@@ -655,6 +659,9 @@ const heading = document.createElement('div');
 heading.className = 'workspace-heading';
 heading.innerHTML = `<div><h1>${esc(me.user.role === 'admin' ? t('admin') : me.user.role === 'owner' ? t('owner') : t('branch'))}</h1><p class="muted">${esc(subtitle)}</p></div>${me.user.role === 'owner' && me.org?.slug ? `<a class="btn ghost sm heading-link" href="/p/${esc(me.org.slug)}" target="_blank" rel="noopener">${lang === 'ar' ? 'عرض صفحتي العامة' : 'View public page'} ↗</a>` : me.branch?.slug ? `<a class="btn ghost sm heading-link" href="/m/${esc(me.branch.slug)}" target="_blank" rel="noopener">${lang === 'ar' ? 'عرض المنيو' : 'View menu'} ↗</a>` : ''}`;
 main.before(heading);
+
+// Staff screens get live updates (new orders, tickets, waitlist) without waiting for the next poll.
+if (me.user.role === 'branch') startLive();
 
 const views = {
   admin: [['orgs', t('orgs'), adminOrgs], ['admins', t('admins'), adminAdmins], ['legal', lang === 'ar' ? 'البيانات القانونية' : 'Legal details', adminLegalView], ['account', t('account'), accountView]],
