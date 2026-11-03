@@ -8,6 +8,10 @@ import { ApiError, api, chime, esc, lang, makeT, money, pick, qrSvg, relTime, se
 import { imageField, wireImageFields } from './uploads.js';
 import { addonsView } from './addons-store.js';
 import { templatesView, domainView } from './studio-extras.js';
+import { designStudio } from './design-studio.js';
+import { couponsView } from './ordering-admin.js';
+import { waitlistBoard } from './waitlist-board.js';
+import { loyaltyAdmin } from './loyalty-admin.js';
 import { importView, subscriptionView, integrationsView, devicesView, menuOrdersView, branchSettingsView, mfaView, dataControlsView, adminLegalView } from './dashboard-panels.js';
 
 const t = makeT({
@@ -214,6 +218,10 @@ const ICON = {
 };
 const A = (ar, en) => (lang === 'ar' ? ar : en);
 
+const BADGES = [
+  ['new', 'جديد', 'New'], ['popular', 'الأكثر طلبًا', 'Popular'], ['chef', 'اختيار الشيف', "Chef's pick"], ['spicy', 'حار', 'Spicy'],
+  ['vegan', 'نباتي صرف', 'Vegan'], ['vegetarian', 'نباتي', 'Vegetarian'], ['healthy', 'صحي', 'Healthy'], ['limited', 'لفترة محدودة', 'Limited time'],
+];
 const ALLERGENS = [
   ['gluten', 'غلوتين (قمح)', 'Gluten'], ['crustaceans', 'قشريات', 'Crustaceans'], ['eggs', 'بيض', 'Eggs'], ['fish', 'سمك', 'Fish'],
   ['peanuts', 'فول سوداني', 'Peanuts'], ['soy', 'صويا', 'Soy'], ['milk', 'حليب', 'Milk'], ['tree_nuts', 'مكسرات', 'Tree nuts'],
@@ -264,6 +272,7 @@ async function ownerMenu(el) {
     <div class="row">${field('name_ar', t('nameAr'), `required value="${esc(i.name_ar || '')}"`, p)}${field('name_en', t('nameEn'), `required value="${esc(i.name_en || '')}"`, p)}</div>
     <div class="row">${field('desc_ar', t('descAr'), `value="${esc(i.desc_ar || '')}"`, p)}${field('desc_en', t('descEn'), `value="${esc(i.desc_en || '')}"`, p)}</div>
     ${imageField('image_url', A('صورة الصنف', 'Item photo'), i.image_url || '', p)}
+    <fieldset class="opt-group"><legend>${A('شارات تظهر على الصنف (حتى 3)', 'Badges on the dish (up to 3)')}</legend><div class="allergen-grid">${BADGES.map(([k, ar, en]) => `<label class="check"><input type="checkbox" data-badge value="${k}" ${i.badges?.includes(k) ? 'checked' : ''}> ${esc(A(ar, en))}</label>`).join('')}</div></fieldset>
     <details class="item-more"${i.compare_price || i.allergens?.length || i.options?.length || i.caffeine_mg != null || i.sodium_mg != null ? ' open' : ''}><summary>${A('عرض وأحجام ومعلومات غذائية', 'Offer, sizes and nutrition')}</summary><div class="stack">
       <div class="row">${field('compare_price', A('السعر قبل الخصم (اختياري)', 'Price before discount (optional)'), `type="number" min="0" step="0.01" inputmode="decimal" value="${i.compare_price != null ? i.compare_price / 100 : ''}"`, p)}${field('caffeine_mg', A('الكافيين (ملغ)', 'Caffeine (mg)'), `type="number" min="0" inputmode="numeric" value="${i.caffeine_mg ?? ''}"`, p)}${field('sodium_mg', A('الصوديوم (ملغ)', 'Sodium (mg)'), `type="number" min="0" inputmode="numeric" value="${i.sodium_mg ?? ''}"`, p)}</div>
       <fieldset class="opt-group"><legend>${A('مسببات الحساسية', 'Allergens')}</legend><div class="allergen-grid">${ALLERGENS.map(([k, ar, en]) => `<label class="check"><input type="checkbox" data-allergen value="${k}" ${i.allergens?.includes(k) ? 'checked' : ''}> ${esc(A(ar, en))}</label>`).join('')}</div></fieldset>
@@ -279,6 +288,7 @@ async function ownerMenu(el) {
     caffeine_mg: v.caffeine_mg === '' || v.caffeine_mg == null ? null : Number(v.caffeine_mg),
     sodium_mg: v.sodium_mg === '' || v.sodium_mg == null ? null : Number(v.sodium_mg),
     allergens: [...form.querySelectorAll('[data-allergen]:checked')].map((x) => x.value),
+    badges: [...form.querySelectorAll('[data-badge]:checked')].map((x) => x.value).slice(0, 3),
     options: readGroups(form),
     sort: Number(v.sort || 0), active: !v.hidden,
   });
@@ -391,29 +401,6 @@ async function ownerMenu(el) {
 }
 
 const ownerOverview=el=>overviewView(el,me);
-
-async function ownerLoyalty(el) {
-  const { program: p } = await api('/api/owner/loyalty');
-  el.innerHTML = `<div class="section-intro"><h2>${esc(t('loyalty'))}</h2><p>${A('بطاقة أختام رقمية: العميل يمسح الرمز مرة واحدة، والكاشير يضيف ختمًا مع كل زيارة.', 'A digital stamp card: customers scan once, the cashier adds a stamp each visit.')}</p></div>
-    <div class="overview-grid">
-    <form novalidate class="card stack" id="f"><h3>${A('إعدادات البرنامج', 'Programme settings')}</h3>
-      ${field('stamps_required', t('stampsReq'), `type="number" min="2" max="50" required value="${p.stamps_required}"`)}
-      ${field('reward_ar', t('rewardAr'), `required value="${esc(p.reward_ar)}"`)}${field('reward_en', t('rewardEn'), `required value="${esc(p.reward_en)}"`)}
-      <label><input type="checkbox" name="active" ${p.active ? 'checked' : ''}> ${esc(t('programOn'))}</label>
-      <div id="m"></div><button class="btn">${esc(t('save'))}</button></form>
-    <div class="card share-card"><h3>${esc(t('joinQr'))}</h3><div class="qr">${qrSvg(`${location.origin}/j/${me.org.slug}`, 5)}</div><p class="device-link"><a href="/j/${esc(me.org.slug)}" target="_blank" rel="noopener" dir="ltr">${esc(location.host)}/j/${esc(me.org.slug)}</a></p><p class="small muted">${A('اطبعه عند الكاشير ليشترك العميل في بطاقة الولاء.', 'Print it at the counter so customers can join.')}</p></div>
-    </div>`;
-  el.querySelector('#f').onsubmit = async (e) => {
-    e.preventDefault();
-    const v = fd(e.target);
-    try {
-      await api('/api/owner/loyalty', { method: 'PUT', body: { stamps_required: Number(v.stamps_required), reward_ar: v.reward_ar, reward_en: v.reward_en, active: Boolean(v.active) } });
-      flash(el.querySelector('#m'), t('saved'));
-    } catch (err) {
-      flash(el.querySelector('#m'), errMsg(err), true);
-    }
-  };
-}
 
 async function ownerStats(el) {
   const s = await api('/api/owner/stats');
@@ -579,15 +566,19 @@ function branchLoyalty(el) {
   let current = null;
   function show(c) {
     current = c;
-    out.innerHTML = `<div class="card stack"><p><strong style="letter-spacing:3px">${esc(c.code)}</strong> · ${esc(t('stampsOf', { n: c.stamps, m: c.program.stamps_required }))}</p>
-      <div class="row"><button class="btn ok big" id="st" type="button">+1 ${esc(t('addStamp'))}</button>
-      <button class="btn warn" id="rd" type="button" ${c.stamps >= c.program.stamps_required ? '' : 'disabled'}>${esc(t('redeemBtn'))}: ${esc(pick(c.program, 'reward'))}</button></div><div id="m"></div></div>`;
+    const pts = c.program.kind === 'points', need = c.program.need || c.program.stamps_required;
+    out.innerHTML = `<div class="card stack"><p><strong style="letter-spacing:3px">${esc(c.code)}</strong> · ${pts ? esc(A(`${c.stamps} نقطة من ${need}`, `${c.stamps} of ${need} points`)) : esc(t('stampsOf', { n: c.stamps, m: need }))}</p>
+      ${pts ? `<label for="bill">${A('مبلغ الفاتورة (ر.س)', 'Bill amount (SAR)')}</label><input id="bill" type="number" min="1" step="0.01" inputmode="decimal" style="max-width:220px">` : ''}
+      <div class="row"><button class="btn ok big" id="st" type="button">${pts ? A('أضف النقاط', 'Add points') : '+1 ' + esc(t('addStamp'))}</button>
+      <button class="btn warn" id="rd" type="button" ${c.stamps >= need ? '' : 'disabled'}>${esc(t('redeemBtn'))}: ${esc(pick(c.program, 'reward'))}</button></div><div id="m"></div></div>`;
     // One idempotency key per intended action, kept across retries of that same click.
     const send = async (kind, btn) => {
       btn.disabled = true;
       const key = btn.dataset.key || (btn.dataset.key = uuid());
       try {
-        show(await api(`/api/branch/loyalty/${current.code}/${kind}`, { method: 'POST', body: { idem_key: key } }));
+        const bill = out.querySelector('#bill');
+        if (kind === 'stamp' && bill && !(Number(bill.value) >= 1)) { flash(out.querySelector('#m'), A('اكتب مبلغ الفاتورة.', 'Enter the bill amount.'), true); btn.disabled = false; bill.focus(); return; }
+        show(await api(`/api/branch/loyalty/${current.code}/${kind}`, { method: 'POST', body: { idem_key: key, ...(kind === 'stamp' && bill ? { amount: Math.round(Number(bill.value) * 100) } : {}) } }));
       } catch (err) {
         if (err.status === 409) { delete btn.dataset.key; flash(out.querySelector('#m'), t('notEnough'), true); }
         else flash(out.querySelector('#m'), errMsg(err), true);
@@ -667,8 +658,8 @@ main.before(heading);
 
 const views = {
   admin: [['orgs', t('orgs'), adminOrgs], ['admins', t('admins'), adminAdmins], ['legal', lang === 'ar' ? 'البيانات القانونية' : 'Legal details', adminLegalView], ['account', t('account'), accountView]],
-  owner: [['overview', lang === 'ar' ? 'نظرة عامة' : 'Overview', ownerOverview], ['menu', t('menu'), ownerMenu], ['brand', lang === 'ar' ? 'استوديو الهوية' : 'Brand studio', ownerBrand], ['profile',lang === 'ar' ? 'صفحة المنشأة' : 'Business page',el=>profileEditor(el,me)], ['branches', t('branches'), ownerBranches], ['loyalty', t('loyalty'), ownerLoyalty], ['stats', t('stats'), ownerStats], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'إعدادات الفروع' : 'Branch settings', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['templates', lang === 'ar' ? 'صفحات جاهزة' : 'Ready pages', templatesView], ['addons', lang === 'ar' ? 'الإضافات' : 'Add-ons', addonsView], ['domain', lang === 'ar' ? 'الدومين الخاص' : 'Own domain', domainView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
-  branch: [['orders', t('orders'), branchOrders], ['display', t('display'), branchDisplay], ['loyalty', t('loyalty'), branchLoyalty], ['availability', t('availability'), branchAvailability], ['inbox', lang === 'ar' ? 'طلبات المنيو' : 'Menu orders', menuOrdersView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['account', t('account'), accountView]],
+  owner: [['overview', lang === 'ar' ? 'نظرة عامة' : 'Overview', ownerOverview], ['menu', t('menu'), ownerMenu], ['brand', lang === 'ar' ? 'استوديو الهوية' : 'Brand studio', ownerBrand], ['profile',lang === 'ar' ? 'صفحة المنشأة' : 'Business page',el=>profileEditor(el,me)], ['branches', t('branches'), ownerBranches], ['loyalty', t('loyalty'), (el) => loyaltyAdmin(el, me)], ['stats', t('stats'), ownerStats], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'إعدادات الفروع' : 'Branch settings', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['design', lang === 'ar' ? 'استوديو التصميم' : 'Design studio', el => designStudio(el, me)], ['coupons', lang === 'ar' ? 'الكوبونات' : 'Coupons', couponsView], ['templates', lang === 'ar' ? 'صفحات جاهزة' : 'Ready pages', templatesView], ['addons', lang === 'ar' ? 'الإضافات' : 'Add-ons', addonsView], ['domain', lang === 'ar' ? 'الدومين الخاص' : 'Own domain', domainView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
+  branch: [['orders', t('orders'), branchOrders], ['waitlist', lang === 'ar' ? 'قائمة الانتظار' : 'Waitlist', waitlistBoard], ['display', t('display'), branchDisplay], ['loyalty', t('loyalty'), branchLoyalty], ['availability', t('availability'), branchAvailability], ['inbox', lang === 'ar' ? 'طلبات المنيو' : 'Menu orders', menuOrdersView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['account', t('account'), accountView]],
 }[me.user.role];
 tabs(views.map(([k, l]) => [k, l]), (k, el) => {
   clearTimeout(boardTimer);

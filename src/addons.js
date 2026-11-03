@@ -3,6 +3,7 @@
 // loader turns into the vendor's standard snippet, so no tenant can inject script.
 import { requireRole, body, audit, rateLimit } from './context.js';
 import { bad, notFound, forbidden, str, int, url, id, now, shortCode } from './util.js';
+import { acceptOrder, rejectOrder } from './orders.js';
 
 const PIXEL_RE = {
   pixel_meta: /^\d{10,20}$/,
@@ -95,14 +96,21 @@ export const telegramConfigured = (env) => Boolean(env.TELEGRAM_BOT_TOKEN && env
 const EVENTS = ['orders', 'billing'];
 const CODE_TTL = 30 * 60 * 1000;
 
-export async function tgSend(env, chatId, message, fetcher = fetch) {
+export async function tgSend(env, chatId, message, fetcher = fetch, extra = {}) {
   const res = await fetcher(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text: message, disable_web_page_preview: true }),
+    body: JSON.stringify({ chat_id: chatId, text: message, disable_web_page_preview: true, ...extra }),
   });
   return res.ok;
 }
+const tgCall = (env, method, payload, fetcher = fetch) => fetcher(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`, {
+  method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload),
+});
+
+// Accept / reject buttons under a new-order message.
+export const orderButtons = (orderId) => ({ inline_keyboard: [[{ text: '✅ قبول', callback_data: 'zo:a:' + orderId }, { text: '✖️ رفض', callback_data: 'zo:r:' + orderId }]] });
+const TYPE_AR = { dine_in: '🍽 محلي', pickup: '🛍 استلام', delivery: '🛵 توصيل', car: '🚗 سيارة' };
 
 const sar = (h) => (h / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ر.س';
 
@@ -128,10 +136,17 @@ export function orderMessage(order, branchName, base, format = {}) {
     return `• ${l.quantity}× ${l.name_ar || l.name_en}${opts ? ` (${opts})` : ''}${fields.has('prices') ? ` · ${sar(l.total)}` : ''}`;
   }) : [];
   const time = new Date(order.created_at || Date.now()).toLocaleTimeString('ar-SA-u-nu-latn', { timeZone: 'Asia/Riyadh', hour: '2-digit', minute: '2-digit' });
+  const d = (() => { try { return JSON.parse(order.details_json || '{}'); } catch { return {}; } })();
+  const who = [d.name, d.phone ? '+' + d.phone : null].filter(Boolean).join(' · ');
   return [
     fields.has('branch') ? `${title} · ${branchName}` : title,
+    order.order_type && order.order_type !== 'pickup' ? `${TYPE_AR[order.order_type] || order.order_type}${d.table ? ` · طاولة ${d.table}` : ''}${d.car ? ` · ${d.car}` : ''}` : null,
+    who || null,
+    d.address ? `العنوان: ${d.address}` : null,
     ...lines,
     fields.has('note') && order.note ? `ملاحظة: ${order.note}` : null,
+    order.discount ? `خصم${order.coupon_code ? ` (${order.coupon_code})` : ''}: −${sar(order.discount)}` : null,
+    order.delivery_fee ? `التوصيل: ${sar(order.delivery_fee)}` : null,
     fields.has('total') ? `الإجمالي: ${sar(order.total)}` : null,
     fields.has('time') ? `الوقت: ${time}` : null,
     fields.has('link') && base ? `افتح الطلبات: ${base.replace(/\/$/, '')}/app#inbox` : null,
@@ -139,7 +154,7 @@ export function orderMessage(order, branchName, base, format = {}) {
 }
 
 // Sends to every chat linked to the org (or the branch) that subscribed to the event.
-export async function notifyTelegram(env, orgId, branchId, event, message, fetcher = fetch) {
+export async function notifyTelegram(env, orgId, branchId, event, message, fetcher = fetch, { markup } = {}) {
   if (!telegramConfigured(env)) return 0;
   const { results } = await env.DB.prepare(
     'SELECT chat_id, events_json, format_json FROM telegram_links WHERE org_id=? AND (branch_id IS NULL OR branch_id=?)',
@@ -148,7 +163,7 @@ export async function notifyTelegram(env, orgId, branchId, event, message, fetch
   for (const r of results) {
     if (!JSON.parse(r.events_json || '[]').includes(event)) continue;
     const text = typeof message === 'function' ? message(JSON.parse(r.format_json || '{}')) : message;
-    try { if (await tgSend(env, r.chat_id, text, fetcher)) sent++; } catch { /* one chat failing never blocks the rest */ }
+    try { if (await tgSend(env, r.chat_id, text, fetcher, markup ? { reply_markup: markup } : {})) sent++; } catch { /* one chat failing never blocks the rest */ }
   }
   return sent;
 }
@@ -160,7 +175,39 @@ export function later(c, promise) {
   return null;
 }
 
+// A tap on ✅/✖️ under an order. Only a chat linked to that order's business
+// (and branch, when the link is per branch) with order alerts on can act on it.
+async function handleOrderButton(env, cq, fetcher) {
+  const m = /^zo:([ar]):([0-9a-f-]{36})$/.exec(String(cq.data || ''));
+  const chatId = cq.message?.chat?.id;
+  const answer = (text) => tgCall(env, 'answerCallbackQuery', { callback_query_id: cq.id, text }, fetcher).catch(() => {});
+  if (!m || !chatId) return answer('');
+  const order = await env.DB.prepare('SELECT id,org_id,branch_id,status FROM customer_orders WHERE id=?').bind(m[2]).first();
+  const link = order && await env.DB.prepare('SELECT events_json FROM telegram_links WHERE org_id=? AND chat_id=? AND (branch_id IS NULL OR branch_id=?)').bind(order.org_id, String(chatId), order.branch_id).first();
+  if (!order || !link || !JSON.parse(link.events_json || '[]').includes('orders')) return answer('غير مسموح لهذه المحادثة.');
+  const by = String(cq.from?.first_name || cq.from?.username || '').slice(0, 40);
+  let status;
+  try {
+    if (m[1] === 'a') {
+      const { ticket } = await acceptOrder(env, { orgId: order.org_id, branchId: order.branch_id, orderId: order.id });
+      status = `✅ قُبل${by ? ` بواسطة ${by}` : ''} · رقم النداء ${ticket.number}`;
+      await audit(env, { org_id: order.org_id }, 'order.accept', { order: order.id, ticket: ticket.id, via: 'telegram' });
+    } else {
+      await rejectOrder(env, { branchId: order.branch_id, orderId: order.id });
+      status = `✖️ رُفض${by ? ` بواسطة ${by}` : ''}`;
+      await audit(env, { org_id: order.org_id }, 'order.reject', { order: order.id, via: 'telegram' });
+    }
+  } catch {
+    const now = await env.DB.prepare('SELECT status FROM customer_orders WHERE id=?').bind(order.id).first();
+    status = now?.status === 'accepted' ? '✅ الطلب مقبول مسبقًا' : now?.status === 'rejected' ? '✖️ الطلب مرفوض مسبقًا' : '⌛ انتهت صلاحية الطلب';
+  }
+  await answer(status);
+  const original = String(cq.message.text || '').slice(0, 3500);
+  await tgCall(env, 'editMessageText', { chat_id: chatId, message_id: cq.message.message_id, text: `${original}\n\n${status}`, disable_web_page_preview: true }, fetcher).catch(() => {});
+}
+
 async function handleUpdate(env, update, fetcher) {
+  if (update?.callback_query) return handleOrderButton(env, update.callback_query, fetcher);
   const msg = update?.message;
   const chatId = msg?.chat?.id;
   if (!chatId || typeof msg.text !== 'string') return;

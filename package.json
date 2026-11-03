@@ -13,7 +13,12 @@
     "build": "wrangler deploy --dry-run --outdir .wrangler/build",
     "test:onboarding": "node test/e2e/onboarding.mjs",
     "test:workspace": "node test/e2e/workspace.mjs",
-    "test:resilience": "node test/e2e/resilience.mjs"
+    "test:resilience": "node test/e2e/resilience.mjs",
+    "test:design": "node test/e2e/design.mjs",
+    "test:magic": "node test/e2e/magic.mjs",
+    "test:ordering": "node test/e2e/ordering.mjs",
+    "test:waitlist": "node test/e2e/waitlist.mjs",
+    "test:loyalty": "node test/e2e/loyalty.mjs"
   },
   "repository": {
     "type": "git",
@@ -24,6 +29,7 @@
   },
   "homepage": "https://github.com/zimara-hq/zimara-menu#readme",
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.4.0",
     "hono": "^4.13.14"
   },
   "devDependencies": {

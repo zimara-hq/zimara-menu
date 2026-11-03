@@ -10,6 +10,12 @@ import { registerFeatures } from './features.js';
 import { registerAddons, publicAddons } from './addons.js';
 import { registerTemplates } from './templates.js';
 import { registerDomains, customHostRedirect } from './domains.js';
+import { registerDesign, activeDesign } from './design.js';
+import { registerAiImport, aiConfigured } from './ai-import.js';
+import { registerSetup } from './setup.js';
+import { registerWaitlist, waitlistCron, waitSettings } from './waitlist.js';
+import { registerLoyalty, winbackCron } from './loyalty.js';
+import { registerOrdering, getOrdering, publicOrdering } from './ordering.js';
 import { registerIntegrations } from './integrations.js';
 import { registerBilling, reconcileCheckouts, subscriptionCheckoutConfigured } from './billing.js';
 import { registerMail } from './mail.js';
@@ -72,15 +78,20 @@ app.use('*', async (c, next) => {
   if (c.env.ENVIRONMENT === 'preview') c.header('X-Robots-Tag', 'noindex, nofollow');
   c.header('X-Content-Type-Options', 'nosniff');
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
-  c.header('X-Frame-Options', 'DENY');
   c.header('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()');
   // Public menu and business pages may load the owner's ad pixels, from a fixed vendor list only.
   const pixels = /^\/(m|p)\//.test(new URL(c.req.url).pathname);
-  c.header('Content-Security-Policy', `default-src 'self'; script-src 'self'${pixels ? ' ' + PIXEL_SCRIPT_HOSTS : ''}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'${pixels ? ' ' + PIXEL_CONNECT_HOSTS : ''}; frame-src 'self'${pixels ? ' https://www.googletagmanager.com https://td.doubleclick.net' : ''}; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`);
+  // Public pages may be framed by our own design studio for the live preview, never by other sites.
+  c.header('X-Frame-Options', pixels ? 'SAMEORIGIN' : 'DENY');
+  c.header('Content-Security-Policy', `default-src 'self'; script-src 'self'${pixels ? ' ' + PIXEL_SCRIPT_HOSTS : ''}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'${pixels ? ' ' + PIXEL_CONNECT_HOSTS : ''}; frame-src 'self'${pixels ? ' https://www.googletagmanager.com https://td.doubleclick.net' : ''}; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors ${pixels ? "'self'" : "'none'"}`);
   if (new URL(c.req.url).protocol === 'https:') c.header('Strict-Transport-Security', 'max-age=31536000');
 });
 
-app.use('/api/*', bodyLimit({ maxSize: 4 * 1024 * 1024, onError: (c) => c.json({ error: 'request_too_large' }, 413) }));
+// A menu photo or PDF for the AI import may be larger than every other request.
+const AI_IMPORT_PATH = '/api/owner/menu/ai-import';
+const normalLimit = bodyLimit({ maxSize: 4 * 1024 * 1024, onError: (c) => c.json({ error: 'request_too_large' }, 413) });
+const aiLimit = bodyLimit({ maxSize: 13 * 1024 * 1024, onError: (c) => c.json({ error: 'request_too_large' }, 413) });
+app.use('/api/*', (c, next) => (c.req.path === AI_IMPORT_PATH ? aiLimit(c, next) : normalLimit(c, next)));
 
 // Mutating API calls must be JSON: browsers cannot send cross-site JSON without
 // a CORS preflight we never grant, which closes CSRF for cookie sessions.
@@ -377,7 +388,7 @@ owner.post('/items', async (c) => {
   if (!cat) throw bad('invalid_category_id');
   const iid = id();
   await c.env.DB.prepare(
-    'INSERT INTO items (id, org_id, category_id, name_ar, name_en, desc_ar, desc_en, price, calories, image_url, sort, compare_price, allergens, caffeine_mg, sodium_mg, options_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO items (id, org_id, category_id, name_ar, name_en, desc_ar, desc_en, price, calories, image_url, sort, compare_price, allergens, caffeine_mg, sodium_mg, options_json, badges) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
   )
     .bind(iid, u.org_id, cat.id, ...itemFields(b))
     .run();
@@ -390,7 +401,7 @@ owner.patch('/items/:id', async (c) => {
   const cat = await c.env.DB.prepare('SELECT id FROM categories WHERE id = ? AND org_id = ?').bind(b.category_id, u.org_id).first();
   if (!cat) throw bad('invalid_category_id');
   const res = await c.env.DB.prepare(
-    'UPDATE items SET category_id = ?, name_ar = ?, name_en = ?, desc_ar = ?, desc_en = ?, price = ?, calories = ?, image_url = ?, sort = ?, compare_price = ?, allergens = ?, caffeine_mg = ?, sodium_mg = ?, options_json = ?, active = ?, is_sample = 0 WHERE id = ? AND org_id = ?',
+    'UPDATE items SET category_id = ?, name_ar = ?, name_en = ?, desc_ar = ?, desc_en = ?, price = ?, calories = ?, image_url = ?, sort = ?, compare_price = ?, allergens = ?, caffeine_mg = ?, sodium_mg = ?, options_json = ?, badges = ?, active = ?, is_sample = 0 WHERE id = ? AND org_id = ?',
   )
     .bind(cat.id, ...itemFields(b), b.active === false ? 0 : 1, c.req.param('id'), u.org_id)
     .run();
@@ -444,12 +455,30 @@ owner.get('/loyalty', async (c) => {
 
 owner.put('/loyalty', async (c) => {
   const b = await body(c);
+  const cur = await c.env.DB.prepare('SELECT * FROM loyalty_programs WHERE org_id = ?').bind(c.get('user').org_id).first();
+  const kind = b.kind === undefined ? cur?.kind || 'stamps' : b.kind;
+  if (!['stamps', 'points'].includes(kind)) throw bad('invalid_kind');
+  const winbackDays = int(b.winback_days ?? cur?.winback_days ?? 0, 'winback_days', { max: 365 });
+  const winAr = str(b.winback_ar ?? cur?.winback_ar, 'winback_ar', { optional: true, max: 160 });
+  const winEn = str(b.winback_en ?? cur?.winback_en, 'winback_en', { optional: true, max: 160 });
+  if (winbackDays && winbackDays < 7) throw bad('invalid_winback_days');
+  if (winbackDays && !winAr) throw bad('winback_message_required');
   await c.env.DB.prepare(
-    `INSERT INTO loyalty_programs (org_id, stamps_required, reward_ar, reward_en, active) VALUES (?1, ?2, ?3, ?4, ?5)
-     ON CONFLICT(org_id) DO UPDATE SET stamps_required = ?2, reward_ar = ?3, reward_en = ?4, active = ?5`,
+    `INSERT INTO loyalty_programs (org_id, stamps_required, reward_ar, reward_en, active, kind, points_per_sar, reward_points, winback_days, winback_ar, winback_en)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+     ON CONFLICT(org_id) DO UPDATE SET stamps_required = ?2, reward_ar = ?3, reward_en = ?4, active = ?5, kind = ?6, points_per_sar = ?7, reward_points = ?8, winback_days = ?9, winback_ar = ?10, winback_en = ?11`,
   )
-    .bind(c.get('user').org_id, int(b.stamps_required, 'stamps_required', { min: 2, max: 50 }), str(b.reward_ar, 'reward_ar', { max: 80 }), str(b.reward_en, 'reward_en', { max: 80 }), b.active === false ? 0 : 1)
+    .bind(
+      c.get('user').org_id,
+      int(b.stamps_required ?? cur?.stamps_required ?? 8, 'stamps_required', { min: 2, max: 50 }),
+      str(b.reward_ar ?? cur?.reward_ar, 'reward_ar', { max: 80 }), str(b.reward_en ?? cur?.reward_en, 'reward_en', { max: 80 }),
+      b.active === false ? 0 : 1, kind,
+      int(b.points_per_sar ?? cur?.points_per_sar ?? 1, 'points_per_sar', { min: 1, max: 100 }),
+      int(b.reward_points ?? cur?.reward_points ?? 100, 'reward_points', { min: 10, max: 100000 }),
+      winbackDays, winAr, winEn || winAr,
+    )
     .run();
+  await audit(c.env, c.get('user'), 'loyalty.program', { kind, winback_days: winbackDays });
   return c.json({ ok: true });
 });
 
@@ -612,19 +641,21 @@ branch.post('/loyalty/:code/:kind', async (c) => {
   const b = await body(c);
   const idem = str(b.idem_key, 'idem_key', { min: 8, max: 64 });
   const card = await cardByCode(c.env, u.org_id, c.req.param('code'));
-  const program = await c.env.DB.prepare('SELECT stamps_required, active FROM loyalty_programs WHERE org_id = ?').bind(u.org_id).first();
+  const program = await c.env.DB.prepare('SELECT stamps_required, active, kind, points_per_sar, reward_points FROM loyalty_programs WHERE org_id = ?').bind(u.org_id).first();
   if (!program?.active) throw conflict('loyalty_inactive');
-  const delta = kind === 'stamp' ? 1 : -program.stamps_required;
+  // Points: the cashier enters the bill (halalas) and the server converts it.
+  const amount = program.kind === 'points' && kind === 'stamp' ? int(b.amount, 'amount', { min: 100, max: 100_000_000 }) : null;
+  const delta = kind === 'stamp' ? (amount ? Math.floor((amount / 100) * program.points_per_sar) : 1) : -(program.kind === 'points' ? program.reward_points : program.stamps_required);
   // One statement: SQLite serialises writes, so the balance read and the insert are atomic.
   // A redeem only lands when the balance covers it; a retried idem_key is a no-op.
   const res = await c.env.DB.prepare(
-    `INSERT INTO loyalty_ledger (id, card_id, branch_id, user_id, kind, delta, balance_after, idem_key, created_at)
-     SELECT ?1, ?2, ?3, ?4, ?5, ?6, bal + ?6, ?7, ?8
+    `INSERT INTO loyalty_ledger (id, card_id, branch_id, user_id, kind, delta, balance_after, idem_key, created_at, amount)
+     SELECT ?1, ?2, ?3, ?4, ?5, ?6, bal + ?6, ?7, ?8, ?9
        FROM (SELECT COALESCE(SUM(delta), 0) AS bal FROM loyalty_ledger WHERE card_id = ?2)
       WHERE bal + ?6 >= 0
      ON CONFLICT(idem_key) DO NOTHING`,
   )
-    .bind(id(), card.id, u.branch_id, u.id, kind, delta, idem, now())
+    .bind(id(), card.id, u.branch_id, u.id, kind, delta, idem, now(), amount)
     .run();
   if (!res.meta.changes) {
     const prior = await c.env.DB.prepare('SELECT card_id, kind FROM loyalty_ledger WHERE idem_key = ?').bind(idem).first();
@@ -642,7 +673,7 @@ async function orgMenu(env, orgId, { branchId = null, includeHidden = false } = 
   const active = includeHidden ? '' : 'AND active = 1';
   const { results: categories } = await env.DB.prepare(`SELECT id, name_ar, name_en, sort, active FROM categories WHERE org_id = ? ${active} ORDER BY sort, rowid`).bind(orgId).all();
   const { results: items } = await env.DB.prepare(
-    `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.compare_price, i.calories, i.caffeine_mg, i.sodium_mg, i.allergens, i.options_json, i.image_url, i.sort, i.active, i.is_sample,
+    `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.compare_price, i.calories, i.caffeine_mg, i.sodium_mg, i.allergens, i.options_json, i.badges, i.image_url, i.sort, i.active, i.is_sample,
             CASE WHEN bu.item_id IS NULL THEN 1 ELSE 0 END AS available
        FROM items i JOIN categories category ON category.id = i.category_id AND category.org_id = i.org_id LEFT JOIN branch_unavailable bu ON bu.item_id = i.id AND bu.branch_id = ?
       WHERE i.org_id = ? ${includeHidden ? '' : 'AND i.active = 1 AND i.is_sample = 0 AND category.active = 1'} ORDER BY i.sort, i.rowid`,
@@ -662,7 +693,8 @@ app.get('/api/public/menu/:branchSlug', async (c) => {
   if (!b) throw notFound();
   const menu = await orgMenu(c.env, b.org_id, { branchId: b.id });
   const { org_id, ...branchInfo } = b;
-  return c.json({ branch: branchInfo, ...menu, addons: await publicAddons(c.env, org_id) });
+  const { results: siblings } = await c.env.DB.prepare('SELECT slug, name_ar, name_en FROM branches WHERE org_id = ? AND active = 1 ORDER BY created_at').bind(org_id).all();
+  return c.json({ branch: branchInfo, ...menu, addons: await publicAddons(c.env, org_id), design: await activeDesign(c.env, org_id), ordering: publicOrdering(await getOrdering(c.env, b.id)), waitlist: (await waitSettings(c.env, b.id)).active, branches: siblings });
 });
 
 async function ticketByToken(env, token) {
@@ -732,13 +764,16 @@ async function cardByCode(env, orgId, code) {
 }
 
 async function cardView(env, card) {
-  const program = await env.DB.prepare('SELECT stamps_required, reward_ar, reward_en, active FROM loyalty_programs WHERE org_id = ?').bind(card.org_id).first();
+  const program = await env.DB.prepare('SELECT stamps_required, reward_ar, reward_en, active, kind, points_per_sar, reward_points FROM loyalty_programs WHERE org_id = ?').bind(card.org_id).first();
+  if (program) program.need = program.kind === 'points' ? program.reward_points : program.stamps_required;
   const bal = await env.DB.prepare('SELECT COALESCE(SUM(delta), 0) AS b FROM loyalty_ledger WHERE card_id = ?').bind(card.id).first();
   const { results: history } = await env.DB.prepare('SELECT kind, delta, balance_after, created_at FROM loyalty_ledger WHERE card_id = ? ORDER BY created_at DESC LIMIT 20')
     .bind(card.id)
     .all();
   const org = await env.DB.prepare('SELECT slug, name_ar, name_en, brand_color, logo_url FROM orgs WHERE id = ?').bind(card.org_id).first();
-  return { code: card.code, token: card.token, stamps: bal.b, program, history, org };
+  const { results: messages } = await env.DB.prepare('SELECT m.id, m.title_ar, m.title_en, m.body_ar, m.body_en, i.created_at FROM card_inbox i JOIN loyalty_messages m ON m.id = i.message_id WHERE i.card_id = ? ORDER BY i.created_at DESC LIMIT 5')
+    .bind(card.id).all();
+  return { code: card.code, token: card.token, stamps: bal.b, program, history, org, messages, vapidPublicKey: pushConfigured(env) ? env.VAPID_PUBLIC_KEY : null };
 }
 
 app.post('/api/cards', async (c) => {
@@ -764,7 +799,7 @@ app.get('/api/cards/:token', async (c) => {
   return c.json(await cardView(c.env, card));
 });
 
-app.get('/api/config', (c) => c.json({ vapidPublicKey: pushConfigured(c.env) ? c.env.VAPID_PUBLIC_KEY : null, payments: subscriptionCheckoutConfigured(c.env), rewaa: rewaaConfigured(c.env) }));
+app.get('/api/config', (c) => c.json({ vapidPublicKey: pushConfigured(c.env) ? c.env.VAPID_PUBLIC_KEY : null, payments: subscriptionCheckoutConfigured(c.env), rewaa: rewaaConfigured(c.env), ai_import: aiConfigured(c.env) }));
 
 // ---------- Alerts ----------
 
@@ -811,7 +846,11 @@ export async function scheduled(env, fetcher) {
     env.DB.prepare("DELETE FROM push_subscriptions WHERE ticket_id IN (SELECT id FROM tickets WHERE status IN ('collected', 'cancelled'))"),
     env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(t),
   ]);
-  return { realerted: results.length };
+  let waitlist = null;
+  try { waitlist = await waitlistCron(env, fetcher); } catch { /* next minute */ }
+  // Win-back messages once an hour during Riyadh daytime (06:23 to 20:23), never at night.
+  if (new Date(t).getUTCMinutes() === 23 && new Date(t).getUTCHours() >= 3 && new Date(t).getUTCHours() <= 17) { try { await winbackCron(env, fetcher); } catch { /* next hour */ } }
+  return { realerted: results.length, waitlist };
 }
 
 // ---------- Pages ----------
@@ -821,11 +860,17 @@ registerFeatures(app);
 registerAddons(app);
 registerTemplates(app);
 registerDomains(app);
+registerDesign(app);
+registerAiImport(app);
+registerSetup(app);
+registerOrdering(app);
+registerWaitlist(app);
+registerLoyalty(app);
 registerIntegrations(app, { onTicketReady: (env, ticketId) => alertTicket(env, ticketId) });
 
 registerDemo(app);
 
-const PAGES = { '/p/': '/profile', '/m/': '/menu', '/t/': '/ticket', '/c/': '/card', '/j/': '/join', '/display/': '/display' };
+const PAGES = { '/p/': '/profile', '/m/': '/menu', '/t/': '/ticket', '/c/': '/card', '/j/': '/join', '/display/': '/display', '/w/': '/wait', '/q/': '/wait' };
 
 app.get('*', async (c) => {
   const path = new URL(c.req.url).pathname;

@@ -1,4 +1,5 @@
 import {applyTenantTheme,bannerGallery,coverImage} from './tenant-theme.js';
+import { applyDesign, listenForPreview } from './design-engine.js';
 import { api, esc, lang, makeT, pick, setBrandColor, topbar } from './common.js';
 import { renderAddons } from './addons-public.js';
 const a = (ar, en) => (lang === 'ar' ? ar : en);
@@ -35,12 +36,13 @@ const statusPill = (hours) => {
 
 const slug = decodeURIComponent(location.pathname.split('/')[2] || '');
 try {
-  const { org, profile: p, branches, loyalty, addons } = await api('/api/public/profile/' + encodeURIComponent(slug));
+  const { org, profile: p, branches, loyalty, addons, design } = await api('/api/public/profile/' + encodeURIComponent(slug));
   setBrandColor(org.brand_color);
   const name = pick(org, 'name');
   topbar(document.getElementById('top'), t, { subtitle: name });
   document.title = name + ' · ' + t('brand');
   applyTenantTheme(p);
+  applyDesign(design);
   document.body.classList.add('profile-body');
 
   const days = a(['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'], ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']);
@@ -109,3 +111,5 @@ try {
   topbar(document.getElementById('top'), t);
   main.innerHTML = `<div class="card"><h1>${a('الصفحة غير متاحة', 'Page unavailable')}</h1><p class="muted">${a('تأكد من رابط المنشأة وحاول مجددًا.', 'Check the business link and try again.')}</p><a class="btn ghost" href="/">${a('زيمارا منيو', 'ZIMARA Menu')}</a></div>`;
 }
+
+listenForPreview();
