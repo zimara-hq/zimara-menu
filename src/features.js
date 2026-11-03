@@ -1,8 +1,10 @@
 import { activeDesign } from './design.js';
 import { itemView, priceWithOptions } from './menu-extras.js';
 import { DEFAULT_THEME, validateTheme } from './identity.js';
-import { publicAddons, notifyTelegram, orderMessage, later } from './addons.js';
+import { publicAddons, notifyTelegram, orderMessage, orderButtons, later } from './addons.js';
 import { loadUser, verifyPassword } from './auth.js';
+import { orderExtras } from './ordering.js';
+import { acceptOrder, rejectOrder } from './orders.js';
 import {
   requireRole,
   body,
@@ -372,8 +374,8 @@ async function deviceRevoke(c, branchId) {
   return c.json({ ok: true });
 }
 function orderView(row) {
-  const { fingerprint, idem_key, org_id, branch_id, items_json, ...rest } = row;
-  return { ...rest, items: JSON.parse(items_json) };
+  const { fingerprint, idem_key, org_id, branch_id, items_json, details_json, ...rest } = row;
+  return { ...rest, items: JSON.parse(items_json), details: JSON.parse(details_json || '{}') };
 }
 
 // Data rights remain available after a subscription expires. This narrow guard
@@ -990,8 +992,10 @@ export function registerFeatures(app) {
       lines.push({ ...base, price: unit, options, quantity, total: unit * quantity });
     }
     const note = str(b.note, 'note', { optional: true, max: 300 });
-    const total = lines.reduce((n, l) => n + l.total, 0);
-    if (total > 100_000_000) throw bad('order_total_limit');
+    const subtotal = lines.reduce((n, l) => n + l.total, 0);
+    if (subtotal > 100_000_000) throw bad('order_total_limit');
+    const extra = await orderExtras(c.env, branch, b, subtotal);
+    const total = extra.total;
     const fingerprint = await hmac(
       c.env.AUTH_SECRET,
       JSON.stringify(
@@ -1000,11 +1004,14 @@ export function registerFeatures(app) {
             .map((l) => [l.id + '|' + l.options.map((o) => o.id).sort().join(','), l.quantity])
             .sort((a, b) => a[0].localeCompare(b[0])),
           note,
+          extra.order_type,
+          extra.details,
+          extra.coupon_code,
         ],
       ),
     );
     const inserted = await c.env.DB.prepare(
-      'INSERT INTO customer_orders(id,org_id,branch_id,token,idem_key,fingerprint,total,items_json,note,created_at) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(branch_id,idem_key) DO NOTHING',
+      'INSERT INTO customer_orders(id,org_id,branch_id,token,idem_key,fingerprint,total,items_json,note,created_at,order_type,details_json,subtotal,discount,delivery_fee,coupon_code) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(branch_id,idem_key) DO NOTHING',
     )
       .bind(
         id(),
@@ -1017,8 +1024,15 @@ export function registerFeatures(app) {
         JSON.stringify(lines),
         note,
         now(),
+        extra.order_type,
+        JSON.stringify(extra.details),
+        subtotal,
+        extra.discount,
+        extra.delivery_fee,
+        extra.coupon_code,
       )
       .run();
+    if (inserted.meta?.changes && extra.statements.length) await c.env.DB.batch(extra.statements);
     const order = await c.env.DB.prepare(
       'SELECT * FROM customer_orders WHERE branch_id=? AND idem_key=?',
     )
@@ -1026,7 +1040,7 @@ export function registerFeatures(app) {
       .first();
     if (order.fingerprint !== fingerprint) throw conflict('idem_key_reused');
     if (inserted.meta?.changes) {
-      const pending = later(c, notifyTelegram(c.env, branch.org_id, branch.id, 'orders', (format) => orderMessage(order, branch.name_ar, c.env.PUBLIC_BASE_URL, format)));
+      const pending = later(c, notifyTelegram(c.env, branch.org_id, branch.id, 'orders', (format) => orderMessage(order, branch.name_ar, c.env.PUBLIC_BASE_URL, format), undefined, { markup: orderButtons(order.id) }));
       if (pending) await pending;
     }
     return c.json({ order: orderView(order) }, 201);
@@ -1055,79 +1069,20 @@ export function registerFeatures(app) {
       .all();
     return c.json({ orders: results.map(orderView) });
   });
-  app.post(
-    '/api/branch/orders/:id/reject',
-    requireRole('branch'),
-    async (c) => {
-      const b = await body(c),
-        u = c.get('user');
-      const version = int(b.version, 'version', { min: 1 });
-      const result = await c.env.DB.prepare(
-        "UPDATE customer_orders SET status='rejected',version=version+1 WHERE id=? AND branch_id=? AND status='pending' AND version=?",
-      )
-        .bind(c.req.param('id'), u.branch_id, version)
-        .run();
-      if (!result.meta.changes) throw conflict('stale_order');
-      return c.json({ ok: true });
-    },
-  );
-  app.post(
-    '/api/branch/orders/:id/accept',
-    requireRole('branch'),
-    async (c) => {
-      const b = await body(c),
-        u = c.get('user');
-      const version = int(b.version, 'version', { min: 1 }),
-        orderId = c.req.param('id');
-      const order = await c.env.DB.prepare(
-        'SELECT * FROM customer_orders WHERE id=? AND branch_id=?',
-      )
-        .bind(orderId, u.branch_id)
-        .first();
-      if (!order) throw notFound();
-      if (order.created_at < now() - TTL) throw conflict('order_expired');
-      if (order.status !== 'pending' || order.version !== version)
-        throw conflict('stale_order');
-      const ticketId = id(),
-        token = randomToken(18),
-        t = now();
-      const invoice = text(b.invoice_number, 'invoice_number', 64);
-      const result = await c.env.DB.batch([
-        c.env.DB.prepare(
-          `INSERT INTO tickets(id,org_id,branch_id,number,token,status,created_at,invoice_number) SELECT ?1,?2,?3,CAST(COALESCE((SELECT MAX(CAST(number AS INTEGER)) FROM tickets WHERE branch_id=?3 AND created_at>?4 AND number GLOB '[0-9]*'),0)+1 AS TEXT),?5,'preparing',?6,?7 WHERE EXISTS(SELECT 1 FROM customer_orders WHERE id=?8 AND branch_id=?3 AND status='pending' AND version=?9)`,
-        ).bind(
-          ticketId,
-          u.org_id,
-          u.branch_id,
-          t - TTL,
-          token,
-          t,
-          invoice,
-          orderId,
-          version,
-        ),
-        c.env.DB.prepare(
-          "UPDATE customer_orders SET status='accepted',ticket_id=?,version=version+1 WHERE id=? AND branch_id=? AND status='pending' AND version=? AND EXISTS(SELECT 1 FROM tickets WHERE id=?)",
-        ).bind(ticketId, orderId, u.branch_id, version, ticketId),
-      ]);
-      if (!result[0].meta.changes) throw conflict('stale_order');
-      const ticket = await c.env.DB.prepare(
-        'SELECT id,number,token FROM tickets WHERE id=?',
-      )
-        .bind(ticketId)
-        .first();
-      const updated = await c.env.DB.prepare(
-        'SELECT * FROM customer_orders WHERE id=? AND branch_id=?',
-      )
-        .bind(orderId, u.branch_id)
-        .first();
-      await audit(c.env, u, 'order.accept', {
-        order: orderId,
-        ticket: ticketId,
-      });
-      return c.json({ ticket, order: orderView(updated) }, 201);
-    },
-  );
+  app.post('/api/branch/orders/:id/reject', requireRole('branch'), async (c) => {
+    const b = await body(c), u = c.get('user');
+    await rejectOrder(c.env, { branchId: u.branch_id, orderId: c.req.param('id'), version: int(b.version, 'version', { min: 1 }) });
+    return c.json({ ok: true });
+  });
+  app.post('/api/branch/orders/:id/accept', requireRole('branch'), async (c) => {
+    const b = await body(c), u = c.get('user');
+    const { ticket, order } = await acceptOrder(c.env, {
+      orgId: u.org_id, branchId: u.branch_id, orderId: c.req.param('id'),
+      version: int(b.version, 'version', { min: 1 }), invoice: text(b.invoice_number, 'invoice_number', 64),
+    });
+    await audit(c.env, u, 'order.accept', { order: order.id, ticket: ticket.id });
+    return c.json({ ticket, order: orderView(order) }, 201);
+  });
 
   app.post('/api/owner/assets', requireRole('owner'), async (c) => {
     const u = c.get('user');

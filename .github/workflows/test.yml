@@ -46,6 +46,7 @@ jobs:
           npm run test:resilience -- http://127.0.0.1:8787 output/playwright/resilience
           npm run test:design -- http://127.0.0.1:8787 output/playwright/design
           npm run test:magic -- http://127.0.0.1:8787 output/playwright/magic
+          npm run test:ordering -- http://127.0.0.1:8787 output/playwright/ordering
       - uses: actions/upload-artifact@v4
         if: always()
         with:

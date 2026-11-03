@@ -10,6 +10,20 @@ import {
 } from "./common.js";
 import { confirmAction } from "./forms.js";
 const a = (ar, en) => (lang === "ar" ? ar : en);
+const TYPE_LABEL = { dine_in: ["🍽 محلي", "🍽 Dine-in"], pickup: ["🛍 استلام", "🛍 Pickup"], delivery: ["🛵 توصيل", "🛵 Delivery"], car: ["🚗 سيارة", "🚗 Curbside"] };
+// Order type and the guest's details (table, name, phone, address, car).
+function orderDetails(o) {
+  const d = o.details || {};
+  const bits = [
+    o.order_type && TYPE_LABEL[o.order_type] ? `<span class="pill">${esc(a(...TYPE_LABEL[o.order_type]))}${d.table ? ` · ${a("طاولة", "Table")} ${esc(d.table)}` : ""}</span>` : "",
+    d.name ? `<span>${esc(d.name)}</span>` : "",
+    d.phone ? `<a href="tel:+${esc(d.phone)}" dir="ltr">+${esc(d.phone)}</a>` : "",
+    d.car ? `<span>🚗 ${esc(d.car)}</span>` : "",
+    d.address ? `<span>📍 ${esc(d.address)}</span>` : "",
+    o.delivery_fee ? `<span>${a("توصيل", "Delivery")} ${esc(money(o.delivery_fee))}</span>` : "",
+  ].filter(Boolean);
+  return bits.length ? `<p class="order-details">${bits.join(" ")}</p>` : "";
+}
 const statuses = {
   pending: ["بانتظار القبول", "Awaiting acceptance"],
   accepted: ["قُبل وأنشئ النداء", "Accepted · pager created"],
@@ -88,7 +102,7 @@ export async function orderInbox(el) {
         node.className = "card inbox-order";
         node.dataset.version = o.version;
         node.dataset.orderId = o.id;
-        node.innerHTML = `<header class="editor-heading"><span class="pill ${o.status === "pending" ? "pending" : o.status === "accepted" ? "ready" : "rejected"}">${esc(a(...(statuses[o.status] || [o.status, o.status])))}</span><time class="small muted" datetime="${new Date(o.created_at).toISOString()}">${esc(time(o.created_at))}</time></header><h3>${esc(money(o.total))}</h3><ul class="order-lines">${(o.items || []).map((i) => `<li><span>${esc(pick(i, "name") || i.item_id)}${i.options?.length ? `<small>${i.options.map((x) => esc(pick(x, "name"))).join("، ")}</small>` : ""}</span><b>× ${esc(i.quantity)}</b></li>`).join("")}</ul>${o.note ? `<p class="order-note"><strong>${a("ملاحظة:", "Note:")}</strong> ${esc(o.note)}</p>` : ""}${o.status === "pending" ? `<label class="invoice-field">${a("رقم الفاتورة (اختياري)", "Invoice number (optional)")}<input name="invoice_number" maxlength="64" autocomplete="off" value="${esc(drafts.get(o.id) || "")}"></label><div class="row"><button type="button" class="btn" data-order="${esc(o.id)}" data-action="accept">${a("قبول وإنشاء نداء", "Accept and create pager")}</button><button type="button" class="btn ghost" data-order="${esc(o.id)}" data-action="reject">${a("رفض الطلب", "Reject order")}</button></div>` : o.status === "accepted" ? `<a class="text-link" href="#orders">${a("افتح لوحة النداء", "Open pager board")} ↗</a>` : `<p class="small muted">${a("لم يُنشأ نداء لهذا الطلب.", "No pager was created for this order.")}</p>`}`;
+        node.innerHTML = `<header class="editor-heading"><span class="pill ${o.status === "pending" ? "pending" : o.status === "accepted" ? "ready" : "rejected"}">${esc(a(...(statuses[o.status] || [o.status, o.status])))}</span><time class="small muted" datetime="${new Date(o.created_at).toISOString()}">${esc(time(o.created_at))}</time></header><h3>${esc(money(o.total))}${o.discount ? ` <small class="muted">${a("بعد خصم", "after")} ${esc(money(o.discount))}${o.coupon_code ? ` (${esc(o.coupon_code)})` : ""}</small>` : ""}</h3>${orderDetails(o)}<ul class="order-lines">${(o.items || []).map((i) => `<li><span>${esc(pick(i, "name") || i.item_id)}${i.options?.length ? `<small>${i.options.map((x) => esc(pick(x, "name"))).join("، ")}</small>` : ""}</span><b>× ${esc(i.quantity)}</b></li>`).join("")}</ul>${o.note ? `<p class="order-note"><strong>${a("ملاحظة:", "Note:")}</strong> ${esc(o.note)}</p>` : ""}${o.status === "pending" ? `<label class="invoice-field">${a("رقم الفاتورة (اختياري)", "Invoice number (optional)")}<input name="invoice_number" maxlength="64" autocomplete="off" value="${esc(drafts.get(o.id) || "")}"></label><div class="row"><button type="button" class="btn" data-order="${esc(o.id)}" data-action="accept">${a("قبول وإنشاء نداء", "Accept and create pager")}</button><button type="button" class="btn ghost" data-order="${esc(o.id)}" data-action="reject">${a("رفض الطلب", "Reject order")}</button></div>` : o.status === "accepted" ? `<a class="text-link" href="#orders">${a("افتح لوحة النداء", "Open pager board")} ↗</a>` : `<p class="small muted">${a("لم يُنشأ نداء لهذا الطلب.", "No pager was created for this order.")}</p>`}`;
         node
           .querySelector("input")
           ?.addEventListener("input", (e) => drafts.set(o.id, e.target.value));

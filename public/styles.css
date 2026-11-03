@@ -299,6 +299,23 @@ form .error:empty { display: none; }
 .cart-panel { position: sticky; top: 150px; }
 .cart-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 14px; border-bottom: 1px solid var(--line); }
 .cart-row p { margin: 5px 0; }
+.cart-sum .cart-row { padding-block: 8px; }
+.upsell { margin-top: 12px; }
+.upsell-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.upsell-item { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; text-align: start; flex: 0 0 auto; }
+.upsell-item img { border-radius: 8px; object-fit: cover; }
+.upsell-item span { display: grid; font-size: .85rem; font-weight: 600; }
+.upsell-item small { color: var(--accent-ink, var(--accent)); }
+.order-types { margin: 14px 0 4px; display: flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--line); overflow-x: auto; }
+.order-types button { flex: 1; min-height: 44px; border: 0; border-radius: 10px; background: none; font: inherit; font-weight: 700; color: var(--ink); cursor: pointer; white-space: nowrap; padding-inline: 10px; }
+.order-types button[aria-checked=true] { background: var(--surface); box-shadow: 0 2px 8px rgb(35 0 63 / 10%); }
+.checkout-fields { margin-block: 10px; }
+.coupon-row { display: flex; gap: 8px; margin-top: 12px; }
+.coupon-row input { flex: 1; min-width: 0; }
+.error-text { color: #b3261e; }
+.wa-order { margin-top: 8px; width: 100%; justify-content: center; }
+.branch-pick { margin-top: 4px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
+.order-details { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin: 6px 0; font-size: .9rem; }
 .quantity-controls { display: flex; align-items: center; gap: 12px; }
 @media(max-width: 900px) { .menu-layout:has(.cart-panel:not([hidden])) { grid-template-columns: 1fr; } .cart-panel { position: static; } }
 .opening-hours { margin: 0; }

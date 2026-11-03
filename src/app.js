@@ -13,6 +13,7 @@ import { registerDomains, customHostRedirect } from './domains.js';
 import { registerDesign, activeDesign } from './design.js';
 import { registerAiImport, aiConfigured } from './ai-import.js';
 import { registerSetup } from './setup.js';
+import { registerOrdering, getOrdering, publicOrdering } from './ordering.js';
 import { registerIntegrations } from './integrations.js';
 import { registerBilling, reconcileCheckouts, subscriptionCheckoutConfigured } from './billing.js';
 import { registerMail } from './mail.js';
@@ -670,7 +671,8 @@ app.get('/api/public/menu/:branchSlug', async (c) => {
   if (!b) throw notFound();
   const menu = await orgMenu(c.env, b.org_id, { branchId: b.id });
   const { org_id, ...branchInfo } = b;
-  return c.json({ branch: branchInfo, ...menu, addons: await publicAddons(c.env, org_id), design: await activeDesign(c.env, org_id) });
+  const { results: siblings } = await c.env.DB.prepare('SELECT slug, name_ar, name_en FROM branches WHERE org_id = ? AND active = 1 ORDER BY created_at').bind(org_id).all();
+  return c.json({ branch: branchInfo, ...menu, addons: await publicAddons(c.env, org_id), design: await activeDesign(c.env, org_id), ordering: publicOrdering(await getOrdering(c.env, b.id)), branches: siblings });
 });
 
 async function ticketByToken(env, token) {
@@ -832,6 +834,7 @@ registerDomains(app);
 registerDesign(app);
 registerAiImport(app);
 registerSetup(app);
+registerOrdering(app);
 registerIntegrations(app, { onTicketReady: (env, ticketId) => alertTicket(env, ticketId) });
 
 registerDemo(app);

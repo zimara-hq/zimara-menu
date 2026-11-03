@@ -22,10 +22,20 @@ const ICON = {
 const slug = decodeURIComponent(location.pathname.split('/')[2] || '');
 const main = document.getElementById('main');
 let loyalty = null, data, profile = null, q = '', settings = { orders_enabled: false }, cart = new Map(), orderToken = null, orderTimer = null, orderKey = crypto.randomUUID(), orderNote = '';
+// Checkout choices survive re-renders; a table number comes from the table's QR (?table=7).
+const checkout = { type: null, table: '', name: '', phone: '', address: '', car: '', coupon: '', discount: 0, couponFor: 0 };
+let ordering = { types: ['pickup'], tables: 0, whatsapp: null, delivery_fee: 0, delivery_min: 0 };
 try {
   cart = new Map(JSON.parse(sessionStorage.getItem('zm_cart_' + slug) || '[]'));
   orderToken = sessionStorage.getItem('zm_order_' + slug);
+  const urlTable = new URLSearchParams(location.search).get('table');
+  if (urlTable && /^\d{1,3}$/.test(urlTable)) sessionStorage.setItem('zm_table_' + slug, urlTable);
+  checkout.table = sessionStorage.getItem('zm_table_' + slug) || '';
+  Object.assign(checkout, JSON.parse(sessionStorage.getItem('zm_checkout') || '{}'), { coupon: '', discount: 0 });
 } catch {}
+const canCart = () => settings.orders_enabled || Boolean(ordering.whatsapp);
+const TYPE = { dine_in: ['🍽 محلي', '🍽 Dine-in'], pickup: ['🛍 استلام', '🛍 Pickup'], delivery: ['🛵 توصيل', '🛵 Delivery'], car: ['🚗 سيارة', '🚗 Curbside'] };
+const saveCheckout = () => { try { const { name, phone, address, car } = checkout; sessionStorage.setItem('zm_checkout', JSON.stringify({ name, phone, address, car })); } catch {} };
 
 function openNow(hours) {
   if (!hours?.length) return null;
@@ -42,7 +52,7 @@ function openNow(hours) {
 
 function itemCard(i) {
   const inCart = countFor(i.id);
-  const canAdd = settings.orders_enabled && i.available;
+  const canAdd = canCart() && i.available;
   const photo=profile?.theme?.show_images!==false&&i.image_url;
   return `<article class="dish ${i.available ? '' : 'soldout'} ${photo ? 'has-photo' : ''}">
     <div class="dish-text">
@@ -157,36 +167,109 @@ function saveCart() {
   orderKey = crypto.randomUUID();
 }
 
+// Up to three suggestions from sections not yet in the cart, popular ones first.
+function suggestions(selected) {
+  const inCart = new Set(selected.map((x) => x.line.item.id));
+  const cats = new Set(selected.map((x) => x.line.item.category_id));
+  const score = (i) => (i.badges?.includes('popular') ? 2 : 0) + (i.badges?.includes('chef') ? 1 : 0) + (cats.has(i.category_id) ? -5 : 0);
+  return data.items.filter((i) => i.available && !inCart.has(i.id) && !i.options?.some((g) => g.required)).sort((x, y) => score(y) - score(x)).slice(0, 3);
+}
+
 function renderCart() {
   const box = main.querySelector('#cart');
-  if (!settings.orders_enabled) { box.hidden = true; return; }
+  if (!canCart()) { box.hidden = true; return; }
   const selected = [...cart].map(([key, quantity]) => ({ key, line: lineOf(key), quantity })).filter((x) => x.line && x.line.item.available);
   box.hidden = !selected.length;
   if (!selected.length) return;
-  const total = selected.reduce((sum, x) => sum + x.line.unit * x.quantity, 0);
+  const types = settings.orders_enabled ? ordering.types : [];
+  if (!types.includes(checkout.type)) checkout.type = types.includes('dine_in') && checkout.table ? 'dine_in' : types[0] || null;
+  const subtotal = selected.reduce((sum, x) => sum + x.line.unit * x.quantity, 0);
+  if (checkout.couponFor !== subtotal) { checkout.coupon = ''; checkout.discount = 0; }
+  const fee = checkout.type === 'delivery' ? ordering.delivery_fee : 0;
+  const total = subtotal - checkout.discount + fee;
+  const short = checkout.type === 'delivery' && subtotal < ordering.delivery_min;
+  const field = (k, label, attrs = '') => `<label for="co-${k}">${label}</label><input id="co-${k}" data-co="${k}" value="${esc(checkout[k])}" ${attrs}>`;
+  const ups = suggestions(selected);
+  const details = checkout.type === 'dine_in'
+    ? (ordering.tables ? `<label for="co-table">${a('رقم الطاولة', 'Table number')}</label><select id="co-table" data-co="table"><option value="">${a('اختر', 'Choose')}</option>${Array.from({ length: ordering.tables }, (_, i) => `<option ${String(i + 1) === String(checkout.table) ? 'selected' : ''}>${i + 1}</option>`).join('')}</select>` : field('table', a('رقم الطاولة (اختياري)', 'Table (optional)'), 'maxlength="10" inputmode="numeric"'))
+    : checkout.type === 'delivery'
+      ? field('name', a('الاسم', 'Name'), 'maxlength="60" autocomplete="name" required') + field('phone', a('الجوال', 'Mobile'), 'dir="ltr" inputmode="tel" autocomplete="tel" placeholder="05xxxxxxxx" required') + field('address', a('العنوان', 'Address'), 'maxlength="300" autocomplete="street-address" required')
+      : checkout.type === 'car'
+        ? field('car', a('السيارة (النوع واللون)', 'Car (model and colour)'), 'maxlength="60" placeholder="' + a('مثال: كامري بيضاء', 'e.g. white Camry') + '" required') + field('phone', a('الجوال (اختياري)', 'Mobile (optional)'), 'dir="ltr" inputmode="tel" autocomplete="tel"')
+        : checkout.type === 'pickup' ? field('name', a('اسمك (اختياري)', 'Your name (optional)'), 'maxlength="60" autocomplete="given-name"') : '';
   box.innerHTML = `<h2>${a('طلبك', 'Your order')}</h2>${selected.map(({ key, line: { item: i, picked, unit }, quantity: n }) => `<div class="cart-row"><div><strong>${esc(pick(i, 'name'))}</strong>${picked.length ? `<p class="small muted">${picked.map((p) => esc(pick(p.ch, 'name'))).join('، ')}</p>` : ''}<p class="small muted">${esc(money(unit * n))}</p></div><div class="quantity-controls"><button class="btn ghost sm" type="button" data-minus="${esc(key)}" aria-label="${esc(a('تقليل', 'Decrease') + ' ' + pick(i, 'name'))}">−</button><span>${n}</span><button class="btn ghost sm" type="button" data-plus="${esc(key)}" aria-label="${esc(a('زيادة', 'Increase') + ' ' + pick(i, 'name'))}">+</button></div></div>`).join('')}
-    <div class="cart-row"><strong>${a('الإجمالي', 'Total')}</strong><strong>${esc(money(total))}</strong></div>
-    <label for="order-note">${a('ملاحظة للكاشير (اختياري)', 'Note for the cashier (optional)')}</label>
+    ${ups.length ? `<div class="upsell"><p class="small"><strong>${a('يكمّل طلبك', 'Goes well with it')}</strong></p><div class="upsell-row">${ups.map((i) => `<button type="button" class="upsell-item" data-upsell="${esc(i.id)}">${i.image_url ? `<img src="${esc(i.image_url)}" alt="" width="44" height="44" loading="lazy">` : ''}<span>${esc(pick(i, 'name'))}<small>+ ${esc(money(i.price))}</small></span></button>`).join('')}</div></div>` : ''}
+    ${types.length > 1 ? `<div class="seg order-types" role="radiogroup" aria-label="${a('طريقة الطلب', 'How to order')}">${types.map((k) => `<button type="button" role="radio" aria-checked="${k === checkout.type}" data-type="${k}">${a(...TYPE[k])}</button>`).join('')}</div>` : ''}
+    ${details ? `<div class="stack checkout-fields">${details}</div>` : ''}
+    ${settings.orders_enabled ? `<div class="coupon-row"><label class="visually-hidden" for="co-coupon">${a('كود الخصم', 'Discount code')}</label><input id="co-coupon" placeholder="${a('عندك كود خصم؟', 'Have a code?')}" dir="ltr" maxlength="20" value="${esc(checkout.coupon)}"><button type="button" class="btn ghost sm" id="apply-coupon">${a('طبّق', 'Apply')}</button></div><p class="small" id="coupon-msg" role="status">${checkout.discount ? a(`تم تطبيق الخصم ✓`, 'Discount applied ✓') : ''}</p>` : ''}
+    <div class="cart-sum">${checkout.discount || fee ? `<div class="cart-row"><span>${a('المجموع', 'Subtotal')}</span><span>${esc(money(subtotal))}</span></div>` : ''}${checkout.discount ? `<div class="cart-row"><span>${a('الخصم', 'Discount')}</span><span>−${esc(money(checkout.discount))}</span></div>` : ''}${fee ? `<div class="cart-row"><span>${a('التوصيل', 'Delivery')}</span><span>${esc(money(fee))}</span></div>` : ''}
+    <div class="cart-row"><strong>${a('الإجمالي', 'Total')}</strong><strong>${esc(money(total))}</strong></div></div>
+    ${short ? `<p class="msg error">${a(`أقل طلب للتوصيل ${money(ordering.delivery_min)}.`, `Minimum for delivery is ${money(ordering.delivery_min)}.`)}</p>` : ''}
+    <label for="order-note">${a('ملاحظة (اختياري)', 'Note (optional)')}</label>
     <textarea id="order-note" rows="2" maxlength="300" placeholder="${a('مثال: بدون سكر', 'e.g. no sugar')}">${esc(orderNote)}</textarea>
-    <p class="small muted">${a('الدفع عند الكاشير.', 'Pay at the counter.')}</p>
-    <button type="button" class="btn" id="send-order">${a('إرسال الطلب للكاشير', 'Send order to cashier')}</button><div id="order-message" role="status"></div>`;
+    ${settings.orders_enabled ? `<p class="small muted">${checkout.type === 'delivery' ? a('الدفع عند الاستلام.', 'Pay on delivery.') : a('الدفع عند الكاشير.', 'Pay at the counter.')}</p><button type="button" class="btn" id="send-order" ${short ? 'disabled' : ''}>${a('أرسل الطلب', 'Send order')}</button>` : ''}
+    ${ordering.whatsapp ? `<a class="btn ${settings.orders_enabled ? 'ghost' : ''} wa-order" id="wa-order" target="_blank" rel="noopener">${a('اطلب عبر واتساب', 'Order on WhatsApp')}</a>` : ''}
+    <div id="order-message" role="status"></div>`;
+  const wa = box.querySelector('#wa-order');
+  const waLink = () => {
+    const lines = selected.map(({ line: { item, picked, unit }, quantity: n }) => `• ${n}× ${pick(item, 'name')}${picked.length ? ' (' + picked.map((p) => pick(p.ch, 'name')).join('، ') + ')' : ''} · ${money(unit * n)}`);
+    const extra = [checkout.type ? a(...TYPE[checkout.type]) : '', checkout.table ? a('طاولة ', 'Table ') + checkout.table : '', checkout.name, checkout.address, checkout.car, orderNote.trim()].filter(Boolean);
+    const text = `${a('طلب جديد من المنيو', 'New order from the menu')} · ${pick(data.branch, 'name')}\n${lines.join('\n')}\n${a('الإجمالي', 'Total')}: ${money(total)}${extra.length ? '\n' + extra.join('\n') : ''}`;
+    return `https://wa.me/${ordering.whatsapp}?text=${encodeURIComponent(text)}`;
+  };
+  if (wa) { wa.href = waLink(); wa.addEventListener('focus', () => (wa.href = waLink())); wa.addEventListener('pointerdown', () => (wa.href = waLink())); }
   box.querySelector('#order-note').oninput = (e) => { orderNote = e.target.value; orderKey = crypto.randomUUID(); };
-  box.querySelectorAll('[data-minus]').forEach((b) => (b.onclick = () => { const n = cart.get(b.dataset.minus) || 0; if (n <= 1) cart.delete(b.dataset.minus); else cart.set(b.dataset.minus, n - 1); saveCart(); render(); }));
-  box.querySelectorAll('[data-plus]').forEach((b) => (b.onclick = () => { cart.set(b.dataset.plus, Math.min(20, (cart.get(b.dataset.plus) || 0) + 1)); saveCart(); render(); }));
-  box.querySelector('#send-order').addEventListener('click', async (e) => {
+  box.querySelectorAll('[data-co]').forEach((inp) => inp.addEventListener(inp.tagName === 'SELECT' ? 'change' : 'input', () => { checkout[inp.dataset.co] = inp.value.trim(); orderKey = crypto.randomUUID(); saveCheckout(); }));
+  box.querySelectorAll('[data-type]').forEach((b) => (b.onclick = () => { checkout.type = b.dataset.type; orderKey = crypto.randomUUID(); renderCart(); box.querySelector(`[data-type="${checkout.type}"]`)?.focus(); }));
+  box.querySelectorAll('[data-upsell]').forEach((b) => (b.onclick = () => addLine(lineKey(b.dataset.upsell))));
+  box.querySelector('#apply-coupon')?.addEventListener('click', async (e) => {
+    const code = box.querySelector('#co-coupon').value.trim(), msg = box.querySelector('#coupon-msg');
+    if (!code) return;
     e.target.disabled = true;
     try {
-      const d = await api('/api/public/orders/' + slug, { method: 'POST', body: { idem_key: orderKey, note: orderNote.trim() || undefined, items: selected.map((x) => ({ item_id: x.line.item.id, quantity: x.quantity, options: x.line.opts })) } });
+      const r = await api('/api/public/coupons/' + slug + '/check', { method: 'POST', body: { code, subtotal } });
+      Object.assign(checkout, { coupon: r.code, discount: r.discount, couponFor: subtotal });
+      orderKey = crypto.randomUUID();
+      renderCart();
+      announce(a('تم تطبيق الخصم', 'Discount applied'));
+    } catch (err) {
+      const k = err?.data?.error;
+      msg.className = 'small error-text';
+      msg.textContent = k === 'coupon_expired' ? a('الكود منتهي.', 'This code has expired.') : k === 'coupon_used_up' ? a('الكود استُخدم بالكامل.', 'This code is used up.') : k === 'coupon_min_total' ? a('السلة أقل من الحد المطلوب للكود.', 'Your cart is below this code’s minimum.') : err?.status === 429 ? a('محاولات كثيرة. انتظر شوي.', 'Too many tries. Wait a moment.') : a('الكود غير صحيح.', 'Invalid code.');
+      e.target.disabled = false;
+    }
+  });
+  box.querySelectorAll('[data-minus]').forEach((b) => (b.onclick = () => { const n = cart.get(b.dataset.minus) || 0; if (n <= 1) cart.delete(b.dataset.minus); else cart.set(b.dataset.minus, n - 1); saveCart(); render(); }));
+  box.querySelectorAll('[data-plus]').forEach((b) => (b.onclick = () => { cart.set(b.dataset.plus, Math.min(20, (cart.get(b.dataset.plus) || 0) + 1)); saveCart(); render(); }));
+  box.querySelector('#send-order')?.addEventListener('click', async (e) => {
+    const missing = [...box.querySelectorAll('.checkout-fields [required]')].find((x) => !x.value.trim()) || (checkout.type === 'dine_in' && ordering.tables && !checkout.table ? box.querySelector('#co-table') : null);
+    if (missing) { box.querySelector('#order-message').innerHTML = `<p class="msg error">${a('كمّل البيانات المطلوبة.', 'Please complete the required details.')}</p>`; missing.focus(); return; }
+    e.target.disabled = true;
+    const c = checkout;
+    try {
+      const d = await api('/api/public/orders/' + slug, { method: 'POST', body: {
+        idem_key: orderKey, note: orderNote.trim() || undefined, order_type: c.type || undefined,
+        table: c.type === 'dine_in' && c.table ? c.table : undefined,
+        name: ['delivery', 'pickup'].includes(c.type) && c.name ? c.name : undefined,
+        phone: ['delivery', 'car'].includes(c.type) && c.phone ? c.phone : undefined,
+        address: c.type === 'delivery' ? c.address : undefined, car: c.type === 'car' ? c.car : undefined,
+        coupon: c.discount ? c.coupon : undefined,
+        items: selected.map((x) => ({ item_id: x.line.item.id, quantity: x.quantity, options: x.line.opts })),
+      } });
       orderToken = d.order.token;
       trackPurchase(d.order.total);
       try { sessionStorage.setItem('zm_order_' + slug, orderToken); } catch {}
       cart.clear();
       orderNote = '';
+      Object.assign(checkout, { coupon: '', discount: 0 });
       saveCart();
       render();
       pollOrder();
-    } catch {
-      box.querySelector('#order-message').innerHTML = `<p class="msg error">${a('تعذر إرسال الطلب. قد تغيّر السعر أو التوفر؛ حدّث المنيو ثم حاول مجددًا.', 'Could not send the order. Prices or availability may have changed; refresh the menu and retry.')}</p>`;
+    } catch (err) {
+      const k = err?.data?.error;
+      const why = k === 'invalid_phone' ? a('رقم الجوال لازم يبدأ بـ 05.', 'The mobile number must start with 05.') : k === 'delivery_min_total' ? a('السلة أقل من حد التوصيل.', 'Below the delivery minimum.') : k?.startsWith?.('coupon_') ? a('كود الخصم ما عاد صالح. احذفه وأرسل مرة ثانية.', 'The discount code is no longer valid. Remove it and resend.') : a('تعذر إرسال الطلب. قد تغيّر السعر أو التوفر؛ حدّث المنيو ثم حاول مجددًا.', 'Could not send the order. Prices or availability may have changed; refresh the menu and retry.');
+      if (k?.startsWith?.('coupon_')) Object.assign(checkout, { coupon: '', discount: 0 });
+      box.querySelector('#order-message').innerHTML = `<p class="msg error">${why}</p>`;
       e.target.disabled = false;
     }
   });
@@ -232,6 +315,7 @@ function watchSections() {
 
 try {
   data = await api('/api/public/menu/' + slug);
+  if (data.ordering) ordering = data.ordering;
   setBrandColor(data.branch.brand_color);
   const name = lang === 'ar' ? data.branch.org_name_ar : data.branch.org_name_en;
   try {
@@ -262,7 +346,7 @@ try {
     <section class="menu-sheet" aria-labelledby="menu-title">
       <div class="menu-id">
         ${data.branch.logo_url ? `<img class="menu-logo" src="${esc(data.branch.logo_url)}" alt="" width="84" height="84">` : `<span class="menu-logo menu-monogram" aria-hidden="true">${esc([...name][0] || 'Z')}</span>`}
-        <div><h1 id="menu-title">${esc(name)}</h1><p class="menu-branch">${esc(pick(data.branch, 'name'))}</p></div>
+        <div><h1 id="menu-title">${esc(name)}</h1>${data.branches?.length > 1 ? `<label class="visually-hidden" for="branch-pick">${a('الفرع', 'Branch')}</label><select id="branch-pick" class="branch-pick">${data.branches.map((b) => `<option value="${esc(b.slug)}" ${b.slug === slug ? 'selected' : ''}>${esc(pick(b, 'name'))}</option>`).join('')}</select>` : `<p class="menu-branch">${esc(pick(data.branch, 'name'))}</p>`}</div>
       </div>
       ${profile && pick(profile, 'description') ? `<p class="menu-about">${esc(pick(profile, 'description'))}</p>` : ''}
       ${info ? `<div class="menu-info">${info}</div>` : ''}
@@ -282,6 +366,7 @@ try {
     </section>
     <p class="powered small muted">${a('منيو رقمي من', 'Digital menu by')} <a href="/">${esc(t('brand'))}</a></p>`;
 
+  main.querySelector('#branch-pick')?.addEventListener('change', (e) => location.assign('/m/' + encodeURIComponent(e.target.value)));
   if (hasItems) {
     main.querySelector('#q').oninput = (e) => { q = e.target.value.trim().toLowerCase(); render(); };
     main.querySelector('#clear-q').onclick = () => { q = ''; main.querySelector('#q').value = ''; render(); main.querySelector('#q').focus(); };

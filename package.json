@@ -15,7 +15,8 @@
     "test:workspace": "node test/e2e/workspace.mjs",
     "test:resilience": "node test/e2e/resilience.mjs",
     "test:design": "node test/e2e/design.mjs",
-    "test:magic": "node test/e2e/magic.mjs"
+    "test:magic": "node test/e2e/magic.mjs",
+    "test:ordering": "node test/e2e/ordering.mjs"
   },
   "repository": {
     "type": "git",
