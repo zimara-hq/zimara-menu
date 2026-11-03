@@ -611,3 +611,49 @@ form .error:empty { display: none; }
 .order-lines small { display: block; color: var(--muted); }
 .allergen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
 .option-group-editor { border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 10px; }
+
+/* Add-ons: announcement bar, FAQ, WhatsApp button, pixel consent */
+.announce-bar { display: block; padding: 10px 16px; text-align: center; font-weight: 700; background: var(--accent); color: var(--on-accent); text-decoration: none; }
+.announce-bar.tone-offer { background: #f94500; color: #fff; }
+.announce-bar.tone-notice { background: var(--solar); color: var(--indigo); }
+a.announce-bar:hover { text-decoration: underline; }
+.faq-block details { border-top: 1px solid var(--line); padding: 12px 0; }
+.faq-block details:first-of-type { border-top: 0; }
+.faq-block summary { cursor: pointer; font-weight: 700; }
+.faq-block details p { margin: 8px 0 0; color: var(--muted); }
+.wa-float { position: fixed; inset-inline-end: 16px; inset-block-end: 16px; z-index: 40; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: #1f9d55; color: #fff; box-shadow: 0 6px 20px rgb(0 0 0 / 22%); }
+.wa-float:focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; }
+body.menu-page .wa-float { inset-block-end: 88px; }
+.consent-bar { position: fixed; inset-inline: 12px; inset-block-end: 12px; z-index: 50; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: var(--radius); background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 10px 30px rgb(0 0 0 / 18%); max-width: 640px; margin-inline: auto; }
+.consent-bar p { margin: 0; flex: 1 1 260px; }
+.consent-bar div { display: flex; gap: 8px; }
+/* Add-on store (owner) */
+.addon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.addon-card { display: flex; flex-direction: column; gap: 10px; }
+.addon-card header { display: flex; gap: 12px; align-items: center; }
+.addon-ico { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--line); color: var(--ink); font-weight: 800; font-size: 13px; flex: none; }
+.addon-card h3 { margin: 0; font-size: 1.05rem; }
+.addon-card .actions { display: flex; gap: 8px; margin-top: auto; flex-wrap: wrap; }
+.addon-group-title { margin: 24px 0 10px; }
+.tg-code { font-family: ui-monospace, monospace; font-size: 1.4rem; letter-spacing: .15em; direction: ltr; }
+/* Ready pages (templates) and own domain */
+.template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+.template-card { display: flex; flex-direction: column; gap: 8px; }
+.template-card h3 { margin: 0; }
+.template-card .btn { margin-top: auto; }
+.tpl-phone { border: 6px solid var(--ink); border-radius: 26px; overflow: hidden; background: #faf8fb; color: #1d1426; height: 300px; padding-bottom: 10px; }
+.tpl-cover { height: 70px; background: linear-gradient(135deg, var(--tpl), color-mix(in srgb, var(--tpl) 55%, #fff)); }
+.tpl-id { display: flex; align-items: center; gap: 8px; margin: -20px 12px 8px; }
+.tpl-logo { display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--tpl-r); background: #fff; color: var(--tpl); font-weight: 800; box-shadow: 0 2px 8px rgb(0 0 0 / 15%); }
+.tpl-id strong { font-size: 13px; margin-top: 18px; }
+.tpl-cat { margin: 8px 12px 4px; font-size: 11px; font-weight: 800; color: var(--tpl); }
+.tpl-item { display: flex; justify-content: space-between; gap: 6px; margin: 0 12px 4px; padding: 6px 8px; font-size: 11px; border-bottom: 1px solid #ece6f1; }
+.tpl-item.is-card { background: #fff; border: 0; border-radius: var(--tpl-r); box-shadow: 0 1px 4px rgb(0 0 0 / 8%); }
+.tpl-item b { color: var(--tpl); white-space: nowrap; }
+.sample-banner { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; border-inline-start: 4px solid var(--warn); }
+.sample-banner p { margin: 0; }
+#dom-form .row input { flex: 1 1 240px; }
+.tg-format { display: grid; gap: 10px; }
+.check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px 12px; }
+.tg-preview { margin: 0; padding: 12px 14px; border-radius: 14px; background: #e6f3fb; color: #12324a; white-space: pre-wrap; font: inherit; font-size: .95rem; min-height: 3em; }
+.tg-edit { flex-basis: 100%; display: grid; gap: 10px; padding-top: 8px; }

@@ -7,6 +7,9 @@ import { body, requireRole, audit, newUser, isSecure, assertPlanQuota, subscript
 import { registerAccounts, expireSubscriptions } from './accounts.js';
 import { consumeMfa } from './mfa.js';
 import { registerFeatures } from './features.js';
+import { registerAddons, publicAddons } from './addons.js';
+import { registerTemplates } from './templates.js';
+import { registerDomains, customHostRedirect } from './domains.js';
 import { registerIntegrations } from './integrations.js';
 import { registerBilling, reconcileCheckouts, subscriptionCheckoutConfigured } from './billing.js';
 import { registerMail } from './mail.js';
@@ -60,6 +63,9 @@ app.onError((err, c) => {
   return c.json({ error: 'server_error' }, 500);
 });
 
+const PIXEL_SCRIPT_HOSTS = 'https://connect.facebook.net https://www.googletagmanager.com https://analytics.tiktok.com https://sc-static.net https://static.ads-twitter.com https://s.pinimg.com https://snap.licdn.com';
+const PIXEL_CONNECT_HOSTS = 'https://www.facebook.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://www.google.com https://googleads.g.doubleclick.net https://analytics.tiktok.com https://*.tiktokw.us https://tr.snapchat.com https://*.snapchat.com https://analytics.twitter.com https://ct.pinterest.com https://px.ads.linkedin.com';
+
 // Security headers on everything the Worker answers.
 app.use('*', async (c, next) => {
   await next();
@@ -68,7 +74,9 @@ app.use('*', async (c, next) => {
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   c.header('X-Frame-Options', 'DENY');
   c.header('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()');
-  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
+  // Public menu and business pages may load the owner's ad pixels, from a fixed vendor list only.
+  const pixels = /^\/(m|p)\//.test(new URL(c.req.url).pathname);
+  c.header('Content-Security-Policy', `default-src 'self'; script-src 'self'${pixels ? ' ' + PIXEL_SCRIPT_HOSTS : ''}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'${pixels ? ' ' + PIXEL_CONNECT_HOSTS : ''}; frame-src 'self'${pixels ? ' https://www.googletagmanager.com https://td.doubleclick.net' : ''}; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`);
   if (new URL(c.req.url).protocol === 'https:') c.header('Strict-Transport-Security', 'max-age=31536000');
 });
 
@@ -382,7 +390,7 @@ owner.patch('/items/:id', async (c) => {
   const cat = await c.env.DB.prepare('SELECT id FROM categories WHERE id = ? AND org_id = ?').bind(b.category_id, u.org_id).first();
   if (!cat) throw bad('invalid_category_id');
   const res = await c.env.DB.prepare(
-    'UPDATE items SET category_id = ?, name_ar = ?, name_en = ?, desc_ar = ?, desc_en = ?, price = ?, calories = ?, image_url = ?, sort = ?, compare_price = ?, allergens = ?, caffeine_mg = ?, sodium_mg = ?, options_json = ?, active = ? WHERE id = ? AND org_id = ?',
+    'UPDATE items SET category_id = ?, name_ar = ?, name_en = ?, desc_ar = ?, desc_en = ?, price = ?, calories = ?, image_url = ?, sort = ?, compare_price = ?, allergens = ?, caffeine_mg = ?, sodium_mg = ?, options_json = ?, active = ?, is_sample = 0 WHERE id = ? AND org_id = ?',
   )
     .bind(cat.id, ...itemFields(b), b.active === false ? 0 : 1, c.req.param('id'), u.org_id)
     .run();
@@ -634,10 +642,10 @@ async function orgMenu(env, orgId, { branchId = null, includeHidden = false } = 
   const active = includeHidden ? '' : 'AND active = 1';
   const { results: categories } = await env.DB.prepare(`SELECT id, name_ar, name_en, sort, active FROM categories WHERE org_id = ? ${active} ORDER BY sort, rowid`).bind(orgId).all();
   const { results: items } = await env.DB.prepare(
-    `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.compare_price, i.calories, i.caffeine_mg, i.sodium_mg, i.allergens, i.options_json, i.image_url, i.sort, i.active,
+    `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.compare_price, i.calories, i.caffeine_mg, i.sodium_mg, i.allergens, i.options_json, i.image_url, i.sort, i.active, i.is_sample,
             CASE WHEN bu.item_id IS NULL THEN 1 ELSE 0 END AS available
        FROM items i JOIN categories category ON category.id = i.category_id AND category.org_id = i.org_id LEFT JOIN branch_unavailable bu ON bu.item_id = i.id AND bu.branch_id = ?
-      WHERE i.org_id = ? ${includeHidden ? '' : 'AND i.active = 1 AND category.active = 1'} ORDER BY i.sort, i.rowid`,
+      WHERE i.org_id = ? ${includeHidden ? '' : 'AND i.active = 1 AND i.is_sample = 0 AND category.active = 1'} ORDER BY i.sort, i.rowid`,
   )
     .bind(branchId, orgId)
     .all();
@@ -654,7 +662,7 @@ app.get('/api/public/menu/:branchSlug', async (c) => {
   if (!b) throw notFound();
   const menu = await orgMenu(c.env, b.org_id, { branchId: b.id });
   const { org_id, ...branchInfo } = b;
-  return c.json({ branch: branchInfo, ...menu });
+  return c.json({ branch: branchInfo, ...menu, addons: await publicAddons(c.env, org_id) });
 });
 
 async function ticketByToken(env, token) {
@@ -810,6 +818,9 @@ export async function scheduled(env, fetcher) {
 
 // Asset paths without .html: the assets layer redirects *.html to the clean URL.
 registerFeatures(app);
+registerAddons(app);
+registerTemplates(app);
+registerDomains(app);
 registerIntegrations(app, { onTicketReady: (env, ticketId) => alertTicket(env, ticketId) });
 
 registerDemo(app);
@@ -819,6 +830,8 @@ const PAGES = { '/p/': '/profile', '/m/': '/menu', '/t/': '/ticket', '/c/': '/ca
 app.get('*', async (c) => {
   const path = new URL(c.req.url).pathname;
   if (path.startsWith('/api/')) throw notFound();
+  const own = await customHostRedirect(c);
+  if (own) return own;
   for (const [prefix, page] of Object.entries(PAGES)) {
     if (path.startsWith(prefix) && path.length > prefix.length) {
       return c.env.ASSETS.fetch(new Request(new URL(page, c.req.url), c.req.raw));

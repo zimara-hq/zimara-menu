@@ -6,6 +6,8 @@ import {overviewView,workspaceIcon} from './workspace.js';
 import { ApiError, api, chime, esc, lang, makeT, money, pick, qrSvg, relTime, setBrandColor, topbar, unlockAudio, requestValue, announce, toggleLang } from './common.js';
 
 import { imageField, wireImageFields } from './uploads.js';
+import { addonsView } from './addons-store.js';
+import { templatesView, domainView } from './studio-extras.js';
 import { importView, subscriptionView, integrationsView, devicesView, menuOrdersView, branchSettingsView, mfaView, dataControlsView, adminLegalView } from './dashboard-panels.js';
 
 const t = makeT({
@@ -319,6 +321,7 @@ async function ownerMenu(el) {
                 <div class="admin-item-text"><strong>${esc(pick(i, 'name'))}</strong><span class="small muted">${esc(pick(i, 'desc') || A('بدون وصف', 'No description'))}</span></div>
                 <span class="admin-price">${esc(money(i.price))}</span>
                 ${i.active ? '' : `<span class="pill">${esc(t('hidden'))}</span>`}
+                ${i.is_sample ? `<span class="pill pending" title="${esc(A('يظهر للزوار بعد ما تعدّله', 'Shown to guests once you edit it'))}">${esc(A('تجريبي · مخفي', 'Sample · hidden'))}</span>` : ''}
                 <div class="icon-actions">
                   <button type="button" class="btn ghost sm icon-only" data-item-edit="${n}" aria-label="${esc(A('تعديل', 'Edit') + ' ' + pick(i, 'name'))}" aria-expanded="false">${ICON.edit}</button>
                   <button type="button" class="btn ghost sm icon-only danger-text" data-item-del="${esc(i.id)}" data-name="${esc(pick(i, 'name'))}" aria-label="${esc(A('حذف', 'Delete') + ' ' + pick(i, 'name'))}">${ICON.trash}</button>
@@ -664,7 +667,7 @@ main.before(heading);
 
 const views = {
   admin: [['orgs', t('orgs'), adminOrgs], ['admins', t('admins'), adminAdmins], ['legal', lang === 'ar' ? 'البيانات القانونية' : 'Legal details', adminLegalView], ['account', t('account'), accountView]],
-  owner: [['overview', lang === 'ar' ? 'نظرة عامة' : 'Overview', ownerOverview], ['menu', t('menu'), ownerMenu], ['brand', lang === 'ar' ? 'استوديو الهوية' : 'Brand studio', ownerBrand], ['profile',lang === 'ar' ? 'صفحة المنشأة' : 'Business page',el=>profileEditor(el,me)], ['branches', t('branches'), ownerBranches], ['loyalty', t('loyalty'), ownerLoyalty], ['stats', t('stats'), ownerStats], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'إعدادات الفروع' : 'Branch settings', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
+  owner: [['overview', lang === 'ar' ? 'نظرة عامة' : 'Overview', ownerOverview], ['menu', t('menu'), ownerMenu], ['brand', lang === 'ar' ? 'استوديو الهوية' : 'Brand studio', ownerBrand], ['profile',lang === 'ar' ? 'صفحة المنشأة' : 'Business page',el=>profileEditor(el,me)], ['branches', t('branches'), ownerBranches], ['loyalty', t('loyalty'), ownerLoyalty], ['stats', t('stats'), ownerStats], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'إعدادات الفروع' : 'Branch settings', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['templates', lang === 'ar' ? 'صفحات جاهزة' : 'Ready pages', templatesView], ['addons', lang === 'ar' ? 'الإضافات' : 'Add-ons', addonsView], ['domain', lang === 'ar' ? 'الدومين الخاص' : 'Own domain', domainView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
   branch: [['orders', t('orders'), branchOrders], ['display', t('display'), branchDisplay], ['loyalty', t('loyalty'), branchLoyalty], ['availability', t('availability'), branchAvailability], ['inbox', lang === 'ar' ? 'طلبات المنيو' : 'Menu orders', menuOrdersView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['account', t('account'), accountView]],
 }[me.user.role];
 tabs(views.map(([k, l]) => [k, l]), (k, el) => {

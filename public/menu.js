@@ -1,5 +1,6 @@
 import {applyTenantTheme,bannerGallery,coverImage} from './tenant-theme.js';
 import { api, esc, lang, makeT, money, pick, setBrandColor, topbar, announce } from './common.js';
+import { renderAddons, trackPurchase } from './addons-public.js';
 
 const a = (ar, en) => (lang === 'ar' ? ar : en);
 const t = makeT({
@@ -171,6 +172,7 @@ function renderCart() {
     try {
       const d = await api('/api/public/orders/' + slug, { method: 'POST', body: { idem_key: orderKey, note: orderNote.trim() || undefined, items: selected.map((x) => ({ item_id: x.line.item.id, quantity: x.quantity, options: x.line.opts })) } });
       orderToken = d.order.token;
+      trackPurchase(d.order.total);
       try { sessionStorage.setItem('zm_order_' + slug, orderToken); } catch {}
       cart.clear();
       orderNote = '';
@@ -279,6 +281,7 @@ try {
     render();
     watchSections();
   }
+  try { renderAddons(data.addons, { main, orgSlug: data.branch.org_slug }); } catch {}
   if (orderToken) pollOrder();
 } catch {
   topbar(document.getElementById('top'), t);
