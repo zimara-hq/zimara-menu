@@ -1,4 +1,5 @@
 import { requireRole, body, audit, assertOrgWritable, subscriptionFor } from './context.js';
+import { publish } from './realtime.js';
 import { HttpError, bad, conflict, id, int, notFound, now, randomToken, str } from './util.js';
 import { encryptionConfigured, encryptSigningSecret, decryptSigningSecret, verifyBridgeSignature, payloadHash } from './providers/pos-bridge.js';
 import { paymentProvider } from './providers/contracts.js';
@@ -141,6 +142,7 @@ export function registerIntegrations(app, { onTicketReady } = {}) {
           c.env.DB.prepare("INSERT INTO tickets (id, org_id, branch_id, number, token, status, created_at) VALUES (?, ?, ?, ?, ?, 'preparing', ?)").bind(ticketId, connection.org_id, connection.branch_id, number, randomToken(24), stamp),
           c.env.DB.prepare('INSERT INTO pos_orders (connection_id, external_order_id, ticket_id) VALUES (?, ?, ?)').bind(connection.id, externalId, ticketId),
         ]);
+        await publish(c.env, connection.branch_id, 'ticket', { id: ticketId });
       } catch (error) {
         if (await duplicate()) return c.json({ ok: true, duplicate: true });
         if (/UNIQUE/i.test(String(error))) throw conflict('order_or_number_exists');
@@ -158,6 +160,7 @@ export function registerIntegrations(app, { onTicketReady } = {}) {
           c.env.DB.prepare("UPDATE tickets SET status = 'ready', ready_at = ?, alerts_sent = 1, last_alert_at = ?, version = version + 1 WHERE id = ? AND org_id = ? AND branch_id = ? AND status = 'preparing'").bind(stamp, stamp, ticketId, connection.org_id, connection.branch_id),
         ]);
         if (!transition[1].meta.changes) return c.json({ ok: true, duplicate: false, already_ready: true, ticket_id: ticketId }, 202);
+        await publish(c.env, connection.branch_id, 'ticket', { id: ticketId });
       } catch (error) {
         if (await duplicate()) return c.json({ ok: true, duplicate: true });
         throw error;

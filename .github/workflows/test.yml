@@ -49,6 +49,7 @@ jobs:
           npm run test:ordering -- http://127.0.0.1:8787 output/playwright/ordering
           npm run test:waitlist -- http://127.0.0.1:8787 output/playwright/waitlist
           npm run test:loyalty -- http://127.0.0.1:8787 output/playwright/loyalty
+          npm run test:security -- http://localhost:8787 output/playwright/security
       - uses: actions/upload-artifact@v4
         if: always()
         with:

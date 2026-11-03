@@ -3,6 +3,7 @@
 // place in line, the expected wait and a call alert. Staff run the list from the
 // branch screen: call, seat, cancel, no-show, or add a walk-in.
 import { requireRole, body, audit, rateLimit, assertOrgWritable } from './context.js';
+import { publish } from './realtime.js';
 import { bad, conflict, notFound, str, int, id, now, randomToken, HttpError } from './util.js';
 import { normalPhone } from './ordering.js';
 import { sendPush, pushConfigured, validEndpoint } from './push.js';
@@ -170,6 +171,7 @@ export function registerWaitlist(app) {
     const q = await queueStats(c.env, b.id);
     if (q.waiting >= MAX_OPEN) throw conflict('waitlist_full');
     const e = await insertEntry(c.env, { orgId: b.org_id, branchId: b.id, ...f, source: 'guest' });
+    await publish(c.env, b.id, 'waitlist', { number: e.number });
     return c.json({ token: e.token, number: e.number }, 201);
   });
 
@@ -191,7 +193,8 @@ export function registerWaitlist(app) {
 
   app.post('/api/w/:token/seen', async (c) => {
     const e = await entryByToken(c.env, c.req.param('token'));
-    await c.env.DB.prepare("UPDATE waitlist SET seen_at=? WHERE id=? AND status='called' AND seen_at IS NULL").bind(now(), e.id).run();
+    const seen = await c.env.DB.prepare("UPDATE waitlist SET seen_at=? WHERE id=? AND status='called' AND seen_at IS NULL").bind(now(), e.id).run();
+    if (seen.meta.changes) await publish(c.env, e.branch_id, 'waitlist', { status: 'seen' });
     return c.json(await guestView(c.env, await entryByToken(c.env, c.req.param('token'))));
   });
 
@@ -199,6 +202,7 @@ export function registerWaitlist(app) {
     const e = await entryByToken(c.env, c.req.param('token'));
     const r = await c.env.DB.prepare(`UPDATE waitlist SET status='cancelled', done_at=?, version=version+1 WHERE id=? AND status IN ${OPEN}`).bind(now(), e.id).run();
     if (!r.meta.changes) throw conflict('entry_closed');
+    await publish(c.env, e.branch_id, 'waitlist', { status: 'cancelled' });
     return c.json(await guestView(c.env, await entryByToken(c.env, c.req.param('token'))));
   });
 
@@ -219,6 +223,7 @@ export function registerWaitlist(app) {
     const q = await queueStats(c.env, u.branch_id);
     if (q.waiting >= MAX_OPEN) throw conflict('waitlist_full');
     const e = await insertEntry(c.env, { orgId: u.org_id, branchId: u.branch_id, ...f, source: 'staff' });
+    await publish(c.env, u.branch_id, 'waitlist', { number: e.number });
     return c.json({ id: e.id, number: e.number, token: e.token }, 201);
   });
 
@@ -240,6 +245,7 @@ export function registerWaitlist(app) {
     const entry = await c.env.DB.prepare(`SELECT ${STAFF_COLS} FROM waitlist WHERE id=? AND branch_id=?`).bind(c.req.param('id'), u.branch_id).first();
     if (!entry) throw notFound();
     if (!res.meta.changes) return c.json({ error: 'stale', entry }, 409);
+    await publish(c.env, u.branch_id, 'waitlist', { id: entry.id, status: entry.status });
     const push = action === 'call' ? await alertEntry(c.env, entry.id) : null;
     return c.json({ entry, push });
   });

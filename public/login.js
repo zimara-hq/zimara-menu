@@ -1,4 +1,5 @@
 import { api, esc, lang, makeT, topbar } from './common.js';
+import { passkeyLogin, passkeysSupported } from './security-ui.js';
 
 const t = makeT({
   ar: { title: 'أهلًا بعودتك.', email: 'البريد الإلكتروني', password: 'كلمة المرور', go: 'دخول لوحة التحكم', bad: 'تحقق من البريد وكلمة المرور وحاول مرة أخرى.', many: 'محاولات كثيرة. انتظر ربع ساعة ثم حاول مجددًا.', intro: 'مساحتك لإدارة المنيو والنداء والولاء.', new: 'أول مرة مع زيمارا؟', create: 'أنشئ حساب منشأتك', story: 'كل تفاصيل منشأتك. في مكان واحد.', subtitle: 'زيمارا منيو', point1: 'منيو يتحدث معك، لحظة بلحظة', point2: 'نداء واضح من الكاشير إلى العميل', point3: 'ولاء يرجّعهم لك', code: 'رمز التحقق بخطوتين', codeHint: 'اكتب رمز تطبيق المصادقة، أو رمز استرداد.', recover: 'استخدم رمز استرداد', wrongCode: 'رمز التحقق غير صحيح. جرّب الرمز الحالي.' },
@@ -20,7 +21,15 @@ try {
       <div><label for="p">${esc(t('password'))}</label><input id="p" type="password" autocomplete="current-password" required></div>
       <div id="mfa-fields" hidden><label for="mfa-code">${esc(t('code'))}</label><input id="mfa-code" name="code" type="text" autocomplete="one-time-code" aria-describedby="mfa-help"><p id="mfa-help" class="small muted">${esc(t('codeHint'))}</p><label><input type="checkbox" id="recovery"> ${esc(t('recover'))}</label></div>
       <p id="err" role="alert"></p><button class="btn" type="submit">${esc(t('go'))}</button>
+      ${passkeysSupported() ? `<button class="btn ghost" type="button" id="passkey-login">🔑 ${esc(lang === 'ar' ? 'ادخل بمفتاح المرور (البصمة)' : 'Sign in with a passkey')}</button>` : ''}
     </form><p class="auth-footer">${esc(t('new'))} <a href="/register">${esc(t('create'))}</a></p><p class="small"><a href="/reset">${esc(lang === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot your password?')}</a></p>${new URLSearchParams(location.search).get('verified') === '1' ? `<p class="msg" role="status">${esc(lang === 'ar' ? 'تأكد بريدك. سجّل دخولك.' : 'Email confirmed. Please sign in.')}</p>` : new URLSearchParams(location.search).get('verified') === '0' ? `<p class="msg error" role="alert">${esc(lang === 'ar' ? 'رابط التأكيد غير صالح أو انتهى.' : 'This confirmation link is invalid or expired.')}</p>` : ''}</div>`;
+  main.querySelector('#passkey-login')?.addEventListener('click', async (ev) => {
+    const err = main.querySelector('#err');
+    ev.target.disabled = true; err.textContent = '';
+    try { await passkeyLogin(); location.replace('/app'); }
+    catch (e) { err.innerHTML = `<span class="msg error">${esc(e?.name === 'NotAllowedError' ? (lang === 'ar' ? 'تم الإلغاء.' : 'Cancelled.') : e?.status === 429 ? t('many') : (lang === 'ar' ? 'ما قدرنا ندخلك بمفتاح المرور. جرّب كلمة المرور.' : 'Could not sign in with a passkey. Try your password.'))}</span>`; }
+    finally { ev.target.disabled = false; }
+  });
   main.querySelector('#f').onsubmit = async (ev) => {
     ev.preventDefault();
     const btn = ev.target.querySelector('button');

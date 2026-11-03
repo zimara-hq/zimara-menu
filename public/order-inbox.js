@@ -9,6 +9,7 @@ import {
   announce,
 } from "./common.js";
 import { confirmAction } from "./forms.js";
+import { onLive } from "./realtime.js";
 const a = (ar, en) => (lang === "ar" ? ar : en);
 const TYPE_LABEL = { dine_in: ["🍽 محلي", "🍽 Dine-in"], pickup: ["🛍 استلام", "🛍 Pickup"], delivery: ["🛵 توصيل", "🛵 Delivery"], car: ["🚗 سيارة", "🚗 Curbside"] };
 // Order type and the guest's details (table, name, phone, address, car).
@@ -271,5 +272,6 @@ export async function orderInbox(el) {
     if (armed) chime(1);
   };
   refreshButton.onclick = () => refresh();
+  onLive(refreshButton, ['order'], () => refresh());
   await refresh();
 }

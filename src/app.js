@@ -15,6 +15,8 @@ import { registerAiImport, aiConfigured } from './ai-import.js';
 import { registerSetup } from './setup.js';
 import { registerWaitlist, waitlistCron, waitSettings } from './waitlist.js';
 import { registerLoyalty, winbackCron } from './loyalty.js';
+import { registerSecurity } from './security.js';
+import { registerRealtime, publish } from './realtime.js';
 import { registerOrdering, getOrdering, publicOrdering } from './ordering.js';
 import { registerIntegrations } from './integrations.js';
 import { registerBilling, reconcileCheckouts, subscriptionCheckoutConfigured } from './billing.js';
@@ -29,6 +31,7 @@ import {
   clearLoginFailures,
   createSession,
   destroySession,
+  deviceLabel,
   hashPassword,
   loadUser,
   recordLoginFailure,
@@ -115,8 +118,8 @@ registerLegal(app);
 
 // ---------- Session ----------
 
-app.post('/api/login', async (c) => {
-  const b = await body(c);
+// Password (+ TOTP when enrolled) check shared by the web login and the app token login.
+async function passwordLogin(c, b) {
   const email = str(b.email, 'email', { max: 200 }).toLowerCase();
   const password = typeof b.password === 'string' ? b.password : '';
   const ip = c.req.header('cf-connecting-ip') || 'local';
@@ -136,9 +139,23 @@ app.post('/api/login', async (c) => {
     throw new HttpError(401, b.code || b.recovery_code ? 'invalid_mfa_code' : 'mfa_required');
   }
   await clearLoginFailures(c.env, keys);
-  const token = await createSession(c.env, user.id, !!user.mfa_secret);
+  return user;
+}
+
+app.post('/api/login', async (c) => {
+  const user = await passwordLogin(c, await body(c));
+  const token = await createSession(c.env, user.id, !!user.mfa_secret, { label: deviceLabel(c.req.header('user-agent')) });
   c.header('Set-Cookie', sessionCookie(token, isSecure(c)));
   return c.json({ ok: true });
+});
+
+// Phone apps (POST /api/v1/auth/token): the same check, answered with a bearer token instead of a cookie.
+app.post('/api/auth/token', async (c) => {
+  const b = await body(c);
+  const user = await passwordLogin(c, b);
+  const label = str(b.device, 'device', { optional: true, max: 80 }) || deviceLabel(c.req.header('user-agent')) || 'App';
+  const token = await createSession(c.env, user.id, !!user.mfa_secret, { kind: 'app', label });
+  return c.json({ token, token_type: 'Bearer' }, 201);
 });
 
 app.post('/api/logout', async (c) => {
@@ -572,6 +589,7 @@ branch.post('/tickets', async (c) => {
     if (idem) stmts.push(c.env.DB.prepare('INSERT INTO cashier_ticket_requests (branch_id,idem_key,fingerprint,ticket_id,created_at) VALUES (?,?,?,?,?)').bind(u.branch_id,idem,fingerprint,tid,createdAt));
     try {
       await c.env.DB.batch(stmts);
+      await publish(c.env, u.branch_id, 'ticket', { id: tid });
       return c.json({ id: tid, number, invoice_number: invoiceNumber, token }, 201);
     } catch (error) {
       const duplicate = await previous();
@@ -606,6 +624,7 @@ branch.post('/tickets/:id/:action', async (c) => {
   const ticket = await c.env.DB.prepare(`SELECT ${TICKET_COLS} FROM tickets WHERE id = ? AND branch_id = ?`).bind(c.req.param('id'), u.branch_id).first();
   if (!ticket) throw notFound();
   if (!res.meta.changes) return c.json({ error: 'stale', ticket }, 409);
+  await publish(c.env, u.branch_id, 'ticket', { id: ticket.id, status: ticket.status });
   let push = null;
   if (action === 'ready' || action === 'realert') push = await alertTicket(c.env, ticket.id);
   return c.json({ ticket, push });
@@ -866,6 +885,8 @@ registerSetup(app);
 registerOrdering(app);
 registerWaitlist(app);
 registerLoyalty(app);
+registerSecurity(app);
+registerRealtime(app);
 registerIntegrations(app, { onTicketReady: (env, ticketId) => alertTicket(env, ticketId) });
 
 registerDemo(app);
@@ -885,4 +906,19 @@ app.get('*', async (c) => {
   return c.env.ASSETS.fetch(c.req.raw);
 });
 
-export default app;
+// Versioned API for the phone apps: /api/v1/* answers exactly like /api/*. When an
+// endpoint must change shape, /api/v1 keeps the old one so installed apps never break.
+const root = new Hono();
+const ctxOf = (c) => { try { return c.executionCtx; } catch { return undefined; } };
+root.all('/api/v1/*', async (c) => {
+  const u = new URL(c.req.url);
+  u.pathname = '/api/' + u.pathname.slice('/api/v1/'.length);
+  const res = await app.fetch(new Request(u, c.req.raw), c.env, ctxOf(c));
+  if (res.status === 101) return res;
+  const out = new Response(res.body, res);
+  out.headers.set('X-API-Version', '1');
+  return out;
+});
+root.all('*', (c) => app.fetch(c.req.raw, c.env, ctxOf(c)));
+
+export default root;

@@ -1,4 +1,5 @@
 import { requireRole, body, audit, assertOrgWritable, subscriptionFor, rateLimit } from '../context.js';
+import { publish } from '../realtime.js';
 import { HttpError, bad, id, notFound, now, randomToken, str } from '../util.js';
 import { encryptionConfigured, encryptSigningSecret, decryptSigningSecret } from './pos-bridge.js';
 
@@ -138,6 +139,7 @@ async function openTicket(env, conn, inv, t) {
         env.DB.prepare('UPDATE rewaa_invoices SET ticket_id = ? WHERE connection_id = ? AND invoice_id = ?').bind(tid, conn.id, invoiceId),
         env.DB.prepare('UPDATE rewaa_connections SET imported = imported + 1 WHERE id = ?').bind(conn.id),
       ]);
+      await publish(env, conn.branch_id, 'ticket', { id: tid });
       return true;
     } catch (error) {
       if (!/UNIQUE|constraint/i.test(String(error?.message ?? error)) || attempt === 2) {

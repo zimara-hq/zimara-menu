@@ -708,3 +708,8 @@ body.menu-page .wa-float { inset-block-end: 88px; }
 .seg small { color: var(--muted); }
 .seg[aria-pressed=true] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 @media (prefers-reduced-motion: reduce) { .points-bar span { transition: none; } }
+
+/* Account security lists */
+.plain-list { list-style: none; padding: 0; margin: 8px 0 12px; display: grid; gap: 8px; }
+.plain-list li { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.plain-list li small { display: block; }

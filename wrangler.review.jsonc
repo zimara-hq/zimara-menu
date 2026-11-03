@@ -10,5 +10,7 @@
  "vars":{"ENVIRONMENT":"preview","DEMO_ENABLED":"true","SIGNUP_ENABLED":"true","REQUIRE_ADMIN_MFA":"true","MAIL_FROM":"ZIMARA <no-reply@zimara.co>","PUBLIC_BASE_URL":"https://zimara-menu-review-20261031.zimara-hq.workers.dev","VAT_RATE_BPS":"0","REWAA_ENABLED":"true"},
  "secrets":{"required":["AUTH_SECRET"]},
  "triggers":{"crons":["* * * * *"]},
+ "durable_objects":{"bindings":[{"name":"HUB","class_name":"BranchHub"}]},
+ "migrations":[{"tag":"v1-branch-hub","new_sqlite_classes":["BranchHub"]}],
  "observability":{"enabled":true}
 }
