@@ -29,11 +29,11 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Configure isolated local test environment
-        run: node -e "require('fs').writeFileSync('.dev.vars','AUTH_SECRET='+require('crypto').randomBytes(32).toString('hex')+'\nREQUIRE_ADMIN_MFA=true\nDEMO_HOURLY_LIMIT=40\n')"
+        run: node -e "require('fs').writeFileSync('.dev.vars','AUTH_SECRET='+require('crypto').randomBytes(32).toString('hex')+'\nREQUIRE_ADMIN_MFA=true\n')"
       - run: npm run db:migrate:local
       - name: Run separate-browser customer, cashier and display journey
         run: |
-          npm run dev -- --ip 127.0.0.1 --port 8787 > /tmp/zimara-menu-test.log 2>&1 &
+          npm run dev -- --ip 127.0.0.1 --port 8787 --var DEMO_HOURLY_LIMIT:100 > /tmp/zimara-menu-test.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 30); do

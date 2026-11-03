@@ -14,6 +14,7 @@ try{
  await cdp.send('WebAuthn.addVirtualAuthenticator',{options:{protocol:'ctap2',transport:'internal',hasResidentKey:true,hasUserVerification:true,isUserVerified:true,automaticPresenceSimulation:true}});
  await owner.goto(base+'/demo');
  const room=await owner.evaluate(async()=>(await fetch('/api/demo',{method:'POST',headers:{'content-type':'application/json'},body:'{}'})).json());
+ assert.ok(room.token,'demo room was not created: '+JSON.stringify(room));
  await owner.evaluate(async token=>{await fetch('/api/demo/'+token+'/session',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({role:'owner'})});},room.token);
  await owner.goto(base+'/app');await owner.locator('.workspace-welcome').waitFor();
  await owner.locator('[data-k=account]').click();await owner.locator('#account-devices #pk-add').waitFor();
