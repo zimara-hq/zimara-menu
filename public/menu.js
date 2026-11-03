@@ -350,6 +350,7 @@ try {
       </div>
       ${profile && pick(profile, 'description') ? `<p class="menu-about">${esc(pick(profile, 'description'))}</p>` : ''}
       ${info ? `<div class="menu-info">${info}</div>` : ''}
+      ${data.waitlist ? `<a class="btn ghost sm wl-join-link" id="wl-join-link" href="/q/${esc(slug)}">⏳ ${a('سجّل في قائمة الانتظار', 'Join the waitlist')}</a>` : ''}
     </section>
     ${bannerGallery(profile?.banners)}
     ${hasItems ? `

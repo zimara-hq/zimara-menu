@@ -13,6 +13,7 @@ import { registerDomains, customHostRedirect } from './domains.js';
 import { registerDesign, activeDesign } from './design.js';
 import { registerAiImport, aiConfigured } from './ai-import.js';
 import { registerSetup } from './setup.js';
+import { registerWaitlist, waitlistCron, waitSettings } from './waitlist.js';
 import { registerOrdering, getOrdering, publicOrdering } from './ordering.js';
 import { registerIntegrations } from './integrations.js';
 import { registerBilling, reconcileCheckouts, subscriptionCheckoutConfigured } from './billing.js';
@@ -672,7 +673,7 @@ app.get('/api/public/menu/:branchSlug', async (c) => {
   const menu = await orgMenu(c.env, b.org_id, { branchId: b.id });
   const { org_id, ...branchInfo } = b;
   const { results: siblings } = await c.env.DB.prepare('SELECT slug, name_ar, name_en FROM branches WHERE org_id = ? AND active = 1 ORDER BY created_at').bind(org_id).all();
-  return c.json({ branch: branchInfo, ...menu, addons: await publicAddons(c.env, org_id), design: await activeDesign(c.env, org_id), ordering: publicOrdering(await getOrdering(c.env, b.id)), branches: siblings });
+  return c.json({ branch: branchInfo, ...menu, addons: await publicAddons(c.env, org_id), design: await activeDesign(c.env, org_id), ordering: publicOrdering(await getOrdering(c.env, b.id)), waitlist: (await waitSettings(c.env, b.id)).active, branches: siblings });
 });
 
 async function ticketByToken(env, token) {
@@ -821,7 +822,9 @@ export async function scheduled(env, fetcher) {
     env.DB.prepare("DELETE FROM push_subscriptions WHERE ticket_id IN (SELECT id FROM tickets WHERE status IN ('collected', 'cancelled'))"),
     env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(t),
   ]);
-  return { realerted: results.length };
+  let waitlist = null;
+  try { waitlist = await waitlistCron(env, fetcher); } catch { /* next minute */ }
+  return { realerted: results.length, waitlist };
 }
 
 // ---------- Pages ----------
@@ -835,11 +838,12 @@ registerDesign(app);
 registerAiImport(app);
 registerSetup(app);
 registerOrdering(app);
+registerWaitlist(app);
 registerIntegrations(app, { onTicketReady: (env, ticketId) => alertTicket(env, ticketId) });
 
 registerDemo(app);
 
-const PAGES = { '/p/': '/profile', '/m/': '/menu', '/t/': '/ticket', '/c/': '/card', '/j/': '/join', '/display/': '/display' };
+const PAGES = { '/p/': '/profile', '/m/': '/menu', '/t/': '/ticket', '/c/': '/card', '/j/': '/join', '/display/': '/display', '/w/': '/wait', '/q/': '/wait' };
 
 app.get('*', async (c) => {
   const path = new URL(c.req.url).pathname;

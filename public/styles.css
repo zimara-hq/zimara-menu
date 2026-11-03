@@ -118,6 +118,7 @@ input[type='checkbox'] { width: auto; min-height: 0; }
 
 .msg { padding: 10px 14px; border-radius: 12px; background: var(--ready-bg); margin: 10px 0; }
 .msg.error { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
+.msg.warn { background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn); }
 .empty { text-align: center; color: var(--muted); padding: 24px; }
 
 table { width: 100%; border-collapse: collapse; }
@@ -679,3 +680,19 @@ body.menu-page .wa-float { inset-block-end: 88px; }
 .check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px 12px; }
 .tg-preview { margin: 0; padding: 12px 14px; border-radius: 14px; background: #e6f3fb; color: #12324a; white-space: pre-wrap; font: inherit; font-size: .95rem; min-height: 3em; }
 .tg-edit { flex-basis: 100%; display: grid; gap: 10px; padding-top: 8px; }
+
+/* Waitlist */
+.center { text-align: center; }
+.party-pick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.party-pick .btn { min-width: 48px; min-height: 48px; padding: 0 12px; }
+.party-pick .btn[aria-checked="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.party-pick input { width: 90px; min-height: 48px; }
+.wl-board { display: grid; gap: 10px; }
+.wl-row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.wl-row.called { border-color: var(--ok); box-shadow: inset 4px 0 0 var(--ok); }
+.wl-row .wl-num { font-size: 1.6rem; font-weight: 800; min-width: 2.2em; text-align: center; }
+.wl-row .wl-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.wl-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.wl-stats span { padding: 6px 12px; border-radius: 999px; background: var(--line); font-weight: 700; }
+@media (max-width: 560px) { .wl-row { grid-template-columns: auto 1fr; } .wl-row .wl-actions { grid-column: 1 / -1; justify-content: flex-start; } }
+.wl-join-link { margin-top: 10px; }

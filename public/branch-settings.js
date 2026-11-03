@@ -1,6 +1,7 @@
 import {watchForm,markFormDirty,markFormSaved,validateForm,formBusy,setFormBusy} from './forms.js';
 import {api,esc,lang,pick,announce} from './common.js';
 import {orderingPanel} from './ordering-admin.js';
+import {waitlistPanel} from './waitlist-board.js';
 const a=(ar,en)=>lang==='ar'?ar:en;
 const dayNames=a(['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']);
 export async function branchSettingsEditor(el){
@@ -13,6 +14,7 @@ export async function branchSettingsEditor(el){
   function sync(){for(const row of f.querySelectorAll('[data-day]')){const day=row.dataset.day,disabled=!f.elements.publish_hours.checked||f.elements['closed-'+day].checked;row.querySelectorAll('[type=time]').forEach(i=>{i.disabled=disabled;i.required=!disabled;});}}
   watchForm(f);f.addEventListener('change',sync);sync();el.querySelector('#branch-settings-list').append(f);
   const oc=document.createElement('section');oc.className='card stack';el.querySelector('#branch-settings-list').append(oc);orderingPanel(oc,b).catch(()=>{oc.remove();});
+  const wc=document.createElement('section');wc.className='card stack';el.querySelector('#branch-settings-list').append(wc);waitlistPanel(wc,b).catch(()=>{wc.remove();});
   f.onsubmit=async e=>{e.preventDefault();if(formBusy(f)||!validateForm(f))return;const v=Object.fromEntries(new FormData(f)),btn=f.querySelector('[type=submit]'),msg=f.querySelector('[role=status]');const release=setFormBusy(f);msg.textContent='';try{const hours=v.publish_hours?dayNames.map((_,day)=>({day,closed:Boolean(v['closed-'+day]),open:v['closed-'+day]?null:v['open-'+day],close:v['closed-'+day]?null:v['close-'+day]})):[];await api(`/api/owner/branches/${b.id}/settings`,{method:'PATCH',body:{orders_enabled:Boolean(v.orders_enabled),address:v.address,maps_url:v.maps_url||null,game:v.game,hours}});markFormSaved(f);announce(a('تم حفظ إعدادات الفرع.','Branch settings saved.'));}catch{msg.textContent=a('تعذر الحفظ. راجع الرابط وأوقات العمل ثم أعد المحاولة.','Could not save. Check the link and opening hours, then retry.');}finally{release();}};
  }
 }

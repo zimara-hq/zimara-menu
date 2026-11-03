@@ -1,5 +1,5 @@
 // ZIMARA Menu service worker: receives payload-less pager pushes and shows the alert.
-const STATE = 'zm-state-v1';
+const STATE = 'zm-state-v1'; // tracked tokens: { token, lang, kind: 't' pager | 'w' waitlist }
 
 async function readTokens() {
   const cache = await caches.open(STATE);
@@ -19,7 +19,7 @@ self.addEventListener('message', (e) => {
   if (e.data?.type === 'track' && typeof e.data.token === 'string') {
     e.waitUntil((async () => {
       const tokens = await readTokens();
-      await writeTokens([...tokens.filter((x) => x.token !== e.data.token), { token: e.data.token, lang: e.data.lang }]);
+      await writeTokens([...tokens.filter((x) => x.token !== e.data.token), { token: e.data.token, lang: e.data.lang, kind: e.data.kind === 'w' ? 'w' : 't' }]);
       e.ports[0]?.postMessage({ type: 'tracked' });
     })());
   }
@@ -30,11 +30,22 @@ self.addEventListener('push', (event) => {
     (async () => {
       const tokens = await readTokens();
       let shown = false;
-      for (const { token, lang } of tokens.reverse()) {
+      for (const { token, lang, kind } of tokens.reverse()) {
         try {
-          const r = await fetch('/api/t/' + token, { cache: 'no-store' });
+          const r = await fetch((kind === 'w' ? '/api/w/' : '/api/t/') + token, { cache: 'no-store' });
           if (!r.ok) continue;
           const t = await r.json();
+          if (kind === 'w') {
+            if (t.status !== 'called') continue;
+            const ar = lang !== 'en';
+            await self.registration.showNotification(ar ? `جا دوركم! رقم ${t.number}` : `Your table is ready! #${t.number}`, {
+              body: ar ? `تفضلوا للاستقبال — ${t.org_ar}` : `Please come to the host stand — ${t.org_en}`,
+              icon: '/brand/symbol.png', badge: '/brand/symbol.png', tag: 'zm-w-' + token, renotify: true, requireInteraction: true,
+              vibrate: [300, 150, 300, 150, 600], data: { url: '/w/' + token },
+            });
+            shown = true;
+            break;
+          }
           if (t.status !== 'ready') continue;
           const ar = lang !== 'en';
           await self.registration.showNotification(ar ? `طلبك رقم ${t.number} جاهز` : `Order ${t.number} is ready`, {
@@ -52,7 +63,7 @@ self.addEventListener('push', (event) => {
         } catch {}
       }
       // Browsers require a visible notification for every push.
-      if (!shown) await self.registration.showNotification('ZIMARA Menu', { body: 'طلبك جاهز · Your order is ready', icon: '/brand/symbol.png' });
+      if (!shown) await self.registration.showNotification('ZIMARA Menu', { body: 'وصلك تنبيه · You have an update', icon: '/brand/symbol.png' });
     })(),
   );
 });
