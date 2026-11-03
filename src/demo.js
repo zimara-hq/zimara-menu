@@ -18,7 +18,7 @@ export function registerDemo(app) {
  });
  app.post('/api/demo',async c=>{
   if(c.env.DEMO_ENABLED==='false')throw new HttpError(503,'demo_unavailable');
-  await rateLimit(c,'demo-create',{limit:8,window:HOUR});
+  await rateLimit(c,'demo-create',{limit:Math.min(100,Math.max(1,Number(c.env.DEMO_HOURLY_LIMIT)||8)),window:HOUR}); // DEMO_HOURLY_LIMIT: test runs only
   const n=await c.env.DB.prepare('SELECT COUNT(*) AS n FROM demo_rooms WHERE expires_at>?').bind(now()).first();
   if(n.n>=200)throw new HttpError(429,'demo_capacity');
   const token=randomToken(24),oid=id(),bid=id(),owner=id(),cashier=id(),t=now(),expires=t+2*HOUR;

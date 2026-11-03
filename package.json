@@ -17,7 +17,8 @@
     "test:design": "node test/e2e/design.mjs",
     "test:magic": "node test/e2e/magic.mjs",
     "test:ordering": "node test/e2e/ordering.mjs",
-    "test:waitlist": "node test/e2e/waitlist.mjs"
+    "test:waitlist": "node test/e2e/waitlist.mjs",
+    "test:loyalty": "node test/e2e/loyalty.mjs"
   },
   "repository": {
     "type": "git",

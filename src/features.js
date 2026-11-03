@@ -613,6 +613,8 @@ export function registerFeatures(app) {
       c.env.DB.prepare(
         'INSERT INTO revoked_card_tokens(token_hash,card_id,org_id,revoked_at) SELECT ?,id,org_id,? FROM loyalty_cards WHERE id=? AND token=? AND revoked_at=? ON CONFLICT(token_hash) DO NOTHING',
       ).bind(tokenHash, stamp, card.id, replacement, stamp),
+      c.env.DB.prepare('DELETE FROM card_push WHERE card_id=?').bind(card.id),
+      c.env.DB.prepare('DELETE FROM card_inbox WHERE card_id=?').bind(card.id),
     ]);
     await audit(c.env, { org_id: card.org_id }, 'loyalty.revoke', {
       card: card.id,

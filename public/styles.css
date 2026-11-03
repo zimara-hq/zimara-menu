@@ -696,3 +696,15 @@ body.menu-page .wa-float { inset-block-end: 88px; }
 .wl-stats span { padding: 6px 12px; border-radius: 999px; background: var(--line); font-weight: 700; }
 @media (max-width: 560px) { .wl-row { grid-template-columns: auto 1fr; } .wl-row .wl-actions { grid-column: 1 / -1; justify-content: flex-start; } }
 .wl-join-link { margin-top: 10px; }
+
+/* Loyalty: points, inbox, segments */
+.points-bar { height: 14px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.points-bar span { display: block; height: 100%; background: var(--accent); border-radius: inherit; transition: width .4s ease; }
+.inbox-msg { padding: 10px 12px; border-radius: 12px; background: var(--bg); }
+.inbox-msg p { margin: 4px 0; }
+.seg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin: 12px 0; }
+.seg { display: grid; gap: 2px; text-align: start; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
+.seg strong { font-size: 1.6rem; }
+.seg small { color: var(--muted); }
+.seg[aria-pressed=true] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+@media (prefers-reduced-motion: reduce) { .points-bar span { transition: none; } }

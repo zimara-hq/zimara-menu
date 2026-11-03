@@ -1,5 +1,5 @@
 // ZIMARA Menu service worker: receives payload-less pager pushes and shows the alert.
-const STATE = 'zm-state-v1'; // tracked tokens: { token, lang, kind: 't' pager | 'w' waitlist }
+const STATE = 'zm-state-v1'; // tracked tokens: { token, lang, kind: 't' pager | 'w' waitlist | 'c' loyalty card }
 
 async function readTokens() {
   const cache = await caches.open(STATE);
@@ -9,7 +9,9 @@ async function readTokens() {
 
 async function writeTokens(tokens) {
   const cache = await caches.open(STATE);
-  await cache.put('/__tickets', new Response(JSON.stringify(tokens.slice(-5))));
+  // Short-lived pager/waitlist tokens rotate; long-lived card tokens keep their own slots.
+  const cards = tokens.filter((x) => x.kind === 'c').slice(-3), rest = tokens.filter((x) => x.kind !== 'c').slice(-5);
+  await cache.put('/__tickets', new Response(JSON.stringify([...cards, ...rest])));
 }
 
 self.addEventListener('install', () => self.skipWaiting());
@@ -19,7 +21,7 @@ self.addEventListener('message', (e) => {
   if (e.data?.type === 'track' && typeof e.data.token === 'string') {
     e.waitUntil((async () => {
       const tokens = await readTokens();
-      await writeTokens([...tokens.filter((x) => x.token !== e.data.token), { token: e.data.token, lang: e.data.lang, kind: e.data.kind === 'w' ? 'w' : 't' }]);
+      await writeTokens([...tokens.filter((x) => x.token !== e.data.token), { token: e.data.token, lang: e.data.lang, kind: ['w', 'c'].includes(e.data.kind) ? e.data.kind : 't' }]);
       e.ports[0]?.postMessage({ type: 'tracked' });
     })());
   }
@@ -32,9 +34,20 @@ self.addEventListener('push', (event) => {
       let shown = false;
       for (const { token, lang, kind } of tokens.reverse()) {
         try {
-          const r = await fetch((kind === 'w' ? '/api/w/' : '/api/t/') + token, { cache: 'no-store' });
+          const r = await fetch(({ w: '/api/w/', c: '/api/cards/' }[kind] || '/api/t/') + token, { cache: 'no-store' });
           if (!r.ok) continue;
           const t = await r.json();
+          if (kind === 'c') {
+            const m = t.messages?.[0];
+            if (!m || Date.now() - m.created_at > 30 * 60_000) continue;
+            const ar = lang !== 'en';
+            await self.registration.showNotification(ar ? m.title_ar : m.title_en, {
+              body: (ar ? m.body_ar : m.body_en) + ' — ' + (ar ? t.org.name_ar : t.org.name_en),
+              icon: '/brand/symbol.png', badge: '/brand/symbol.png', tag: 'zm-c-' + m.id, data: { url: '/c/' + token },
+            });
+            shown = true;
+            break;
+          }
           if (kind === 'w') {
             if (t.status !== 'called') continue;
             const ar = lang !== 'en';
