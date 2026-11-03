@@ -14,7 +14,8 @@
     "test:onboarding": "node test/e2e/onboarding.mjs",
     "test:workspace": "node test/e2e/workspace.mjs",
     "test:resilience": "node test/e2e/resilience.mjs",
-    "test:design": "node test/e2e/design.mjs"
+    "test:design": "node test/e2e/design.mjs",
+    "test:magic": "node test/e2e/magic.mjs"
   },
   "repository": {
     "type": "git",
@@ -25,6 +26,7 @@
   },
   "homepage": "https://github.com/zimara-hq/zimara-menu#readme",
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.4.0",
     "hono": "^4.13.14"
   },
   "devDependencies": {

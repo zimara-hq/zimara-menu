@@ -8,6 +8,21 @@ export const ALLERGENS = [
   'tree_nuts', 'celery', 'mustard', 'sesame', 'sulphites', 'lupin', 'molluscs',
 ];
 
+// Item badges a guest sees on the dish card. At most three per item.
+export const BADGES = ['new', 'popular', 'chef', 'spicy', 'vegan', 'vegetarian', 'healthy', 'limited'];
+const MAX_BADGES = 3;
+
+export function normalizeBadges(v) {
+  if (v === undefined || v === null || v === '') return [];
+  if (!Array.isArray(v) || v.length > MAX_BADGES) throw bad('invalid_badges');
+  const out = [];
+  for (const b of v) {
+    if (!BADGES.includes(b)) throw bad('invalid_badges');
+    if (!out.includes(b)) out.push(b);
+  }
+  return out;
+}
+
 const MAX_GROUPS = 8;
 const MAX_CHOICES = 20;
 const MAX_DELTA = 1_000_000; // halalas (10,000 SAR)
@@ -66,7 +81,7 @@ export function normalizeOptions(v) {
 }
 
 // Validates the extra item fields and returns them in column order:
-// compare_price, allergens, caffeine_mg, sodium_mg, options_json.
+// compare_price, allergens, caffeine_mg, sodium_mg, options_json, badges.
 export function itemExtras(b, price) {
   const compare = int(b.compare_price, 'compare_price', { optional: true, max: 10_000_000 });
   if (compare !== null && compare <= price) throw bad('invalid_compare_price');
@@ -76,6 +91,7 @@ export function itemExtras(b, price) {
     int(b.caffeine_mg, 'caffeine_mg', { optional: true, max: 2000 }),
     int(b.sodium_mg, 'sodium_mg', { optional: true, max: 20000 }),
     JSON.stringify(normalizeOptions(b.options)),
+    JSON.stringify(normalizeBadges(b.badges)),
   ];
 }
 
@@ -90,8 +106,8 @@ const parse = (s, fallback) => {
 
 // Shapes a stored item row for API output.
 export function itemView(row) {
-  const { options_json, allergens, ...rest } = row;
-  return { ...rest, allergens: parse(allergens, []), options: parse(options_json, []) };
+  const { options_json, allergens, badges, ...rest } = row;
+  return { ...rest, allergens: parse(allergens, []), options: parse(options_json, []), badges: parse(badges, []) };
 }
 
 // Resolves a customer's chosen option ids against the stored groups.

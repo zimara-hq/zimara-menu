@@ -203,7 +203,7 @@ async function menuFor(env, orgId, branchId) {
     .bind(orgId)
     .all();
   const { results: items } = await env.DB.prepare(
-    `SELECT i.id,i.category_id,i.name_ar,i.name_en,i.desc_ar,i.desc_en,i.price,i.compare_price,i.calories,i.caffeine_mg,i.sodium_mg,i.allergens,i.options_json,i.image_url,i.sort,CASE WHEN u.item_id IS NULL THEN 1 ELSE 0 END AS available FROM items i JOIN categories c ON c.id=i.category_id LEFT JOIN branch_unavailable u ON u.item_id=i.id AND u.branch_id=? WHERE i.org_id=? AND i.active=1 AND i.is_sample=0 AND c.active=1 ORDER BY i.sort,i.name_ar`,
+    `SELECT i.id,i.category_id,i.name_ar,i.name_en,i.desc_ar,i.desc_en,i.price,i.compare_price,i.calories,i.caffeine_mg,i.sodium_mg,i.allergens,i.options_json,i.badges,i.image_url,i.sort,CASE WHEN u.item_id IS NULL THEN 1 ELSE 0 END AS available FROM items i JOIN categories c ON c.id=i.category_id LEFT JOIN branch_unavailable u ON u.item_id=i.id AND u.branch_id=? WHERE i.org_id=? AND i.active=1 AND i.is_sample=0 AND c.active=1 ORDER BY i.sort,i.name_ar`,
   )
     .bind(branchId, orgId)
     .all();
@@ -281,7 +281,7 @@ export function parseCsv(value) {
     return Object.fromEntries(headers.map((h, i) => [h, values[i]]));
   });
 }
-function importPreview(b) {
+export function importPreview(b) {
   const input =
     b.csv !== undefined ? parseCsv(b.csv) : list(b.rows, 'rows', 1000);
   if (!input.length) throw bad('empty_import');
@@ -397,7 +397,7 @@ const EXPORT_DATASETS = {
     sql: 'SELECT id,name_ar,name_en,sort,active FROM categories WHERE org_id=? AND id>? ORDER BY id LIMIT ?',
   },
   items: {
-    sql: 'SELECT id,category_id,name_ar,name_en,desc_ar,desc_en,price,compare_price,calories,caffeine_mg,sodium_mg,allergens,options_json,image_url,sort,active FROM items WHERE org_id=? AND id>? ORDER BY id LIMIT ?',
+    sql: 'SELECT id,category_id,name_ar,name_en,desc_ar,desc_en,price,compare_price,calories,caffeine_mg,sodium_mg,allergens,options_json,badges,image_url,sort,active FROM items WHERE org_id=? AND id>? ORDER BY id LIMIT ?',
   },
   tickets: {
     sql: 'SELECT id,branch_id,number,invoice_number,status,linked_at,ready_at,seen_at,collected_at,rating,rating_comment,created_at,version FROM tickets WHERE org_id=? AND id>? ORDER BY id LIMIT ?',

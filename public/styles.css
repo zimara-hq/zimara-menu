@@ -598,6 +598,11 @@ form .error:empty { display: none; }
 .dish-was { color: var(--muted); font-size: .85rem; }
 .dish-off { font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent-ink, var(--accent)); }
 .dish-allergens { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+.dish-badges { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 4px; }
+.dish-badges span { font-size: .7rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent-ink, var(--accent)); }
+.dish-badges .badge-spicy { background: #fde8e4; color: #a8321c; }
+.dish-badges .badge-vegan, .dish-badges .badge-vegetarian, .dish-badges .badge-healthy { background: #e3f4e8; color: #1d6b38; }
+.dish-badges .badge-limited { background: #fff1d6; color: #7a4d00; }
 .allergen { font-size: .72rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
 .options-sheet { border: 0; border-radius: 20px; padding: 20px; width: min(440px, calc(100vw - 32px)); max-height: 85vh; background: var(--card, #fff); color: inherit; }
 .options-sheet::backdrop { background: rgb(20 0 36 / .45); }

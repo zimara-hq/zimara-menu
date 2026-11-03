@@ -11,6 +11,8 @@ import { registerAddons, publicAddons } from './addons.js';
 import { registerTemplates } from './templates.js';
 import { registerDomains, customHostRedirect } from './domains.js';
 import { registerDesign, activeDesign } from './design.js';
+import { registerAiImport, aiConfigured } from './ai-import.js';
+import { registerSetup } from './setup.js';
 import { registerIntegrations } from './integrations.js';
 import { registerBilling, reconcileCheckouts, subscriptionCheckoutConfigured } from './billing.js';
 import { registerMail } from './mail.js';
@@ -82,7 +84,11 @@ app.use('*', async (c, next) => {
   if (new URL(c.req.url).protocol === 'https:') c.header('Strict-Transport-Security', 'max-age=31536000');
 });
 
-app.use('/api/*', bodyLimit({ maxSize: 4 * 1024 * 1024, onError: (c) => c.json({ error: 'request_too_large' }, 413) }));
+// A menu photo or PDF for the AI import may be larger than every other request.
+const AI_IMPORT_PATH = '/api/owner/menu/ai-import';
+const normalLimit = bodyLimit({ maxSize: 4 * 1024 * 1024, onError: (c) => c.json({ error: 'request_too_large' }, 413) });
+const aiLimit = bodyLimit({ maxSize: 13 * 1024 * 1024, onError: (c) => c.json({ error: 'request_too_large' }, 413) });
+app.use('/api/*', (c, next) => (c.req.path === AI_IMPORT_PATH ? aiLimit(c, next) : normalLimit(c, next)));
 
 // Mutating API calls must be JSON: browsers cannot send cross-site JSON without
 // a CORS preflight we never grant, which closes CSRF for cookie sessions.
@@ -379,7 +385,7 @@ owner.post('/items', async (c) => {
   if (!cat) throw bad('invalid_category_id');
   const iid = id();
   await c.env.DB.prepare(
-    'INSERT INTO items (id, org_id, category_id, name_ar, name_en, desc_ar, desc_en, price, calories, image_url, sort, compare_price, allergens, caffeine_mg, sodium_mg, options_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO items (id, org_id, category_id, name_ar, name_en, desc_ar, desc_en, price, calories, image_url, sort, compare_price, allergens, caffeine_mg, sodium_mg, options_json, badges) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
   )
     .bind(iid, u.org_id, cat.id, ...itemFields(b))
     .run();
@@ -392,7 +398,7 @@ owner.patch('/items/:id', async (c) => {
   const cat = await c.env.DB.prepare('SELECT id FROM categories WHERE id = ? AND org_id = ?').bind(b.category_id, u.org_id).first();
   if (!cat) throw bad('invalid_category_id');
   const res = await c.env.DB.prepare(
-    'UPDATE items SET category_id = ?, name_ar = ?, name_en = ?, desc_ar = ?, desc_en = ?, price = ?, calories = ?, image_url = ?, sort = ?, compare_price = ?, allergens = ?, caffeine_mg = ?, sodium_mg = ?, options_json = ?, active = ?, is_sample = 0 WHERE id = ? AND org_id = ?',
+    'UPDATE items SET category_id = ?, name_ar = ?, name_en = ?, desc_ar = ?, desc_en = ?, price = ?, calories = ?, image_url = ?, sort = ?, compare_price = ?, allergens = ?, caffeine_mg = ?, sodium_mg = ?, options_json = ?, badges = ?, active = ?, is_sample = 0 WHERE id = ? AND org_id = ?',
   )
     .bind(cat.id, ...itemFields(b), b.active === false ? 0 : 1, c.req.param('id'), u.org_id)
     .run();
@@ -644,7 +650,7 @@ async function orgMenu(env, orgId, { branchId = null, includeHidden = false } = 
   const active = includeHidden ? '' : 'AND active = 1';
   const { results: categories } = await env.DB.prepare(`SELECT id, name_ar, name_en, sort, active FROM categories WHERE org_id = ? ${active} ORDER BY sort, rowid`).bind(orgId).all();
   const { results: items } = await env.DB.prepare(
-    `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.compare_price, i.calories, i.caffeine_mg, i.sodium_mg, i.allergens, i.options_json, i.image_url, i.sort, i.active, i.is_sample,
+    `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.compare_price, i.calories, i.caffeine_mg, i.sodium_mg, i.allergens, i.options_json, i.badges, i.image_url, i.sort, i.active, i.is_sample,
             CASE WHEN bu.item_id IS NULL THEN 1 ELSE 0 END AS available
        FROM items i JOIN categories category ON category.id = i.category_id AND category.org_id = i.org_id LEFT JOIN branch_unavailable bu ON bu.item_id = i.id AND bu.branch_id = ?
       WHERE i.org_id = ? ${includeHidden ? '' : 'AND i.active = 1 AND i.is_sample = 0 AND category.active = 1'} ORDER BY i.sort, i.rowid`,
@@ -766,7 +772,7 @@ app.get('/api/cards/:token', async (c) => {
   return c.json(await cardView(c.env, card));
 });
 
-app.get('/api/config', (c) => c.json({ vapidPublicKey: pushConfigured(c.env) ? c.env.VAPID_PUBLIC_KEY : null, payments: subscriptionCheckoutConfigured(c.env), rewaa: rewaaConfigured(c.env) }));
+app.get('/api/config', (c) => c.json({ vapidPublicKey: pushConfigured(c.env) ? c.env.VAPID_PUBLIC_KEY : null, payments: subscriptionCheckoutConfigured(c.env), rewaa: rewaaConfigured(c.env), ai_import: aiConfigured(c.env) }));
 
 // ---------- Alerts ----------
 
@@ -824,6 +830,8 @@ registerAddons(app);
 registerTemplates(app);
 registerDomains(app);
 registerDesign(app);
+registerAiImport(app);
+registerSetup(app);
 registerIntegrations(app, { onTicketReady: (env, ticketId) => alertTicket(env, ticketId) });
 
 registerDemo(app);

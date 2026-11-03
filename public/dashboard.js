@@ -215,6 +215,10 @@ const ICON = {
 };
 const A = (ar, en) => (lang === 'ar' ? ar : en);
 
+const BADGES = [
+  ['new', 'جديد', 'New'], ['popular', 'الأكثر طلبًا', 'Popular'], ['chef', 'اختيار الشيف', "Chef's pick"], ['spicy', 'حار', 'Spicy'],
+  ['vegan', 'نباتي صرف', 'Vegan'], ['vegetarian', 'نباتي', 'Vegetarian'], ['healthy', 'صحي', 'Healthy'], ['limited', 'لفترة محدودة', 'Limited time'],
+];
 const ALLERGENS = [
   ['gluten', 'غلوتين (قمح)', 'Gluten'], ['crustaceans', 'قشريات', 'Crustaceans'], ['eggs', 'بيض', 'Eggs'], ['fish', 'سمك', 'Fish'],
   ['peanuts', 'فول سوداني', 'Peanuts'], ['soy', 'صويا', 'Soy'], ['milk', 'حليب', 'Milk'], ['tree_nuts', 'مكسرات', 'Tree nuts'],
@@ -265,6 +269,7 @@ async function ownerMenu(el) {
     <div class="row">${field('name_ar', t('nameAr'), `required value="${esc(i.name_ar || '')}"`, p)}${field('name_en', t('nameEn'), `required value="${esc(i.name_en || '')}"`, p)}</div>
     <div class="row">${field('desc_ar', t('descAr'), `value="${esc(i.desc_ar || '')}"`, p)}${field('desc_en', t('descEn'), `value="${esc(i.desc_en || '')}"`, p)}</div>
     ${imageField('image_url', A('صورة الصنف', 'Item photo'), i.image_url || '', p)}
+    <fieldset class="opt-group"><legend>${A('شارات تظهر على الصنف (حتى 3)', 'Badges on the dish (up to 3)')}</legend><div class="allergen-grid">${BADGES.map(([k, ar, en]) => `<label class="check"><input type="checkbox" data-badge value="${k}" ${i.badges?.includes(k) ? 'checked' : ''}> ${esc(A(ar, en))}</label>`).join('')}</div></fieldset>
     <details class="item-more"${i.compare_price || i.allergens?.length || i.options?.length || i.caffeine_mg != null || i.sodium_mg != null ? ' open' : ''}><summary>${A('عرض وأحجام ومعلومات غذائية', 'Offer, sizes and nutrition')}</summary><div class="stack">
       <div class="row">${field('compare_price', A('السعر قبل الخصم (اختياري)', 'Price before discount (optional)'), `type="number" min="0" step="0.01" inputmode="decimal" value="${i.compare_price != null ? i.compare_price / 100 : ''}"`, p)}${field('caffeine_mg', A('الكافيين (ملغ)', 'Caffeine (mg)'), `type="number" min="0" inputmode="numeric" value="${i.caffeine_mg ?? ''}"`, p)}${field('sodium_mg', A('الصوديوم (ملغ)', 'Sodium (mg)'), `type="number" min="0" inputmode="numeric" value="${i.sodium_mg ?? ''}"`, p)}</div>
       <fieldset class="opt-group"><legend>${A('مسببات الحساسية', 'Allergens')}</legend><div class="allergen-grid">${ALLERGENS.map(([k, ar, en]) => `<label class="check"><input type="checkbox" data-allergen value="${k}" ${i.allergens?.includes(k) ? 'checked' : ''}> ${esc(A(ar, en))}</label>`).join('')}</div></fieldset>
@@ -280,6 +285,7 @@ async function ownerMenu(el) {
     caffeine_mg: v.caffeine_mg === '' || v.caffeine_mg == null ? null : Number(v.caffeine_mg),
     sodium_mg: v.sodium_mg === '' || v.sodium_mg == null ? null : Number(v.sodium_mg),
     allergens: [...form.querySelectorAll('[data-allergen]:checked')].map((x) => x.value),
+    badges: [...form.querySelectorAll('[data-badge]:checked')].map((x) => x.value).slice(0, 3),
     options: readGroups(form),
     sort: Number(v.sort || 0), active: !v.hidden,
   });

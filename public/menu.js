@@ -46,6 +46,7 @@ function itemCard(i) {
   const photo=profile?.theme?.show_images!==false&&i.image_url;
   return `<article class="dish ${i.available ? '' : 'soldout'} ${photo ? 'has-photo' : ''}">
     <div class="dish-text">
+      ${i.badges?.length ? `<p class="dish-badges">${i.badges.map((k) => BADGE[k] ? `<span class="badge-${k}">${esc(a(...BADGE[k]))}</span>` : '').join('')}</p>` : ''}
       <h3>${esc(pick(i, 'name'))}</h3>
       ${pick(i, 'desc') ? `<p class="dish-desc">${esc(pick(i, 'desc'))}</p>` : ''}
       <p class="dish-meta"><span class="dish-price">${i.options?.length && i.options[0].required ? a('من ', 'From ') : ''}${esc(money(i.price))}</span>${i.compare_price > i.price ? `<s class="dish-was">${esc(money(i.compare_price))}</s><span class="dish-off">${a('خصم', 'Save')} ${Math.round((1 - i.price / i.compare_price) * 100)}٪</span>` : ''}${profile?.theme?.show_calories!==false && i.calories != null ? `<span class="dish-kcal">${esc(t('kcal', { n: i.calories }))}</span>` : ''}${i.caffeine_mg != null ? `<span class="dish-kcal">${a('كافيين', 'Caffeine')} ${i.caffeine_mg} ${a('ملغ', 'mg')}</span>` : ''}${i.sodium_mg != null ? `<span class="dish-kcal">${a('صوديوم', 'Sodium')} ${i.sodium_mg} ${a('ملغ', 'mg')}</span>` : ''}${i.available ? '' : `<span class="dish-out">${esc(t('soldout'))}</span>`}</p>
@@ -54,6 +55,10 @@ function itemCard(i) {
     ${photo ? `<div class="dish-photo"><img src="${esc(i.image_url)}" alt="" loading="lazy" width="112" height="112">${canAdd ? addBtn(i, inCart) : ''}</div>` : canAdd ? `<div class="dish-photo no-photo">${addBtn(i, inCart)}</div>` : ''}
   </article>`;
 }
+const BADGE = {
+  new: ['جديد', 'New'], popular: ['الأكثر طلبًا', 'Popular'], chef: ['اختيار الشيف', "Chef's pick"], spicy: ['حار 🌶', 'Spicy 🌶'],
+  vegan: ['نباتي صرف', 'Vegan'], vegetarian: ['نباتي', 'Vegetarian'], healthy: ['صحي', 'Healthy'], limited: ['لفترة محدودة', 'Limited time'],
+};
 const ALLERGEN = {
   gluten: ['غلوتين', 'Gluten'], crustaceans: ['قشريات', 'Crustaceans'], eggs: ['بيض', 'Eggs'], fish: ['سمك', 'Fish'],
   peanuts: ['فول سوداني', 'Peanuts'], soy: ['صويا', 'Soy'], milk: ['حليب', 'Milk'], tree_nuts: ['مكسرات', 'Tree nuts'],

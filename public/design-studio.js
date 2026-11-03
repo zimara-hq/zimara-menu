@@ -162,7 +162,7 @@ export async function designStudio(el, me) {
   status(); render();
 }
 
-function miniCard(p, current) {
+export function miniCard(p, current) {
   const c = p.recipe.colors;
   const r = { none: '0', sm: '4px', md: '8px', lg: '12px', xl: '16px' }[p.recipe.card.radius];
   const btn = { square: '2px', rounded: '8px', pill: '99px' }[p.recipe.button.shape];

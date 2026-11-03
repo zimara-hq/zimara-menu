@@ -21,6 +21,7 @@ main.querySelector('#register').onsubmit=async(e)=>{
  const btn=f.querySelector('button');btn.disabled=true;btn.setAttribute('aria-busy','true'); f.querySelector('#error').textContent='';
  try{
   await api('/api/register',{method:'POST',body:{name_ar:f.elements.nameAr.value.trim(),name_en:f.elements.nameEn.value.trim()||f.elements.nameAr.value.trim(),slug:f.elements.slug.value.trim(),name:f.elements.name.value.trim(),email:f.elements.email.value.trim(),password:f.elements.password.value,sector:f.elements.sector.value}});
+  try{sessionStorage.setItem('zm_magic_start','1');}catch{}
   location.assign('/app');
  }catch(err){f.querySelector('#error').textContent=t(err.status===409?'taken':err.status===429?'rate':'failure');}finally{btn.disabled=false;btn.removeAttribute('aria-busy');}
 };
