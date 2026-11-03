@@ -1,0 +1,87 @@
+{
+  "enabledPlugins": {
+    "ecc@ecc": true,
+    "document-skills@anthropic-agent-skills": true,
+    "example-skills@anthropic-agent-skills": true,
+    "claude-mem@thedotmack": true,
+    "context7@context7-marketplace": true,
+    "21st@21st-dev": true,
+    "marketing-skills@marketingskills": true,
+    "mattpocock-skills@mattpocock": true,
+    "rea@rea": true
+  },
+  "extraKnownMarketplaces": {
+    "ecc": {
+      "source": {
+        "source": "github",
+        "repo": "affaan-m/ECC"
+      }
+    },
+    "anthropic-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/skills"
+      }
+    },
+    "thedotmack": {
+      "source": {
+        "source": "github",
+        "repo": "thedotmack/claude-mem"
+      }
+    },
+    "context7-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "upstash/context7"
+      }
+    },
+    "21st-dev": {
+      "source": {
+        "source": "github",
+        "repo": "21st-dev/magic-mcp"
+      }
+    },
+    "marketingskills": {
+      "source": {
+        "source": "github",
+        "repo": "coreyhaines31/marketingskills"
+      }
+    },
+    "mattpocock": {
+      "source": {
+        "source": "github",
+        "repo": "mattpocock/skills"
+      }
+    },
+    "rea": {
+      "source": {
+        "source": "github",
+        "repo": "morluto/rea"
+      }
+    }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "graphify hook-guard search",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "graphify hook-guard read",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

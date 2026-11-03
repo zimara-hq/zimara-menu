@@ -155,3 +155,8 @@ vite.config.ts.timestamp-*
 
 # Local verification artifacts
 output/
+
+# graphify: keep graph.json + report, ignore regenerable/local artifacts
+graphify-out/cache/
+graphify-out/graph.html
+graphify-out/.graphify_*
