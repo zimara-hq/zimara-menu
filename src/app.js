@@ -10,6 +10,7 @@ import { registerFeatures } from './features.js';
 import { registerAddons, publicAddons } from './addons.js';
 import { registerTemplates } from './templates.js';
 import { registerDomains, customHostRedirect } from './domains.js';
+import { registerDesign, activeDesign } from './design.js';
 import { registerIntegrations } from './integrations.js';
 import { registerBilling, reconcileCheckouts, subscriptionCheckoutConfigured } from './billing.js';
 import { registerMail } from './mail.js';
@@ -72,11 +73,12 @@ app.use('*', async (c, next) => {
   if (c.env.ENVIRONMENT === 'preview') c.header('X-Robots-Tag', 'noindex, nofollow');
   c.header('X-Content-Type-Options', 'nosniff');
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
-  c.header('X-Frame-Options', 'DENY');
   c.header('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()');
   // Public menu and business pages may load the owner's ad pixels, from a fixed vendor list only.
   const pixels = /^\/(m|p)\//.test(new URL(c.req.url).pathname);
-  c.header('Content-Security-Policy', `default-src 'self'; script-src 'self'${pixels ? ' ' + PIXEL_SCRIPT_HOSTS : ''}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'${pixels ? ' ' + PIXEL_CONNECT_HOSTS : ''}; frame-src 'self'${pixels ? ' https://www.googletagmanager.com https://td.doubleclick.net' : ''}; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`);
+  // Public pages may be framed by our own design studio for the live preview, never by other sites.
+  c.header('X-Frame-Options', pixels ? 'SAMEORIGIN' : 'DENY');
+  c.header('Content-Security-Policy', `default-src 'self'; script-src 'self'${pixels ? ' ' + PIXEL_SCRIPT_HOSTS : ''}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'${pixels ? ' ' + PIXEL_CONNECT_HOSTS : ''}; frame-src 'self'${pixels ? ' https://www.googletagmanager.com https://td.doubleclick.net' : ''}; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors ${pixels ? "'self'" : "'none'"}`);
   if (new URL(c.req.url).protocol === 'https:') c.header('Strict-Transport-Security', 'max-age=31536000');
 });
 
@@ -662,7 +664,7 @@ app.get('/api/public/menu/:branchSlug', async (c) => {
   if (!b) throw notFound();
   const menu = await orgMenu(c.env, b.org_id, { branchId: b.id });
   const { org_id, ...branchInfo } = b;
-  return c.json({ branch: branchInfo, ...menu, addons: await publicAddons(c.env, org_id) });
+  return c.json({ branch: branchInfo, ...menu, addons: await publicAddons(c.env, org_id), design: await activeDesign(c.env, org_id) });
 });
 
 async function ticketByToken(env, token) {
@@ -821,6 +823,7 @@ registerFeatures(app);
 registerAddons(app);
 registerTemplates(app);
 registerDomains(app);
+registerDesign(app);
 registerIntegrations(app, { onTicketReady: (env, ticketId) => alertTicket(env, ticketId) });
 
 registerDemo(app);

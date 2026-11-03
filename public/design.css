@@ -1,0 +1,121 @@
+/* Design engine styles: every rule hangs off a data attribute set by design-engine.js. */
+:root[data-design] body { font-family: var(--font); background-color: var(--bg); color: var(--ink); }
+:root[data-design][data-d-size=sm] { font-size: 15px; }
+:root[data-design][data-d-size=lg] { font-size: 18px; }
+
+/* Background */
+:root[data-design][data-d-bg=gradient] body { background: linear-gradient(var(--d-angle), var(--bg) 0%, color-mix(in srgb, var(--accent) 14%, var(--bg)) 55%, color-mix(in srgb, var(--d-accent2, var(--accent)) 18%, var(--bg)) 100%) fixed; }
+:root[data-design][data-d-bg=pattern][data-d-pattern=dots] body { background-image: radial-gradient(color-mix(in srgb, var(--accent) 16%, transparent) 1.2px, transparent 1.4px); background-size: 18px 18px; }
+:root[data-design][data-d-bg=pattern][data-d-pattern=grid] body { background-image: linear-gradient(color-mix(in srgb, var(--accent) 9%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--accent) 9%, transparent) 1px, transparent 1px); background-size: 26px 26px; }
+:root[data-design][data-d-bg=pattern][data-d-pattern=arabesque] body { background-image: repeating-conic-gradient(from 45deg, color-mix(in srgb, var(--accent) 8%, transparent) 0 25%, transparent 0 50%), radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--d-accent2, var(--accent)) 10%, transparent) 0 22%, transparent 23%); background-size: 34px 34px, 34px 34px; }
+:root[data-design][data-d-bg=pattern][data-d-pattern=waves] body { background-image: repeating-radial-gradient(circle at 0 100%, transparent 0 14px, color-mix(in srgb, var(--accent) 10%, transparent) 15px 16px); background-size: 48px 48px; }
+:root[data-design][data-d-bg=image] body::before { content: ''; position: fixed; inset: -20px; z-index: -1; background: var(--d-image) center / cover no-repeat; filter: blur(var(--d-blur)); }
+:root[data-design][data-d-bg=image] body { background: transparent; }
+
+/* Cover and logo */
+:root[data-design][data-d-cover=none] .menu-cover { display: none; }
+:root[data-design][data-d-cover=none] .menu-sheet { margin-top: 16px; }
+:root[data-design][data-d-cover=compact] .menu-cover, :root[data-design][data-d-cover=compact] .menu-cover.has-photo { height: 130px; }
+:root[data-design][data-d-cover=tall] .menu-cover, :root[data-design][data-d-cover=tall] .menu-cover.has-photo { height: clamp(220px, 46vw, 380px); }
+:root[data-design] .menu-cover:not(.has-photo) { background: linear-gradient(var(--d-angle, 135deg), var(--accent), var(--d-accent2, var(--accent))); }
+:root[data-design][data-d-logo=circle] .menu-logo { border-radius: 50%; }
+:root[data-design][data-d-logo=square] .menu-logo { border-radius: 4px; }
+:root[data-design][data-d-logo-shadow='0'] .menu-logo { box-shadow: none; }
+:root[data-design][data-d-align=center] .menu-id { flex-direction: column; align-items: center; text-align: center; }
+:root[data-design][data-d-align=center] .menu-about, :root[data-design][data-d-align=center] .menu-info { text-align: center; justify-content: center; }
+:root[data-design] .menu-sheet { background: var(--surface); }
+
+/* Category navigation */
+:root[data-design][data-d-cats=pills] .menu-page .menu-cats a { border: 0; background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+:root[data-design][data-d-cats=underline] .menu-page .menu-cats a { border: 0; border-radius: 0; background: none; border-bottom: 3px solid transparent; padding-inline: 6px; }
+:root[data-design][data-d-cats=underline] .menu-page .menu-cats a[aria-current='true'] { background: none; color: var(--accent-ink, var(--accent)); border-bottom-color: var(--accent); }
+:root[data-design][data-d-cats=boxed] .menu-page .menu-cats a { border-radius: 4px; border: 1.5px solid var(--ink); background: var(--surface); text-transform: uppercase; letter-spacing: .02em; }
+
+/* Card radius, shadow, border */
+:root[data-design] { --d-r: 18px; }
+:root[data-design][data-d-radius=none] { --d-r: 0px; }
+:root[data-design][data-d-radius=sm] { --d-r: 6px; }
+:root[data-design][data-d-radius=md] { --d-r: 12px; }
+:root[data-design][data-d-radius=xl] { --d-r: 28px; }
+:root[data-design] .dish-photo img, :root[data-design] .menu-sheet { border-radius: var(--d-r); }
+:root[data-design][data-d-layout=cards] .dish, :root[data-design][data-d-layout=grid] .dish, :root[data-design][data-d-layout=tiles] .dish, :root[data-design][data-d-layout=magazine] .dish { border-radius: var(--d-r); background: var(--surface); }
+:root[data-design][data-d-shadow=soft] .dish { box-shadow: 0 6px 18px color-mix(in srgb, var(--ink) 8%, transparent); }
+:root[data-design][data-d-shadow=strong] .dish { box-shadow: 0 14px 34px color-mix(in srgb, var(--ink) 18%, transparent); }
+:root[data-design][data-d-border='0'] .dish { border-color: transparent; }
+:root[data-design][data-d-image=start] .dish:not(.has-photo) { flex-direction: row; }
+:root[data-design][data-d-image=start][data-d-layout=list] .dish.has-photo, :root[data-design][data-d-image=start][data-d-layout=compact] .dish.has-photo { flex-direction: row-reverse; justify-content: flex-end; }
+
+/* Layouts */
+:root[data-design][data-d-layout=list] .dish { background: transparent; }
+:root[data-design][data-d-layout=grid] .dish-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+:root[data-design][data-d-layout=grid] .dish { flex-direction: column-reverse; align-items: stretch; padding: 0; overflow: hidden; border: 1px solid var(--line); }
+:root[data-design][data-d-layout=grid] .dish-text { padding: 12px; }
+:root[data-design][data-d-layout=grid] .dish-photo img { width: 100%; height: 130px; border-radius: 0; }
+:root[data-design][data-d-layout=grid] .dish-desc { display: none; }
+:root[data-design][data-d-layout=tiles] .dish-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+:root[data-design][data-d-layout=tiles] .dish { position: relative; padding: 0; overflow: hidden; min-height: 170px; align-items: flex-end; border: 0; }
+:root[data-design][data-d-layout=tiles] .dish-photo { position: absolute; inset: 0; }
+:root[data-design][data-d-layout=tiles] .dish-photo img { width: 100%; height: 100%; border-radius: 0; }
+:root[data-design][data-d-layout=tiles] .dish.has-photo .dish-text { position: relative; z-index: 1; width: 100%; padding: 30px 12px 12px; background: linear-gradient(transparent, rgb(0 0 0 / 78%)); color: #fff; }
+:root[data-design][data-d-layout=tiles] .dish.has-photo .dish-text * { color: #fff; }
+:root[data-design][data-d-layout=tiles] .dish-desc { display: none; }
+:root[data-design][data-d-layout=tiles] .dish-add { z-index: 2; inset-inline-end: 8px; top: 8px; bottom: auto; }
+:root[data-design][data-d-layout=compact] .dish { padding: 10px 6px; gap: 10px; }
+:root[data-design][data-d-layout=compact] .dish-photo img { width: 64px; height: 64px; }
+:root[data-design][data-d-layout=compact] .dish-desc { -webkit-line-clamp: 1; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+:root[data-design][data-d-layout=text] .dish-photo img { display: none; }
+:root[data-design][data-d-layout=text] .dish-photo { position: static; }
+:root[data-design][data-d-layout=text] .dish { padding: 12px 4px; border-bottom: 1px dashed var(--line); }
+:root[data-design][data-d-layout=text] .dish-text h3 { display: flex; gap: 8px; }
+:root[data-design][data-d-layout=magazine] .dish-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+:root[data-design][data-d-layout=magazine] .dish:first-child { grid-column: 1 / -1; }
+:root[data-design][data-d-layout=magazine] .dish { flex-direction: column-reverse; align-items: stretch; padding: 0; overflow: hidden; }
+:root[data-design][data-d-layout=magazine] .dish-text { padding: 14px; }
+:root[data-design][data-d-layout=magazine] .dish-photo img { width: 100%; height: 150px; border-radius: 0; }
+:root[data-design][data-d-layout=magazine] .dish:first-child .dish-photo img { height: 230px; }
+:root[data-design][data-d-layout=elegant] .dish { flex-direction: column; align-items: center; text-align: center; border-bottom: 0; padding: 18px 8px; }
+:root[data-design][data-d-layout=elegant] .dish-photo img { width: 120px; height: 120px; border-radius: 50%; }
+:root[data-design][data-d-layout=elegant] .dish-meta { justify-content: center; }
+:root[data-design][data-d-layout=elegant] .menu-section h2 { text-align: center; font-weight: 400; letter-spacing: .06em; }
+:root[data-design][data-d-layout=elegant] .menu-section h2::after { content: ''; display: block; width: 46px; height: 2px; margin: 10px auto 0; background: var(--accent); }
+@media (max-width: 380px) { :root[data-design][data-d-layout=grid] .dish-list, :root[data-design][data-d-layout=magazine] .dish-list { grid-template-columns: 1fr; } }
+
+/* Buttons: shape */
+:root[data-design] { --d-br: 12px; }
+:root[data-design][data-d-bshape=square] { --d-br: 3px; }
+:root[data-design][data-d-bshape=pill] { --d-br: 999px; }
+:root[data-design] .btn, :root[data-design] .menu-page .menu-cats a:not([data-x]) { border-radius: var(--d-br); }
+:root[data-design][data-d-cats=underline] .menu-page .menu-cats a { border-radius: 0; }
+:root[data-design][data-d-bshape=square] .dish-add { border-radius: 4px; }
+
+/* Buttons: style (texture) */
+:root[data-design] .btn:not(.ghost), :root[data-design] .dish-add { background: var(--accent); color: var(--on-accent); }
+:root[data-design][data-d-bstyle=gradient] .btn:not(.ghost), :root[data-design][data-d-bstyle=gradient] .dish-add { background: linear-gradient(135deg, var(--accent), var(--d-accent2, var(--accent))); }
+:root[data-design][data-d-bstyle=glass] .btn:not(.ghost), :root[data-design][data-d-bstyle=glass] .dish-add { background: color-mix(in srgb, var(--accent) 78%, transparent); backdrop-filter: blur(10px); border: 1px solid color-mix(in srgb, #fff 45%, transparent); box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%); }
+:root[data-design][data-d-bstyle=metal] .btn:not(.ghost), :root[data-design][data-d-bstyle=metal] .dish-add { background: linear-gradient(180deg, color-mix(in srgb, #fff 35%, var(--accent)) 0%, var(--accent) 48%, color-mix(in srgb, #000 22%, var(--accent)) 100%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 50%), 0 2px 6px rgb(0 0 0 / 25%); }
+:root[data-design][data-d-bstyle=neon] .btn:not(.ghost), :root[data-design][data-d-bstyle=neon] .dish-add { box-shadow: 0 0 0 2px var(--accent), 0 0 18px color-mix(in srgb, var(--accent) 70%, transparent); }
+:root[data-design][data-d-bstyle=outline] .btn:not(.ghost), :root[data-design][data-d-bstyle=outline] .dish-add { background: var(--surface); color: var(--accent-ink, var(--accent)); border: 2px solid var(--accent); }
+:root[data-design][data-d-bstyle=soft3d] .btn:not(.ghost), :root[data-design][data-d-bstyle=soft3d] .dish-add { box-shadow: 0 5px 0 color-mix(in srgb, #000 28%, var(--accent)); transform: translateY(-2px); }
+:root[data-design][data-d-bstyle=soft3d] .btn:not(.ghost):active, :root[data-design][data-d-bstyle=soft3d] .dish-add:active { transform: translateY(2px); box-shadow: 0 1px 0 color-mix(in srgb, #000 28%, var(--accent)); }
+
+/* Buttons: animation (only when the device allows motion) */
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-design][data-d-motion=none] * { transition: none !important; }
+  :root[data-design][data-d-motion=lively] .dish { transition: transform .2s ease, box-shadow .2s ease; }
+  :root[data-design][data-d-motion=lively] .dish:hover { transform: translateY(-3px); }
+  :root[data-design][data-d-banim=pulse] .dish-add, :root[data-design][data-d-banim=pulse] .cart-panel .btn:not(.ghost) { animation: d-pulse 2.4s ease-in-out infinite; }
+  :root[data-design][data-d-banim=glow] .dish-add, :root[data-design][data-d-banim=glow] .cart-panel .btn:not(.ghost) { animation: d-glow 2.6s ease-in-out infinite; }
+  :root[data-design][data-d-banim=bounce] .dish-add { animation: d-bounce 3s ease-in-out infinite; }
+  :root[data-design][data-d-banim=shine] .btn:not(.ghost), :root[data-design][data-d-banim=shine] .dish-add { background-image: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 35%) 50%, transparent 65%); background-size: 250% 100%; animation: d-shine 3.2s linear infinite; }
+}
+@keyframes d-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes d-glow { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); } 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 25%, transparent); } }
+@keyframes d-bounce { 0%, 80%, 100% { transform: translateY(0); } 88% { transform: translateY(-6px); } 94% { transform: translateY(0); } }
+@keyframes d-shine { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+
+/* What to show */
+:root[data-design][data-d-hide-images='1'] .dish-photo img { display: none; }
+:root[data-design][data-d-hide-calories='1'] .dish-kcal { display: none; }
+:root[data-design][data-d-hide-descriptions='1'] .dish-desc { display: none; }
+:root[data-design][data-d-hide-allergens='1'] .dish-allergens { display: none; }
+:root[data-design] .dish-price { color: var(--accent-ink, var(--accent)); font-family: var(--font); }

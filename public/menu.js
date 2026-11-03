@@ -1,4 +1,5 @@
 import {applyTenantTheme,bannerGallery,coverImage} from './tenant-theme.js';
+import { applyDesign, listenForPreview } from './design-engine.js';
 import { api, esc, lang, makeT, money, pick, setBrandColor, topbar, announce } from './common.js';
 import { renderAddons, trackPurchase } from './addons-public.js';
 
@@ -232,6 +233,7 @@ try {
     const p = await api('/api/public/profile/' + data.branch.org_slug);
     profile = p.profile;
     applyTenantTheme(profile);
+    applyDesign(data.design);
     settings = p.branches.find((b) => b.slug === slug)?.settings || settings;
     loyalty = p.loyalty;
   } catch {}
@@ -289,3 +291,5 @@ try {
   main.innerHTML = `<div class="card"><h1>${a('المنيو غير متاح', 'Menu unavailable')}</h1><p class="muted">${esc(t('notFound'))}</p><button class="btn" id="retry-menu" type="button">${a('إعادة المحاولة', 'Try again')}</button></div>`;
   main.querySelector('#retry-menu').onclick = () => location.reload();
 }
+
+listenForPreview();

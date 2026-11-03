@@ -1,3 +1,4 @@
+import { activeDesign } from './design.js';
 import { itemView, priceWithOptions } from './menu-extras.js';
 import { DEFAULT_THEME, validateTheme } from './identity.js';
 import { publicAddons, notifyTelegram, orderMessage, later } from './addons.js';
@@ -695,6 +696,7 @@ export function registerFeatures(app) {
       profile,
       loyalty: program || null,
       addons: await publicAddons(c.env, org.id),
+      design: await activeDesign(c.env, org.id),
       branches: branches.map((b) => ({
         ...branchPublic(b),
         settings:

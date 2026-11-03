@@ -44,6 +44,7 @@ jobs:
           npm run test:onboarding -- http://127.0.0.1:8787
           npm run test:workspace -- http://127.0.0.1:8787 output/playwright/workspace
           npm run test:resilience -- http://127.0.0.1:8787 output/playwright/resilience
+          npm run test:design -- http://127.0.0.1:8787 output/playwright/design
       - uses: actions/upload-artifact@v4
         if: always()
         with:
