@@ -37,7 +37,7 @@ try{
  assert.equal(await page.locator('.workspace-metrics article').count(),4);assert.equal(await page.locator('.workspace-service').count(),3);assert.equal(await page.locator('nav [role=tab]').count(),18);
  await page.screenshot({path:out+'/overview-desktop.png'});
  for(const width of [360,768,1440]){await page.setViewportSize({width,height:1000});await fits()}
- await page.locator('[data-k=design]').click();await page.locator('.design-card').first().waitFor();await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+'/catalogue-desktop.png'});
+ await page.locator('[data-k=design]').click();await page.locator('.design-card').first().waitFor();await page.frameLocator('#st-frame').getByRole('heading',{name:'تفاصيل مقهاي، باختياري'}).waitFor();await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+'/catalogue-desktop.png'});
  await page.setViewportSize({width:390,height:844});await fits();await page.screenshot({path:out+'/catalogue-mobile.png'});
  pass('owner overview presents existing business data; studio and overview remain usable at 360–1536px');
  assert.deepEqual(errors,[]);writeFileSync(out+'/results.json',JSON.stringify({base,checks,errors},null,2));
