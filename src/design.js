@@ -260,6 +260,7 @@ export function registerDesign(app) {
       'SELECT s.id,s.version_id,s.starts_at,s.ends_at,v.name FROM design_schedules s JOIN design_versions v ON v.id=s.version_id WHERE s.org_id=? AND s.ends_at>? ORDER BY s.starts_at',
     ).bind(u.org_id, now()).all();
     const draft = d ? validateRecipe(JSON.parse(d.draft_json)) : clone(BASE_RECIPE);
+    const fontProfile=await c.env.DB.prepare('SELECT font_url FROM org_profiles WHERE org_id=?').bind(u.org_id).first();
     return c.json({
       draft: { ...draft, derived: derived(draft) },
       published: d?.published_json ? JSON.parse(d.published_json) : null,
@@ -271,7 +272,7 @@ export function registerDesign(app) {
       versions: versions.map(versionView),
       schedules,
       limits: { named_versions: MAX_NAMED, auto_days: 30 },
-      fonts: { ar: FONTS_AR.map(([k, f, , cat]) => ({ id: k, family: f, category: cat })).concat({id:'custom',family:'خط منشأتك المرفوع / Uploaded brand font',category:'modern'}), en: FONTS_EN.map(([k, f, , cat]) => ({ id: k, family: f, category: cat })) },
+      fonts: { ar: FONTS_AR.map(([k, f, , cat]) => ({ id: k, family: f, category: cat })).concat(fontProfile?.font_url?[{id:'custom',family:'خط منشأتك المرفوع / Uploaded brand font',category:'modern'}]:[]), en: FONTS_EN.map(([k, f, , cat]) => ({ id: k, family: f, category: cat })) },
       options: E,
       sectors: SECTORS,
       presets: PRESETS.map((p) => ({ id: p.id, sector: p.sector, name_ar: p.name_ar, name_en: p.name_en, recipe: p.recipe })),
