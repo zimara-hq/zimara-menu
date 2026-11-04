@@ -6,6 +6,11 @@ Independent commercial menu/pager/loyalty product. Source: user brief and suppli
 ## North star
 A hospitality control room inside ZIMARA's night horizon: the landing demonstrates one scan moving between a counter display and the customer's phone. The operational app is calm, legible, task-focused. Never make disabled integrations appear live.
 
+### Connected visit and workspace navigation (2026-11-05)
+The landing's five-step counter/guest scene explains linked, ready, acknowledged and collected as separate states. It is explicitly an illustration; the existing `/demo` remains the actual cross-device demonstration. Existing runtime tokens remain canonical (ownership Model B); the new scene consumes `landing.css` primitives, and the workspace finder, next-step strip and branch summary consume `styles.css` semantic tokens through `workspace.css`.
+
+The workspace keeps the established role-specific tab shell. A searchable navigation dialog makes the same allowed destinations reachable on small screens without changing permissions. The overview prioritizes the next incomplete setup task and branch pager totals from the existing 30-day statistics API. No illustrative graph, synthetic traffic or readiness claim is inserted into the business dashboard. New motion is limited to a short entrance on the marketing illustration and is disabled by `prefers-reduced-motion`.
+
 ## Visual system
 Runtime owner: public/styles.css semantic tokens for operations; public/landing.css scoped marketing tokens reference the same approved palette. Indigo #23003f; violet #8447f2; ember #f94500; lavender #bcacce; solar #fffdb4; paper #faf8fb. Marketing night background is a deliberate indigo derivative, not a change to the logo. Original supplied logo and existing approved symbol remain unaltered. Tajawal Arabic, Plus Jakarta Sans Latin; licensed OFL fonts. Desktop centered max content width 1240px; touch controls 44px minimum. Spacing in multiples of 4/8. Headings balanced, body line-height 1.7. Numerical operational data tabular.
 

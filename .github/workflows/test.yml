@@ -44,6 +44,7 @@ jobs:
           npm run test:onboarding -- http://127.0.0.1:8787
           npm run test:workspace -- http://127.0.0.1:8787 output/playwright/workspace
           npm run test:resilience -- http://127.0.0.1:8787 output/playwright/resilience
+          npm run test:brand-workspace -- http://127.0.0.1:8787 output/playwright/brand-workspace
           npm run test:design -- http://127.0.0.1:8787 output/playwright/design
           npm run test:magic -- http://127.0.0.1:8787 output/playwright/magic
           npm run test:ordering -- http://127.0.0.1:8787 output/playwright/ordering

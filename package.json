@@ -12,6 +12,7 @@
     "build:preview": "node scripts/build-preview.mjs",
     "build": "wrangler deploy --dry-run --outdir .wrangler/build",
     "test:onboarding": "node test/e2e/onboarding.mjs",
+    "test:brand-workspace": "node test/e2e/brand-workspace.mjs",
     "test:workspace": "node test/e2e/workspace.mjs",
     "test:resilience": "node test/e2e/resilience.mjs",
     "test:design": "node test/e2e/design.mjs",

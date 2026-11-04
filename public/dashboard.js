@@ -1,6 +1,7 @@
 import {branchesView} from './branches.js';
 import { startLive, onLive } from './realtime.js';
 import {canLeaveWorkspace} from './forms.js';
+import {installWorkspaceFinder} from './workspace-finder.js';
 import {identityView,fontEditor} from './identity.js';
 import {profileEditor} from './profile-editor.js';
 import {overviewView,workspaceIcon} from './workspace.js';
@@ -101,9 +102,12 @@ function tabs(list, onPick) {
     const panel = document.createElement('section');
     panel.setAttribute('role', 'tabpanel');
     panel.id = 'panel-' + k;
-    panel.innerHTML = `<p class="empty">${esc(t('loading'))}</p>`;
+    panel.innerHTML = `<p class="empty" role="status">${esc(t('loading'))}</p>`;
     body.replaceChildren(panel);
     panel.setAttribute('aria-labelledby', 'tab-' + k);
+    const currentLabel=list.find(([key])=>key===k)[1];
+    const sectionLabel=document.querySelector('#workspace-section');
+    if(sectionLabel)sectionLabel.textContent=currentLabel;
     onPick(k, panel);
     document.title=list.find(([key])=>key===k)[1]+' · '+t('brand');
     nav.querySelector('[aria-selected=true]')?.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
@@ -131,6 +135,7 @@ function tabs(list, onPick) {
     nav.append(b);
   }
   main.replaceChildren(nav, body);
+  installWorkspaceFinder({trigger:document.querySelector('#workspace-find'),views:list,navigate:k=>show(k).then(()=>nav.querySelector('[aria-selected=true]')?.focus())});
   show(current,true);
 }
 
@@ -658,6 +663,8 @@ try { lastIssued = JSON.parse(sessionStorage.getItem('zm_last_ticket_' + me.user
 const heading = document.createElement('div');
 heading.className = 'workspace-heading';
 heading.innerHTML = `<div><h1>${esc(me.user.role === 'admin' ? t('admin') : me.user.role === 'owner' ? t('owner') : t('branch'))}</h1><p class="muted">${esc(subtitle)}</p></div>${me.user.role === 'owner' && me.org?.slug ? `<a class="btn ghost sm heading-link" href="/p/${esc(me.org.slug)}" target="_blank" rel="noopener">${lang === 'ar' ? 'عرض صفحتي العامة' : 'View public page'} ↗</a>` : me.branch?.slug ? `<a class="btn ghost sm heading-link" href="/m/${esc(me.branch.slug)}" target="_blank" rel="noopener">${lang === 'ar' ? 'عرض المنيو' : 'View menu'} ↗</a>` : ''}`;
+heading.querySelector('h1').insertAdjacentHTML('beforeend',' <span aria-hidden="true">/</span> <span id="workspace-section"></span>');
+heading.insertAdjacentHTML('beforeend',`<button type="button" class="btn ghost workspace-find" id="workspace-find" aria-haspopup="dialog">${workspaceIcon('menu')}<span>${lang==='ar'?'ابحث في أدواتك':'Find your tools'}</span><kbd>⌘ / Ctrl K</kbd></button>`);
 main.before(heading);
 
 // Staff screens get live updates (new orders, tickets, waitlist) without waiting for the next poll.
@@ -671,7 +678,17 @@ const views = {
 tabs(views.map(([k, l]) => [k, l]), (k, el) => {
   clearTimeout(boardTimer);
   clearTimeout(displayTimer);
-  Promise.resolve(views.find((v) => v[0] === k)[2](el)).catch((e) => flash(el, errMsg(e), true));
+  const load=()=>{
+    el.setAttribute('aria-busy','true');
+    document.title=views.find(view=>view[0]===k)[1]+' · '+t('brand');
+    return Promise.resolve().then(()=>views.find((v) => v[0] === k)[2](el)).catch(e=>{
+    if(!el.isConnected)return;
+    document.title=(lang==='ar'?'تعذر التحميل':'Could not load')+' · '+views.find(view=>view[0]===k)[1]+' · '+t('brand');
+    el.innerHTML=`<section class="card workspace-recovery" role="alert"><h2>${lang==='ar'?'تعذر تحميل هذا القسم':'This section could not load'}</h2><p>${esc(errMsg(e))}</p><button type="button" class="btn" data-retry>${lang==='ar'?'إعادة المحاولة':'Try again'}</button></section>`;
+    el.querySelector('[data-retry]').onclick=()=>{el.innerHTML=`<p class="empty" role="status">${esc(t('loading'))}</p>`;load();};
+    }).finally(()=>el.removeAttribute('aria-busy'));
+  };
+  load();
 });
 
 
