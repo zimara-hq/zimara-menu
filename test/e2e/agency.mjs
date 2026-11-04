@@ -36,6 +36,8 @@ try{
  const me=await page.evaluate(async()=>{const r=await fetch('/api/me');return r.json()});
  const guest=await browser.newPage({viewport:{width:390,height:844}});await guest.goto(base+'/p/'+me.org.slug);await guest.getByRole('heading',{name:'تفاصيل مقهاي، باختياري'}).waitFor();assert.equal(await guest.locator('.qr').count(),0);
  await guest.screenshot({path:out+'/merchant-mobile.png',fullPage:true});
+ await guest.setViewportSize({width:1200,height:900});await guest.reload();const product=await guest.locator('div.site-featured>a').first().boundingBox();assert.ok(product.width>=240,'featured products must use the section width, not a nested third-width grid');assert.equal(await guest.locator('section.site-featured').evaluate(el=>getComputedStyle(el).display),'block');
+ await guest.screenshot({path:out+'/merchant-desktop.png',fullPage:true});
  pass('studio demo opens a published synthetic site; mobile editor/preview toggle preserves edits and publication reaches an independent visitor');
  await page.locator('[data-k=overview]').click();await page.locator('.workspace-launchpad').waitFor();await page.evaluate(()=>scrollTo(0,0));
  assert.equal(await page.locator('.workspace-metrics article').count(),4);assert.equal(await page.locator('.workspace-service').count(),3);assert.equal(await page.locator('nav [role=tab]').count(),18);

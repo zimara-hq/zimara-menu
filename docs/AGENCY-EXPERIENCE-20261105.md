@@ -20,3 +20,7 @@ Local target: `http://127.0.0.1:8793`, isolated migrated D1, synthetic data.
 ## Limits and rollback
 
 The catalogue remains 100 structural combinations across ten frames and ten hero compositions, not 100 individually designed sites. This change introduces no new database migration or external service activation, and does not modify actual merchant content. Production deployment, DNS, billing, mail settings and Wallet credentials remain outside this change. Use the existing protected review deployment and restore its previous Worker version if verification fails; no database rollback is required for this slice.
+
+## Public section layout correction
+
+Remote visual inspection revealed that `site-featured`, `site-gallery`, `site-hours`, `site-social` and `site-faq` were shared by outer section types and inner containers. Container grid/flex rules now explicitly target their inner `div`, preserving the section’s normal block layout and eliminating nested one-third-width product grids. The agency browser suite verifies desktop product width and outer layout, alongside existing narrow-screen checks. No tenant recipe or stored content is changed.
