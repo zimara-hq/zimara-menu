@@ -11,6 +11,7 @@ import { registerAddons, publicAddons } from './addons.js';
 import { registerTemplates } from './templates.js';
 import { registerDomains, customHostRedirect } from './domains.js';
 import { registerDesign, activeDesign } from './design.js';
+import {registerStaffPermissions,staffPermissions} from './staff-permissions.js';
 import { registerAiImport, aiConfigured } from './ai-import.js';
 import { registerSetup } from './setup.js';
 import { registerWaitlist, waitlistCron, waitSettings } from './waitlist.js';
@@ -172,6 +173,7 @@ app.get('/api/me', requireRole('admin', 'owner', 'branch'), async (c) => {
     user: { id: u.id, email: u.email, name: u.name, role: u.role, email_verified: !!u.email_verified, mfa_enabled: !!u.mfa_enabled },
     org,
     branch,
+    permissions:u.role==='branch'?await staffPermissions(c.env,u.branch_id):null,
     pushConfigured: pushConfigured(c.env),
   });
 });
@@ -880,6 +882,7 @@ registerAddons(app);
 registerTemplates(app);
 registerDomains(app);
 registerDesign(app);
+registerStaffPermissions(app,{requireRole,body,audit});
 registerAiImport(app);
 registerSetup(app);
 registerOrdering(app);

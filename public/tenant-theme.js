@@ -2,6 +2,7 @@ import {esc,lang,applyTenantFont,pick} from './common.js';
 
 export function applyTenantTheme(profile = {}) {
   const theme=profile.theme||{},root=document.documentElement;
+  root.dataset.tenantCustomFont=(theme.font==='custom'||!theme.font)&&profile.font_url?'1':'0';
   for(const [key,values] of Object.entries({layout:['list','cards'],corners:['soft','square'],cover:['wide','compact']}))
     root.dataset['tenant'+key[0].toUpperCase()+key.slice(1)]=values.includes(theme[key])?theme[key]:values[0];
   if(theme.font==='system')root.style.setProperty('--font','system-ui, sans-serif');

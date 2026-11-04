@@ -1,3 +1,4 @@
+import {applyMenuContent} from './tenant-pages.js';
 import {applyTenantTheme,bannerGallery,coverImage} from './tenant-theme.js';
 import { applyDesign, listenForPreview } from './design-engine.js';
 import { api, esc, lang, makeT, money, pick, setBrandColor, topbar, announce } from './common.js';
@@ -313,6 +314,7 @@ function watchSections() {
   main.querySelectorAll('.menu-section').forEach((s) => io.observe(s));
 }
 
+let merchantOrg;
 try {
   data = await api('/api/public/menu/' + slug);
   if (data.ordering) ordering = data.ordering;
@@ -321,6 +323,7 @@ try {
   try {
     const p = await api('/api/public/profile/' + data.branch.org_slug);
     profile = p.profile;
+    merchantOrg=p.org;
     applyTenantTheme(profile);
     applyDesign(data.design);
     settings = p.branches.find((b) => b.slug === slug)?.settings || settings;
@@ -371,7 +374,8 @@ try {
   if (hasItems) {
     main.querySelector('#q').oninput = (e) => { q = e.target.value.trim().toLowerCase(); render(); };
     main.querySelector('#clear-q').onclick = () => { q = ''; main.querySelector('#q').value = ''; render(); main.querySelector('#q').focus(); };
-    render();
+    applyMenuContent(main,data.design,merchantOrg);
+  render();
     watchSections();
   }
   try { renderAddons(data.addons, { main, orgSlug: data.branch.org_slug }); } catch {}
@@ -383,4 +387,4 @@ try {
   main.querySelector('#retry-menu').onclick = () => location.reload();
 }
 
-listenForPreview();
+listenForPreview(recipe=>applyMenuContent(main,recipe,merchantOrg));

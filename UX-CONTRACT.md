@@ -40,3 +40,6 @@ Invalid fields expose a localized message, aria-invalid and aria-describedby; su
 The cashier order inbox polls while mounted, preserves invoice input while unchanged orders refresh, distinguishes connection failure from an empty inbox and re-reads server state after mutations or stale conflicts. New-order audio requires an explicit user action and an open page; no lock-screen or delivery guarantee is implied. The server still owns price, order version and pager creation.
 
 Cashier accept/reject waits for an in-flight read, prevents duplicate gestures and rechecks that the view is still mounted before dispatch. This is in-memory coordination, not offline queuing or background submission.
+
+## Merchant site ownership
+Homepage block composition and menu-page presentation are edited in the design studio and published together through the existing design endpoints. Product data, branch contact/hours, logos and uploads remain with their existing owners. Optimistic draft revisions reject stale writes. Failed saves preserve local input and block publishing. Cashier capability controls are branch-scoped, audited and enforced by `requireRole` on the server, not only hidden in the client. Existing accounts retain their prior access until the owner saves restrictions.

@@ -132,7 +132,7 @@ try {
   const card = owner.locator(".branch-workspace").first();
   await card.waitFor();
   await card.locator(".branch-edit summary").click();
-  const bf = card.locator("form");
+  const bf = card.locator(".branch-edit form");
   await bf.locator("[name=name_ar]").fill("فرع الاختبار");
   await bf.locator("[name=name_en]").fill("Test branch");
   await bf

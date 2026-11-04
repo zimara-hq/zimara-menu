@@ -8,7 +8,7 @@ async function openRole(role){
  const status=main.querySelector('#status');if(status)status.textContent=a('نجهّز شاشتك…','Preparing your screen…');
  try{
   if(role==='display'){const d=await api('/api/demo/'+token+'/display',{method:'POST',body:{}});location.assign(d.url+q);}
-  else{await api('/api/demo/'+token+'/session',{method:'POST',body:{role:role==='cashier'?'branch':'owner'}});location.assign('/app'+q);}
+  else{await api('/api/demo/'+token+'/session',{method:'POST',body:{role:role==='cashier'?'branch':'owner'}});location.assign('/app'+q+(new URLSearchParams(location.search).get('view')==='studio'&&role!=='cashier'?'#design':''));}
  }catch(e){if(status)status.textContent=e.status===410?a('انتهت الغرفة. أنشئ تجربة جديدة.','This room expired. Start a new demo.'):a('تعذر فتح الشاشة. حاول مجددًا.','Unable to open the screen. Try again.');}
 }
 function render(){

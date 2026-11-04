@@ -32,6 +32,7 @@ const statuses = {
 };
 
 export async function orderInbox(el) {
+  const {permissions={}}=await api("/api/me");
   let orders = [],
     filter = "pending",
     timer = null,
@@ -108,6 +109,7 @@ export async function orderInbox(el) {
           .querySelector("input")
           ?.addEventListener("input", (e) => drafts.set(o.id, e.target.value));
         node.querySelectorAll("[data-action]").forEach((button) => {
+          if(permissions?.["orders_"+button.dataset.action]===false){button.remove();return;}
           button.disabled = queued;
           button.onclick = () => act(o, button);
         });

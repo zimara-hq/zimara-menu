@@ -1,5 +1,6 @@
 import { loadUser, hashPassword, validPassword } from './auth.js';
 import { HttpError, bad, forbidden, hmac, id, now, str } from './util.js';
+import {enforceStaff} from './staff-permissions.js';
 
 export const PLANS = Object.freeze({
   pager: { id: 'pager', monthly: 4900, annual: 49000, limits: { branches: 1, items: 0 } },
@@ -67,6 +68,7 @@ export function requireRole(...roles) {
       if (!user.mfa_verified) throw forbidden('mfa_required');
     }
     c.set('user', user);
+    await enforceStaff(c,user);
     await next();
   };
 }

@@ -12,7 +12,7 @@ const FONT_FAMILY = {
   dm_sans: 'DM Sans', playfair: 'Playfair Display', lora: 'Lora', fraunces: 'Fraunces', dm_serif: 'DM Serif Display', bebas: 'Bebas Neue',
 };
 const SINGLE_WEIGHT = new Set(['lalezar', 'rakkas', 'blaka', 'qahiri', 'dm_serif', 'bebas']);
-const LOCAL = new Set(['tajawal', 'jakarta']);
+const LOCAL = new Set(['tajawal', 'jakarta','ibm','readex','alexandria']);
 const ENUMS = {
   layout: ['list', 'cards', 'grid', 'compact', 'text', 'magazine', 'elegant', 'tiles'],
   categories: ['chips', 'pills', 'underline', 'boxed'], motion: ['none', 'soft', 'lively'], font_size: ['sm', 'md', 'lg'],
@@ -22,6 +22,7 @@ const ENUMS = {
   bshape: ['square', 'rounded', 'pill'], bstyle: ['flat', 'gradient', 'glass', 'metal', 'neon', 'outline', 'soft3d'], banim: ['none', 'pulse', 'glow', 'bounce', 'shine'],
 };
 const one = (list, v, d) => (list.includes(v) ? v : d);
+const luminance=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
 
 function loadFont(key) {
   if (!FONT_FAMILY[key] || LOCAL.has(key)) return;
@@ -41,14 +42,30 @@ export function applyDesign(r) {
   // A designed page uses its own colours in light and dark device modes alike.
   root.dataset.theme = 'light';
   set('--brand', c.primary); set('--accent', c.primary); set('--accent-ink', d.price); set('--on-accent', d.on_primary);
+  if(HEX.test(c.primary||'')&&HEX.test(c.surface||'')){
+    const lp=luminance(c.primary),ls=luminance(c.surface),ratio=(Math.max(lp,ls)+.05)/(Math.min(lp,ls)+.05);
+    s.setProperty('--on-accent',lp>.179?'#111111':'#ffffff');s.setProperty('--accent-ink',ratio>=4.5?c.primary:c.text);
+  }
   set('--d-accent2', c.accent); set('--bg', c.bg); set('--surface', c.surface); set('--ink', c.text);
   if (HEX.test(c.text || '') && HEX.test(c.surface || '')) {
     s.setProperty('--muted', `color-mix(in srgb, ${c.text} 68%, ${c.surface})`);
     s.setProperty('--line', `color-mix(in srgb, ${c.text} 14%, ${c.surface})`);
   }
-  const ar = FONT_FAMILY[r.font_ar] ? r.font_ar : 'tajawal', en = FONT_FAMILY[r.font_en] ? r.font_en : 'jakarta';
+  const ar = FONT_FAMILY[r.font_ar] ? r.font_ar : 'ibm', en = FONT_FAMILY[r.font_en] ? r.font_en : 'jakarta';
   loadFont(ar); loadFont(en);
-  s.setProperty('--font', `'${FONT_FAMILY[ar]}', '${FONT_FAMILY[en]}', system-ui, sans-serif`);
+  const curated=document.querySelector('link[data-curated-fonts]');
+  if(!curated){const link=document.createElement('link');link.rel='stylesheet';link.href='/fonts/curated.css';link.dataset.curatedFonts='1';document.head.append(link);}
+  const custom=r.font_ar==='custom'&&root.dataset.tenantCustomFont==='1';
+  s.setProperty('--font', `${custom?'TenantFont, ':''}'${FONT_FAMILY[en]}', '${FONT_FAMILY[ar]}', system-ui, sans-serif`);
+  const type=r.typography||{},heading=FONT_FAMILY[type.heading_font]?type.heading_font:ar;
+  loadFont(heading);
+  s.setProperty('--tenant-heading-font',`${(r.typography?.heading_font==='custom'||!r.typography?.heading_font&&custom)&&root.dataset.tenantCustomFont==='1'?'TenantFont, ':''}'${FONT_FAMILY[en]}', '${FONT_FAMILY[heading]}', sans-serif`);
+  s.setProperty('--tenant-heading-scale',String(Math.max(100,Math.min(180,type.heading_scale||125))/100));
+  s.setProperty('--tenant-leading',String(Math.max(140,Math.min(210,type.line_height||175))/100));
+  s.setProperty('--tenant-spacing',`${Math.max(-2,Math.min(4,type.spacing||0))/100}em`);
+  const composition=r.composition||{};
+  for(const[key,values]of Object.entries({frame:['atelier','split','poster','sidebar','editorial','market','gallery','ledger','boutique','service'],hero:['stacked','centred','split','banner','overlay','minimal','wordmark','portrait','inset','panorama'],navigation:['rail','sidebar','index','pills'],section:['plain','numbered','banner','ruled','centred'],media:['square','landscape','portrait','circle'],width:['narrow','regular','wide'],density:['airy','balanced','dense']}))root.dataset['site'+key[0].toUpperCase()+key.slice(1)]=values.includes(composition[key])?composition[key]:values[0];
+  root.dataset.menuSearch=r.menu?.search===false?'0':'1';root.dataset.menuPrices=r.menu?.prices===false?'0':'1';root.dataset.menuLoyalty=r.menu?.loyalty===false?'0':'1';root.dataset.menuCart=r.menu?.cart==='bottom'?'bottom':'side';
   const bg = r.background || {}, cv = r.cover || {}, card = r.card || {}, b = r.button || {};
   Object.assign(root.dataset, {
     dLayout: one(ENUMS.layout, r.layout, 'list'), dCats: one(ENUMS.categories, r.categories, 'chips'),
@@ -70,11 +87,11 @@ export function applyDesign(r) {
 }
 
 // Live preview inside the design studio: the parent page (same origin only) sends recipes.
-export function listenForPreview() {
+export function listenForPreview(onRecipe) {
   if (!new URLSearchParams(location.search).has('design_preview')) return;
   window.addEventListener('message', (e) => {
     if (e.origin !== location.origin || e.source !== window.parent) return;
-    if (e.data?.type === 'zm-design') applyDesign(e.data.recipe);
+    if (e.data?.type === 'zm-design') {applyDesign(e.data.recipe);onRecipe?.(e.data.recipe);}
   });
   window.parent.postMessage({ type: 'zm-design-ready' }, location.origin);
 }

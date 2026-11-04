@@ -2,6 +2,7 @@
 // so any recipe is safe to render and every preset is just another recipe.
 import { requireRole, body, audit } from './context.js';
 import { bad, notFound, conflict, now, id } from './util.js';
+import {BASE_COMPOSITION,BASE_HOME,BASE_MENU,COMPOSITION_OPTIONS,validateStructure,blueprint} from './design-structure.js';
 
 // ---------- Fonts (served by Google Fonts, allowed by the public CSP) ----------
 // [id, family, weights, category] — category: modern | classic | decorative.
@@ -59,6 +60,10 @@ export const BASE_RECIPE = Object.freeze({
   button: { shape: 'rounded', style: 'flat', animation: 'none' },
   motion: 'soft',
   show: { images: true, calories: true, descriptions: true, allergens: true },
+  composition: {...BASE_COMPOSITION},
+  typography: {heading_font:null,heading_scale:125,line_height:175,spacing:0},
+  home: {...BASE_HOME},
+  menu: {...BASE_MENU},
 });
 
 const clone = (o) => JSON.parse(JSON.stringify(o));
@@ -103,7 +108,7 @@ export function validateRecipe(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw bad('invalid_design');
   const r = clone(BASE_RECIPE);
   const obj = (k) => (input[k] === undefined ? {} : typeof input[k] === 'object' && input[k] && !Array.isArray(input[k]) ? input[k] : (() => { throw bad('invalid_design', k); })());
-  const allowedTop = new Set(['colors', 'font_ar', 'font_en', 'font_size', 'background', 'cover', 'layout', 'categories', 'card', 'button', 'motion', 'show']);
+  const allowedTop = new Set(['colors', 'font_ar', 'font_en', 'font_size', 'background', 'cover', 'layout', 'categories', 'card', 'button', 'motion', 'show','composition','typography','home','menu']);
   for (const k of Object.keys(input)) if (!allowedTop.has(k)) throw bad('invalid_design', k);
 
   const colors = obj('colors');
@@ -111,7 +116,7 @@ export function validateRecipe(input) {
     if (!COLOR_KEYS.includes(k) || typeof v !== 'string' || !HEX.test(v)) throw bad('invalid_design', 'colors.' + k);
     r.colors[k] = v.toLowerCase();
   }
-  if (input.font_ar !== undefined) { if (!FONTS_AR.some((f) => f[0] === input.font_ar)) throw bad('invalid_design', 'font_ar'); r.font_ar = input.font_ar; }
+  if (input.font_ar !== undefined) { if (input.font_ar!=='custom'&&!FONTS_AR.some((f) => f[0] === input.font_ar)) throw bad('invalid_design', 'font_ar'); r.font_ar = input.font_ar; }
   if (input.font_en !== undefined) { if (!FONTS_EN.some((f) => f[0] === input.font_en)) throw bad('invalid_design', 'font_en'); r.font_en = input.font_en; }
   for (const k of ['font_size', 'layout', 'categories', 'motion']) if (input[k] !== undefined) r[k] = pickEnum(k, input[k]);
 
@@ -137,11 +142,13 @@ export function validateRecipe(input) {
     r.show[k] = v;
   }
   if (r.background.type === 'image' && !r.background.image) r.background.type = 'solid';
+  Object.assign(r,validateStructure(input,bad));
+  if(r.typography.heading_font&&r.typography.heading_font!=='custom'&&!FONTS_AR.concat(FONTS_EN).some(f=>f[0]===r.typography.heading_font))throw bad('invalid_design','typography.heading_font');
   return r;
 }
 
 // ---------- 100 ready designs ----------
-// 24 palettes x 4 styles = 96, plus 4 seasonal designs = 100.
+// Stable legacy IDs and palettes, now paired with 100 structural compositions.
 // [key, sector, name_ar, name_en, primary, accent, bg, surface, text, font_ar, font_en]
 const PALETTES = [
   ['latte', 'cafe', 'لاتيه', 'Latte', '#5b3a29', '#c08552', '#f8f3ee', '#ffffff', '#2b1d14', 'tajawal', 'jakarta'],
@@ -186,13 +193,14 @@ function makePresets() {
   const list = [];
   for (const [key, sector, nar, nen, primary, accent, bg, surface, text, far, fen] of PALETTES) {
     for (const [skey, sar, sen, style] of STYLES) {
-      const r = validateRecipe({ ...clone(style), colors: { primary, accent, bg, surface, text }, font_ar: far, font_en: fen, motion: skey === 'luxe' ? 'soft' : skey === 'photo' ? 'lively' : 'soft' });
+      const r = validateRecipe({ ...clone(style),...blueprint(list.length), colors: { primary, accent, bg, surface, text }, font_ar: ['ibm','readex','alexandria','cairo','almarai'][Math.floor(list.length/10)%5], font_en: fen, motion: 'soft' });
+      r.typography.heading_font=['ibm','alexandria','readex','kufi','naskh'][list.length%5];
       fixContrast(r);
       list.push({ id: `${key}-${skey}`, sector, name_ar: `${nar} · ${sar}`, name_en: `${nen} · ${sen}`, recipe: r });
     }
   }
   for (const [key, nar, nen, primary, accent, bg, surface, text, far, fen, pattern] of SEASONAL) {
-    const r = validateRecipe({ ...clone(STYLES[1][3]), colors: { primary, accent, bg, surface, text }, font_ar: far, font_en: fen, background: { type: 'pattern', pattern }, button: { shape: 'pill', style: 'metal', animation: 'glow' } });
+    const r = validateRecipe({ ...clone(STYLES[1][3]),...blueprint(list.length), colors: { primary, accent, bg, surface, text }, font_ar:'ibm', font_en: fen, background: { type: 'pattern', pattern }, button: { shape: 'pill', style: 'flat', animation: 'none' } });
     fixContrast(r);
     list.push({ id: `season-${key}`, sector: 'seasonal', name_ar: nar, name_en: nen, recipe: r });
   }
@@ -215,11 +223,16 @@ async function snapshot(env, orgId, name, recipe) {
     env.DB.prepare('DELETE FROM design_versions WHERE org_id=? AND auto=1 AND created_at<? AND id NOT IN (SELECT version_id FROM design_schedules)').bind(orgId, t - AUTO_KEEP_MS),
   ]);
 }
-async function saveDraft(env, orgId, recipe, presetId = null) {
-  await env.DB.prepare(
-    `INSERT INTO org_designs(org_id,draft_json,preset_id,updated_at) VALUES(?,?,?,?)
-     ON CONFLICT(org_id) DO UPDATE SET draft_json=excluded.draft_json, preset_id=COALESCE(excluded.preset_id, org_designs.preset_id), updated_at=excluded.updated_at`,
-  ).bind(orgId, JSON.stringify(recipe), presetId, now()).run();
+async function saveDraft(env, orgId, recipe, presetId = null, expected = null) {
+  if(expected!==null&&(!Number.isSafeInteger(expected)||expected<0))throw bad('invalid_revision');
+  if(expected>0&&!(await row(env,orgId)))throw conflict('design_conflict');
+  const result=await env.DB.prepare(
+    `INSERT INTO org_designs(org_id,draft_json,preset_id,updated_at,revision) VALUES(?,?,?,?,1)
+     ON CONFLICT(org_id) DO UPDATE SET draft_json=excluded.draft_json, preset_id=COALESCE(excluded.preset_id, org_designs.preset_id), updated_at=excluded.updated_at,revision=org_designs.revision+1
+     WHERE ? IS NULL OR org_designs.revision=?`,
+  ).bind(orgId, JSON.stringify(recipe), presetId, now(),expected,expected).run();
+  if(!result.meta.changes)throw conflict('design_conflict');
+  return (await row(env,orgId)).revision;
 }
 
 // The design guests see now: a running schedule wins over the published design.
@@ -246,17 +259,20 @@ export function registerDesign(app) {
     const { results: schedules } = await c.env.DB.prepare(
       'SELECT s.id,s.version_id,s.starts_at,s.ends_at,v.name FROM design_schedules s JOIN design_versions v ON v.id=s.version_id WHERE s.org_id=? AND s.ends_at>? ORDER BY s.starts_at',
     ).bind(u.org_id, now()).all();
-    const draft = d ? JSON.parse(d.draft_json) : clone(BASE_RECIPE);
+    const draft = d ? validateRecipe(JSON.parse(d.draft_json)) : clone(BASE_RECIPE);
+    const fontProfile=await c.env.DB.prepare('SELECT font_url FROM org_profiles WHERE org_id=?').bind(u.org_id).first();
     return c.json({
       draft: { ...draft, derived: derived(draft) },
       published: d?.published_json ? JSON.parse(d.published_json) : null,
       has_unpublished: !d || d.draft_json !== d.published_json,
       preset_id: d?.preset_id || null,
       published_at: d?.published_at || null,
+      revision:d?.revision||0,
+      compositions:COMPOSITION_OPTIONS,
       versions: versions.map(versionView),
       schedules,
       limits: { named_versions: MAX_NAMED, auto_days: 30 },
-      fonts: { ar: FONTS_AR.map(([k, f, , cat]) => ({ id: k, family: f, category: cat })), en: FONTS_EN.map(([k, f, , cat]) => ({ id: k, family: f, category: cat })) },
+      fonts: { ar: FONTS_AR.map(([k, f, , cat]) => ({ id: k, family: f, category: cat })).concat(fontProfile?.font_url?[{id:'custom',family:'خط منشأتك المرفوع / Uploaded brand font',category:'modern'}]:[]), en: FONTS_EN.map(([k, f, , cat]) => ({ id: k, family: f, category: cat })) },
       options: E,
       sectors: SECTORS,
       presets: PRESETS.map((p) => ({ id: p.id, sector: p.sector, name_ar: p.name_ar, name_en: p.name_en, recipe: p.recipe })),
@@ -265,10 +281,10 @@ export function registerDesign(app) {
 
   app.put('/api/owner/design/draft', owner, async (c) => {
     const u = c.get('user');
-    const r = validateRecipe((await body(c)).recipe);
+    const b=await body(c),r = validateRecipe(b.recipe);
     const adjusted = fixContrast(r);
-    await saveDraft(c.env, u.org_id, r);
-    return c.json({ draft: { ...r, derived: derived(r) }, adjusted });
+    const revision=await saveDraft(c.env, u.org_id, r,null,b.revision??null);
+    return c.json({ draft: { ...r, derived: derived(r) }, adjusted,revision });
   });
 
   app.post('/api/owner/design/presets/:id/apply', owner, async (c) => {
@@ -277,27 +293,34 @@ export function registerDesign(app) {
     if (!p) throw notFound();
     const d = await row(c.env, u.org_id);
     if (d) await snapshot(c.env, u.org_id, 'قبل تطبيق ' + p.name_ar, JSON.parse(d.draft_json));
-    await saveDraft(c.env, u.org_id, clone(p.recipe), p.id);
+    const b=await body(c),next=clone(p.recipe),current=d?validateRecipe(JSON.parse(d.draft_json)):null;
+    // Changing appearance must not erase the merchant's own copy and sections.
+    if(current&&b.replace_content!==true){if(current.home.enabled)next.home=current.home;next.menu=current.menu;}
+    const revision=await saveDraft(c.env, u.org_id, next, p.id,b.revision??null);
     await audit(c.env, u, 'design.preset', { preset: p.id });
-    return c.json({ draft: { ...p.recipe, derived: derived(p.recipe) } });
+    return c.json({ draft: { ...next, derived: derived(next) },revision });
   });
 
   app.post('/api/owner/design/publish', owner, async (c) => {
     const u = c.get('user');
+    const b=await body(c);
+    if(b.revision!==undefined&&(!Number.isSafeInteger(b.revision)||b.revision<0))throw bad('invalid_revision');
     const d = await row(c.env, u.org_id);
     if (!d) throw notFound();
     if (d.published_json) await snapshot(c.env, u.org_id, 'المنشور السابق', JSON.parse(d.published_json));
     const t = now();
-    await c.env.DB.prepare('UPDATE org_designs SET published_json=draft_json, published_at=? WHERE org_id=?').bind(t, u.org_id).run();
+    const result=await c.env.DB.prepare('UPDATE org_designs SET published_json=draft_json, published_at=?,revision=revision+1 WHERE org_id=? AND (? IS NULL OR revision=?)').bind(t, u.org_id,b.revision??null,b.revision??null).run();
+    if(!result.meta.changes)throw conflict('design_conflict');
     await audit(c.env, u, 'design.publish');
-    return c.json({ ok: true, published_at: t });
+    return c.json({ ok: true, published_at: t,revision:(await row(c.env,u.org_id)).revision });
   });
 
   app.post('/api/owner/design/discard', owner, async (c) => {
-    const u = c.get('user');
+    const u = c.get('user');const b=await body(c);
+    if(b.revision!==undefined&&(!Number.isSafeInteger(b.revision)||b.revision<0))throw bad('invalid_revision');
     const d = await row(c.env, u.org_id);
     if (!d?.published_json) throw notFound();
-    await c.env.DB.prepare('UPDATE org_designs SET draft_json=published_json, updated_at=? WHERE org_id=?').bind(now(), u.org_id).run();
+    const result=await c.env.DB.prepare('UPDATE org_designs SET draft_json=published_json, updated_at=?,revision=revision+1 WHERE org_id=? AND (? IS NULL OR revision=?)').bind(now(), u.org_id,b.revision??null,b.revision??null).run();if(!result.meta.changes)throw conflict('design_conflict');
     return c.json({ ok: true });
   });
 
