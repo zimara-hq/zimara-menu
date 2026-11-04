@@ -2,6 +2,14 @@
 
 Source: current user brief, PR1 lifecycle, server routes and migrations. Business rules live in server modules, not in this contract.
 
+## Workspace discovery and recovery
+- `workspace-finder.js` is the navigation-search variant of the established workspace shell. It receives only that role's existing tabs; selecting a result goes through the same `canLeaveWorkspace` guard. It never issues a data mutation. Native dialog owns background isolation; the component owns search, IME handling, arrow/Enter navigation, Escape, clear/no-results and trigger-focus restoration. Ctrl/Cmd+K is optional and does not intercept typing in form fields.
+- `dashboard.js` retains canonical `forms.js` editing/confirmation and `common.js` feedback. Section-load errors keep navigation usable and provide a retry of the original section. Loading exposes `aria-busy`; error titles describe the failure and retry restores the section title.
+- Owner branch summaries use `/api/owner/branches` and `/api/owner/stats` (30-day totals), without generating private display credentials. A public-menu preview opens the established `/m/:slug` route. Setup percentage describes configuration tasks only, not provider activation.
+- `journey-preview.js` is explicitly illustrative, keeps ready/acknowledged/collected separate, and never creates a real order or notification. Its live-demo destination remains `/demo`. Previous/reset are reversible and keep the interaction keyboard-accessible; reduced motion disables the entrance animation.
+
+The implementation review and verification evidence for this slice live in `docs/BRAND-WORKSPACE-20261105.md`.
+
 - Owner signup creates an isolated tenant and trial; verification status remains truthful when no email provider exists. Login exposes validation and recoverable errors and permits password managers/paste.
 - Cashier creates a numbered ticket. Private device display shows the latest unlinked QR. Linking hides the display QR; ready, seen and collected are distinct persisted states. Two cashier sessions resolve stale-version responses rather than double applying.
 - Public profile and menu never leak ticket QR/bearer tokens. Private display access can be revoked without invalidating public menu links.

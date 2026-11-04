@@ -26,3 +26,40 @@
 .footer-note{font-size:max(12px,.75rem)}
 [dir=rtl] .button span[aria-hidden=true]{display:inline-block;transform:scaleX(-1)}
 .text-link,.truth-strip a{display:inline-flex;align-items:center;min-height:44px}
+
+/* The visit, told from both sides. Brand primitives stay owned by :root. */
+.journey{border-block:1px solid var(--line);background:var(--surface);position:relative}
+.journey .section-heading{margin-bottom:42px}
+.journey-kicker{display:block;font-size:.75rem;letter-spacing:.09em;color:var(--muted);font-weight:700;margin-bottom:16px}
+.journey-track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));list-style:none;padding:0;margin:0 0 38px;border-block-end:1px solid var(--line)}
+.journey-track li{padding:16px 10px 20px;font-size:.85rem;color:var(--muted);border-block-end:2px solid transparent;display:flex;gap:10px;align-items:center}
+.journey-track li>span{font:600 .7rem 'Plus Jakarta Sans',sans-serif;border:1px solid var(--line);border-radius:50%;width:28px;height:28px;display:grid;place-items:center;flex:none}
+.journey-track li[aria-current]{color:var(--ink);border-color:var(--ember);font-weight:800}
+.journey-track li[aria-current]>span{background:var(--ember);color:var(--indigo);border-color:var(--ember)}
+.journey-track li.complete>span{border-color:var(--muted);color:var(--ink)}
+.journey-scenes{display:grid;grid-template-columns:minmax(0,1fr) 60px minmax(0,1fr);align-items:center;max-width:1000px;margin-inline:auto;gap:24px}
+.journey-counter{padding:36px;border:1px solid var(--line);border-radius:20px;position:relative;background:var(--night)}
+.journey-counter:before{content:'';position:absolute;inset-block:24px;inset-inline-start:0;width:3px;background:var(--ember);border-radius:4px}
+.journey-ticket-number{font:700 clamp(4rem,8vw,7rem)/1.1 'Plus Jakarta Sans',sans-serif;letter-spacing:-.06em;margin-block:30px 20px;color:var(--ink)}
+.journey-ticket-number>span{display:block;font:500 .7rem var(--body);letter-spacing:.12em;margin-top:10px;color:var(--muted)}
+.journey-state{font-weight:800;font-size:1.1rem;margin-bottom:10px;min-height:2em}
+.journey-note{color:var(--muted);font-size:.9rem;max-width:35ch;min-height:3.4em;margin-bottom:0}
+.journey-connection{text-align:center;font-size:2rem;color:var(--muted)}
+.journey-guest{text-align:center}
+.journey-phone{border:6px solid var(--line);border-radius:32px;background:var(--night);max-width:245px;margin:auto;min-height:315px;padding:18px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.journey-phone-top{position:absolute;top:9px;width:50px;height:4px;background:var(--line);border-radius:10px}
+.journey-phone img{object-fit:contain;margin-top:10px}
+.journey-phone strong{font:700 3.5rem/1.2 'Plus Jakarta Sans',sans-serif;margin-top:24px;letter-spacing:-.05em}
+.journey-phone p{font-weight:700;margin-block:12px;min-height:3.4em;max-width:20ch}
+.journey-guest-status{font-size:.75rem;color:var(--muted);padding-top:12px;border-top:1px solid var(--line);width:100%}
+.journey-scenes[data-step="2"] .journey-phone,.journey-scenes[data-step="3"] .journey-phone{border-color:var(--ember)}
+.journey-controls{margin-top:38px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.journey-controls>div{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.journey-controls .button{min-width:240px;justify-content:space-between}
+.journey-back{border:0;background:none;color:var(--ink);text-decoration:underline;text-underline-offset:5px;font:inherit;min-height:44px;cursor:pointer}
+.journey-back:disabled{opacity:.45;cursor:default}
+.journey-disclaimer{font-size:.75rem;color:var(--muted);max-width:38ch;margin:0}
+.journey-disclaimer>a{display:block;color:var(--ink);min-height:44px;padding-block:8px;text-underline-offset:5px;text-decoration:underline}
+.journey-live{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media(max-width:750px){.journey-track{grid-template-columns:1fr;gap:0;margin-bottom:24px}.journey-track li{display:none;padding:14px 0}.journey-track li[aria-current]{display:flex}.journey-scenes{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}.journey-connection{display:none}.journey-counter{padding:20px 16px;align-self:stretch}.journey-ticket-number{font-size:3.5rem;letter-spacing:-.04em;margin-top:30px}.journey-note{font-size:.75rem;min-height:0}.journey-state{font-size:.9rem;min-height:4em}.journey-kicker{font-size:.65rem}.journey-phone{padding:18px 10px;min-height:300px;border-width:4px;border-radius:24px}.journey-phone strong{font-size:2.5rem}.journey-phone p{font-size:.8rem;min-height:4em}.journey-guest-status{font-size:.65rem}.journey-controls{flex-direction:column;align-items:stretch}.journey-controls>div{flex-direction:column;align-items:stretch;gap:6px}.journey-controls .button{min-width:0}.journey-disclaimer{max-width:none}.journey-guest .journey-kicker{margin-bottom:10px}.journey .section-heading{margin-bottom:18px}}
+@media(prefers-reduced-motion:no-preference){.journey-counter,.journey-phone{animation:journey-reveal .35s ease both}.workspace-finder{animation:journey-reveal .2s ease both}@keyframes journey-reveal{from{opacity:.5;transform:translateY(6px)}to{opacity:1;transform:none}}}
