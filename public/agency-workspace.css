@@ -14,3 +14,6 @@
 @media(prefers-reduced-motion:reduce){.workspace-service,.inventory-photo>img{transition:none}.workspace-service:hover,.inventory-strip>a:hover img{transform:none}}
 #st-toggle-preview{display:none}
 @media(max-width:1000px){.studio-mode #st-toggle-preview{display:inline-flex}.studio-mode .tenant-builder:not([data-mobile-preview=on])>.studio-preview{display:none}.studio-mode .tenant-builder[data-mobile-preview=on]>.studio-panel{display:none}.studio-mode .tenant-builder[data-mobile-preview=on]>.studio-preview{display:block}.studio-mode .tenant-builder,.studio-mode .tenant-builder[data-view=presets]{display:block}.studio-mode .tenant-builder>.studio-panel{width:100%}}
+
+/* Device viewport is scaled once; legacy phone limits must not shrink it again. */
+.studio-mode .tenant-builder .phone-frame{max-width:none}

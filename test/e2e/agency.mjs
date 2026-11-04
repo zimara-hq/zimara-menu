@@ -27,10 +27,12 @@ try{
  const hero=page.locator('[data-editor-block]').first();if(!await hero.evaluate(el=>el.open))await hero.locator('summary').click();
  await hero.locator('[data-edit$="title_ar"]').fill('تفاصيل مقهاي، باختياري');
  await page.locator('#st-toggle-preview').click();await page.frameLocator('#st-frame').getByRole('heading',{name:'تفاصيل مقهاي، باختياري'}).waitFor();await fits();
+ const phone=await page.locator('.phone-frame').boundingBox(),viewport=await page.locator('.preview-viewport').boundingBox();assert.ok(phone.width>=viewport.width*.85,'mobile preview must fill its canvas');
+ assert.equal(await page.frameLocator('#st-frame').locator('html').evaluate(()=>innerWidth),378);
  await page.screenshot({path:out+'/studio-mobile-preview.png'});
  await page.locator('#st-toggle-preview').click();assert.equal(await hero.locator('[data-edit$="title_ar"]').inputValue(),'تفاصيل مقهاي، باختياري');
  await page.locator('#st-publish').click();await page.getByText('نشرنا تصميمك.',{exact:false}).waitFor();
- await page.setViewportSize({width:1536,height:1050});await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+'/studio-desktop.png'});
+ await page.setViewportSize({width:1536,height:1050});await page.locator('[data-preview-width="1160"]').click();await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+'/studio-desktop.png'});
  const me=await page.evaluate(async()=>{const r=await fetch('/api/me');return r.json()});
  const guest=await browser.newPage({viewport:{width:390,height:844}});await guest.goto(base+'/p/'+me.org.slug);await guest.getByRole('heading',{name:'تفاصيل مقهاي، باختياري'}).waitFor();assert.equal(await guest.locator('.qr').count(),0);
  await guest.screenshot({path:out+'/merchant-mobile.png',fullPage:true});
