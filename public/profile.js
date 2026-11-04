@@ -1,3 +1,4 @@
+import {renderHome,tenantChrome} from './tenant-pages.js';
 import {applyTenantTheme,bannerGallery,coverImage} from './tenant-theme.js';
 import { applyDesign, listenForPreview } from './design-engine.js';
 import { api, esc, lang, makeT, pick, setBrandColor, topbar } from './common.js';
@@ -36,7 +37,10 @@ const statusPill = (hours) => {
 
 const slug = decodeURIComponent(location.pathname.split('/')[2] || '');
 try {
-  const { org, profile: p, branches, loyalty, addons, design } = await api('/api/public/profile/' + encodeURIComponent(slug));
+  const payload=await api('/api/public/profile/' + encodeURIComponent(slug));
+  const {org,profile:p,branches,loyalty,addons,design}=payload;
+  let liveRecipe=design,products=[];
+  if(branches[0]&&(design?.home?.enabled||new URLSearchParams(location.search).has('design_preview')))try{products=(await api('/api/public/menu/'+encodeURIComponent(branches[0].slug))).items;}catch{}
   setBrandColor(org.brand_color);
   const name = pick(org, 'name');
   topbar(document.getElementById('top'), t, { subtitle: name });
@@ -105,11 +109,12 @@ try {
     </section>` : '',
   };
   const info = sections.map(k=>bits[k]||'').join('');
-  main.innerHTML = hero + bannerGallery(p.banners) + (info ? `<div class="profile-info">${info}</div>` : '');
+  const legacy=hero + bannerGallery(p.banners) + (info ? `<div class="profile-info">${info}</div>` : '');
+  function renderWebsite(recipe){liveRecipe=recipe;if(!renderHome(main,payload,recipe,products)){main.className='wrap profile-page menu-wrap';main.innerHTML=legacy;tenantChrome(org,recipe||{});}}
+  renderWebsite(design);
+  listenForPreview(renderWebsite);
   try { renderAddons(addons, { main, orgSlug: org.slug }); } catch {}
 } catch {
   topbar(document.getElementById('top'), t);
   main.innerHTML = `<div class="card"><h1>${a('الصفحة غير متاحة', 'Page unavailable')}</h1><p class="muted">${a('تأكد من رابط المنشأة وحاول مجددًا.', 'Check the business link and try again.')}</p><a class="btn ghost" href="/">${a('زيمارا منيو', 'ZIMARA Menu')}</a></div>`;
 }
-
-listenForPreview();

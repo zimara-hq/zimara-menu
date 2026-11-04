@@ -454,6 +454,7 @@ async function branchOrders(el) {
     el.querySelector('#issued').innerHTML = `<div style="text-align:center" class="stack" id="ticketprint"><div class="ticket-num">${esc(lastIssued.number)}</div><div class="qr">${qrSvg(link, 6)}</div><p>${esc(t('scanMe'))}</p></div><button class="btn ghost sm" id="pr" type="button">${esc(t('print'))}</button>`;
     el.querySelector('#pr').onclick = () => printTicket(lastIssued, link);
   };
+  if(!allowed("tickets_create"))el.querySelector("#nt").hidden=true;
   showIssued();
   let issueKey = uuid();
   el.querySelector('#nt').onsubmit = async (e) => {
@@ -517,6 +518,7 @@ async function branchOrders(el) {
         if (!box) return;
         box.innerHTML = list.map(row).join('') || `<p class="empty">${esc(t('none'))}</p>`;
         box.querySelectorAll('[data-a]').forEach((b) => {
+          if(!allowed(({ready:'tickets_call',realert:'tickets_realert',collect:'tickets_collect',cancel:'tickets_cancel'})[b.dataset.a])){b.remove();return;}
           const tk = list.find((x) => x.id === b.closest('.ticket').dataset.id);
           b.onclick = () => act(tk, b.dataset.a, b);
         });
@@ -594,6 +596,7 @@ function branchLoyalty(el) {
         btn.disabled = false;
       }
     };
+    out.querySelector('#st').hidden=!allowed('loyalty_stamp');out.querySelector('#rd').hidden=!allowed('loyalty_redeem');
     out.querySelector('#st').onclick = (e) => send('stamp', e.currentTarget);
     out.querySelector('#rd').onclick = (e) => send('redeem', e.currentTarget);
   }
@@ -670,11 +673,12 @@ main.before(heading);
 // Staff screens get live updates (new orders, tickets, waitlist) without waiting for the next poll.
 if (me.user.role === 'branch') startLive();
 
+const allowed=key=>me.user.role!=='branch'||me.permissions?.[key]!==false;
 const views = {
   admin: [['orgs', t('orgs'), adminOrgs], ['admins', t('admins'), adminAdmins], ['legal', lang === 'ar' ? 'البيانات القانونية' : 'Legal details', adminLegalView], ['account', t('account'), accountView]],
   owner: [['overview', lang === 'ar' ? 'نظرة عامة' : 'Overview', ownerOverview], ['menu', t('menu'), ownerMenu], ['brand', lang === 'ar' ? 'استوديو الهوية' : 'Brand studio', ownerBrand], ['profile',lang === 'ar' ? 'صفحة المنشأة' : 'Business page',el=>profileEditor(el,me)], ['branches', t('branches'), ownerBranches], ['loyalty', t('loyalty'), (el) => loyaltyAdmin(el, me)], ['stats', t('stats'), ownerStats], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'إعدادات الفروع' : 'Branch settings', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['design', lang === 'ar' ? 'استوديو التصميم' : 'Design studio', el => designStudio(el, me)], ['coupons', lang === 'ar' ? 'الكوبونات' : 'Coupons', couponsView], ['templates', lang === 'ar' ? 'صفحات جاهزة' : 'Ready pages', templatesView], ['addons', lang === 'ar' ? 'الإضافات' : 'Add-ons', addonsView], ['domain', lang === 'ar' ? 'الدومين الخاص' : 'Own domain', domainView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
   branch: [['orders', t('orders'), branchOrders], ['waitlist', lang === 'ar' ? 'قائمة الانتظار' : 'Waitlist', waitlistBoard], ['display', t('display'), branchDisplay], ['loyalty', t('loyalty'), branchLoyalty], ['availability', t('availability'), branchAvailability], ['inbox', lang === 'ar' ? 'طلبات المنيو' : 'Menu orders', menuOrdersView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['account', t('account'), accountView]],
-}[me.user.role];
+}[me.user.role].filter(([key])=>allowed(({orders:"tickets_view",display:"display",loyalty:"loyalty_view",availability:"availability",inbox:"orders_view",waitlist:"waitlist",devices:"display"})[key]));
 tabs(views.map(([k, l]) => [k, l]), (k, el) => {
   clearTimeout(boardTimer);
   clearTimeout(displayTimer);

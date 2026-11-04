@@ -1,3 +1,4 @@
+@import url('/fonts/curated.css');
 :root {
   --indigo: #23003f;
   --violet: #8447f2;
@@ -713,3 +714,5 @@ body.menu-page .wa-float { inset-block-end: 88px; }
 .plain-list { list-style: none; padding: 0; margin: 8px 0 12px; display: grid; gap: 8px; }
 .plain-list li { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
 .plain-list li small { display: block; }
+
+.dashboard-page{--font:"IBM Plex Sans Arabic","Plus Jakarta Sans",system-ui,sans-serif;line-height:1.75}

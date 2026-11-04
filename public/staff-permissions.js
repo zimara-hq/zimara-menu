@@ -1,0 +1,12 @@
+import {api,esc,lang} from './common.js';
+import {watchForm,markFormSaved,formBusy,setFormBusy,confirmAction} from './forms.js';
+const a=(ar,en)=>lang==='ar'?ar:en;
+export async function staffPermissionsEditor(el,branch){
+ const data=await api('/api/owner/branches/'+branch.id+'/permissions');
+ el.innerHTML=`<details class="staff-permissions"><summary>${a('صلاحيات حساب الكاشير','Cashier account permissions')}</summary><form novalidate class="stack"><p class="small muted">${a('تُطبّق هذه الصلاحيات على حساب هذا الفرع حتى لو كان مسجلًا من قبل.','These permissions apply to this branch account, including existing sessions.')}</p><div class="permissions-grid">${Object.entries(data.capabilities).map(([key,label])=>`<label class="check"><input type="checkbox" name="${esc(key)}" ${data.permissions[key]?'checked':''}>${a(...label)}</label>`).join('')}</div><p role="status"></p><button type="submit" class="btn">${a('حفظ الصلاحيات','Save permissions')}</button></form></details>`;
+ const form=el.querySelector('form');watchForm(form);
+ for(const[view,children]of [['tickets_view',['tickets_create','tickets_call','tickets_realert','tickets_collect','tickets_cancel']],['loyalty_view',['loyalty_stamp','loyalty_redeem']],['orders_view',['orders_accept','orders_reject']]]){
+  const update=()=>children.forEach(key=>{form.elements[key].disabled=!form.elements[view].checked;if(!form.elements[view].checked)form.elements[key].checked=false;});form.elements[view].addEventListener('change',update);update();
+ }
+ form.onsubmit=async event=>{event.preventDefault();if(formBusy(form))return;if(!await confirmAction({title:a('تغيير صلاحيات الكاشير؟','Change cashier permissions?'),description:a('تتغير العمليات المتاحة لحساب هذا الفرع فور الحفظ.','Allowed operations change immediately for this branch account.'),confirmLabel:a('حفظ الصلاحيات','Save permissions')}))return;const permissions=Object.fromEntries(Object.keys(data.capabilities).map(key=>[key,form.elements[key].checked]));const release=setFormBusy(form);try{await api('/api/owner/branches/'+branch.id+'/permissions',{method:'PUT',body:{permissions}});markFormSaved(form);form.querySelector('[role=status]').textContent=a('حُفظت الصلاحيات. يُعاد فتح لوحة الكاشير لتحديث الأزرار.','Permissions saved. Reopen the cashier workspace to refresh its controls.');}catch{form.querySelector('[role=status]').textContent=a('تعذر الحفظ. بقيت اختياراتك هنا.','Could not save. Your choices remain here.');}finally{release();}};
+}
