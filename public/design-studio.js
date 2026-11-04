@@ -77,7 +77,7 @@ export async function designStudio(el, me) {
     if(editVersion!==version)await save();
   }
   function statusText(text){el.querySelector('#st-status').textContent=text;}
-  function change(path,value){put(recipe,path,value);editVersion++;markFormDirty(guard);dirty=true;status();send(recipe);clearTimeout(saveTimer);saveTimer=setTimeout(()=>{if(el.isConnected)save().catch(()=>{});},700);}
+  function change(path,value){put(recipe,path,value);if(path==='layout')recipe.composition.frame=({list:'atelier',cards:'split',grid:'market',compact:'service',text:'ledger',magazine:'editorial',elegant:'boutique',tiles:'gallery'})[value]||recipe.composition.frame;editVersion++;markFormDirty(guard);dirty=true;status();send(recipe);clearTimeout(saveTimer);saveTimer=setTimeout(()=>{if(el.isConnected)save().catch(()=>{});},700);}
   function preview(page){previewPage=page;frame.src=(page==='home'?`/p/${encodeURIComponent(me.org.slug)}`:`/m/${encodeURIComponent(slug)}`)+'?design_preview=1&lang='+lang;el.querySelector('#st-page-home').setAttribute('aria-pressed',String(page==='home'));el.querySelector('#st-page-menu').setAttribute('aria-pressed',String(page==='menu'));}
   el.querySelector('#st-page-home').onclick=()=>preview('home');el.querySelector('#st-page-menu').onclick=()=>preview('menu');
   const viewport=el.querySelector('.preview-viewport'),phone=el.querySelector('.phone-frame');
