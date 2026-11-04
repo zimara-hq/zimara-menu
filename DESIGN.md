@@ -4,7 +4,7 @@
 Independent commercial menu/pager/loyalty product. Source: user brief and supplied brand profile (2026-10-30), ZIMARA assistant brand reference; PR1 operational code retained. The institutional zimara-website is read-only reference, not a deployment target.
 
 ## North star
-A hospitality control room inside ZIMARA's night horizon: the landing demonstrates one scan moving between a counter display and the customer's phone. The operational app is calm, legible, task-focused. Never make disabled integrations appear live.
+A merchant's expressive digital space surrounded by a calm operational workspace. The landing leads with bold Arabic typography and an illustrative photographic merchant website. The connected visit remains available below it. Never make disabled integrations appear live.
 
 ### Connected visit and workspace navigation (2026-11-05)
 The landing's five-step counter/guest scene explains linked, ready, acknowledged and collected as separate states. It is explicitly an illustration; the existing `/demo` remains the actual cross-device demonstration. Existing runtime tokens remain canonical (ownership Model B); the new scene consumes `landing.css` primitives, and the workspace finder, next-step strip and branch summary consume `styles.css` semantic tokens through `workspace.css`.
@@ -31,3 +31,12 @@ Token ownership remains runtime-first: `public/styles.css` owns the application 
 
 ## Merchant site builder (2026-11-05)
 The subscriber website is a separate expressive register from the operational workspace. `tenant-studio.css` owns ten structural frames, ten hero compositions, navigation, image ratios and content density. The 100 catalogue entries are **100 structural combinations**, not 100 independently art-directed websites; IDs remain compatible. `design-structure.js` owns bounded recipe and block validation. Homepage blocks, menu-page content and typography share the existing private-draft/publish/version lifecycle. A theme switch preserves merchant content. Curated IBM Plex Sans Arabic, Readex Pro and Alexandria are self-hosted under OFL; decorative fonts are optional, not preset body defaults. The dashboard uses IBM Plex Sans Arabic. Uploaded merchant fonts remain selectable.
+
+## Agency workspace revision (2026-11-05)
+`agency-landing.css` replaces the default night/giant-symbol composition with Paper, oversized Alexandria headings, Ember actions and an illustrative photographic website. A saved theme still wins. Dark mode is an equally supported variant. The star-canvas loop is removed. Photos are local compressed WebP, credited in `docs/EDITORIAL-ASSETS.md`; they never imply actual customers or Ha'il premises.
+
+`agency-workspace.css` consumes existing semantic tokens. The owner overview leads with a merchant identity scene from their actual profile, three task destinations, actual operational totals and existing setup/recovery controls. It never inserts stock photography into real tenant accounts. Owner navigation groups existing destinations without changing permissions.
+
+The design workspace has an app rail, one persistent publish bar, a catalogue and a live canvas. Selecting a content editor makes the inspector narrow and the canvas dominant. On small screens, an explicit preview/edit toggle preserves the editor DOM and its values. There are no fixed-height scrolling form panels. IBM Plex Sans Arabic is the operational body, Readex Pro operational headings and Alexandria marketing headings; Latin remains Plus Jakarta Sans. Existing semantic control tokens, focus and feedback owners remain canonical.
+
+`/demo?view=studio` is an opt-in, two-hour synthetic room with a published sample café website and illustrative local photography. The regular demo remains unchanged. No email, payment, POS or Wallet provider is activated by creating either demo.

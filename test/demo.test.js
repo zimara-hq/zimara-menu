@@ -2,6 +2,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {makeEnv,client} from './helpers.js';
 import {expireDemo} from '../src/demo.js';
+test('studio demo seeds an editable published example only in the requested isolated room',async()=>{
+ const env=makeEnv(),plain=client(env),studio=client(env,'2.2.2.2');
+ assert.equal((await plain.post('/api/demo',{mode:'unknown'})).status,400);
+ const regular=(await plain.post('/api/demo')).json,room=(await studio.post('/api/demo',{mode:'studio'})).json;
+ await plain.post('/api/demo/'+regular.token+'/session',{role:'owner'});
+ await studio.post('/api/demo/'+room.token+'/session',{role:'owner'});
+ const untouched=(await plain.get('/api/owner/design')).json,example=(await studio.get('/api/owner/design')).json;
+ assert.equal(untouched.published,null);
+ assert.equal(example.published.home.enabled,true);
+ assert.ok(example.published.home.blocks.some(b=>b.type==='hero'&&b.image==='/editorial/counter.webp'));
+ assert.equal(room.capabilities.payments,false);
+ assert.notEqual(room.org_slug,regular.org_slug);
+ assert.ok(room.expires_at<=Date.now()+2*60*60*1000+5000);
+ assert.equal((await plain.get('/api/owner/design')).json.published,null);
+});
 test('demo rooms isolate roles, expose no staff credentials, and clamp session expiry',async()=>{
  const env=makeEnv(),a=client(env),b=client(env,'2.2.2.2');
  const room=(await a.post('/api/demo')).json,other=(await b.post('/api/demo')).json;

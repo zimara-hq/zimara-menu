@@ -96,6 +96,7 @@ function tabs(list, onPick) {
     navigating=true;
     if(!force&&!await canLeaveWorkspace()){history.replaceState(null,'',location.pathname+location.search+'#'+current);navigating=false;return;}
     current = k;
+    document.body.classList.toggle('studio-mode',k==='design');document.body.dataset.workspaceSection=k;
     try { sessionStorage.setItem('zm_tab_' + me.user.role, k); } catch {}
     if (location.hash.slice(1) !== k) history.replaceState(null, '', location.pathname + location.search + '#' + k);
     nav.querySelectorAll('button').forEach((b) => { b.setAttribute('aria-selected', String(b.dataset.k === k)); b.tabIndex = b.dataset.k === k ? 0 : -1; });
@@ -118,6 +119,7 @@ function tabs(list, onPick) {
     b.type = 'button';
     b.role = 'tab';
     b.dataset.k = k;
+    b.setAttribute('aria-label',label);b.title=label;
     b.id = 'tab-' + k;
     b.setAttribute('aria-controls', 'panel-' + k);
     b.innerHTML = workspaceIcon(k) + `<span>${esc(label)}</span>`;
@@ -132,7 +134,19 @@ function tabs(list, onPick) {
       else return;
       e.preventDefault(); buttons[index].focus(); buttons[index].click();
     });
+    if(me.user.role==='owner'){
+      const groups={overview:'workspace',stats:'workspace',menu:'site',design:'site',brand:'site',profile:'site',import:'site',templates:'site',branches:'operations',settings:'operations',devices:'operations',loyalty:'operations',coupons:'operations',addons:'growth',domain:'growth',integrations:'growth',subscription:'account',account:'account'};
+      b.dataset.navGroup=groups[k]||'workspace';
+    }
     nav.append(b);
+  }
+  if(me.user.role==='owner'){
+    const labels={workspace:lang==='ar'?'مساحتك':'WORKSPACE',site:lang==='ar'?'الموقع والمحتوى':'SITE & CONTENT',operations:lang==='ar'?'التشغيل والعملاء':'OPERATIONS',growth:lang==='ar'?'النمو والربط':'GROWTH',account:lang==='ar'?'حسابك':'ACCOUNT'};
+    for(const group of Object.keys(labels)){
+      const buttons=[...nav.querySelectorAll('button')].filter(button=>button.dataset.navGroup===group);
+      if(!buttons.length)continue;
+      const caption=document.createElement('span');caption.className='nav-caption';caption.textContent=labels[group];nav.append(caption,...buttons);
+    }
   }
   main.replaceChildren(nav, body);
   installWorkspaceFinder({trigger:document.querySelector('#workspace-find'),views:list,navigate:k=>show(k).then(()=>nav.querySelector('[aria-selected=true]')?.focus())});
