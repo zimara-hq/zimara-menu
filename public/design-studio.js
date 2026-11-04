@@ -36,20 +36,22 @@ const day = (ms) => new Date(ms).toISOString().slice(0, 10);
 export async function designStudio(el, me) {
   const [d, br] = await Promise.all([api('/api/owner/design'), api('/api/owner/branches').catch(() => ({ branches: [] }))]);
   const slug = br.branches?.[0]?.slug;
-  const previewUrl = slug ? `/m/${encodeURIComponent(slug)}?design_preview=1` : `/p/${encodeURIComponent(me?.org?.slug || '')}?design_preview=1`;
+  const initialHome=Boolean(d.published?.home?.enabled);
+  const previewUrl=initialHome?`/p/${encodeURIComponent(me?.org?.slug||'')}?design_preview=1`:(slug?`/m/${encodeURIComponent(slug)}?design_preview=1`:`/p/${encodeURIComponent(me?.org?.slug||'')}?design_preview=1`);
   let recipe = strip(d.draft), tab = 'presets', sector = 'all', query = '', saveTimer = null, dirty = d.has_unpublished, revision=d.revision, pendingSave=null,editVersion=0,lastSaved=JSON.stringify(strip(d.draft)),failedSave=false;
-  let previewPage='menu',previewWidth=390;
+  let previewPage=initialHome?'home':'menu',previewWidth=matchMedia('(max-width:1000px)').matches?390:1160;
 
-  el.innerHTML = `<div class="section-intro"><span class="eyebrow">${a('استوديو التصميم', 'DESIGN STUDIO')}</span><h2>${a('موقعك. من أول واجهة لآخر تفصيل.','Your site. From the first screen to the last detail.')}</h2><p>${a('ابنِ الرئيسية والمنيو بنفسك. 100 تركيبة تخطيط من عشرة هياكل وواجهات مختلفة، مع محتواك وخطوطك. التعديل مسودة حتى تنشره.','Build your homepage and menu. 100 structural combinations across ten site frames and hero compositions. Your content and typography remain yours; edits stay private until published.')}</p></div>
+  el.innerHTML = `<div class="section-intro"><span class="eyebrow">${a('استوديو التصميم', 'DESIGN STUDIO')}</span><h2>${a('صمّم تجربة تشبهك.','Design an experience that feels like you.')}</h2><p>${a('ابنِ الرئيسية والمنيو بنفسك. 100 تركيبة تخطيط من عشرة هياكل وواجهات مختلفة، مع محتواك وخطوطك. التعديل مسودة حتى تنشره.','Build your homepage and menu. 100 structural combinations across ten site frames and hero compositions. Your content and typography remain yours; edits stay private until published.')}</p></div>
   <form id="studio-guard" novalidate hidden></form><div class="studio tenant-builder">
     <div class="studio-panel">
-      <div class="studio-bar card"><span id="st-status" class="pill" role="status"></span><button type="button" class="btn ghost sm" id="st-save">${a('حفظ المسودة','Save draft')}</button><div class="row"><button type="button" class="btn ghost sm" id="st-discard">${a('تجاهل المسودة', 'Discard draft')}</button><button type="button" class="btn sm" id="st-publish">${a('انشر', 'Publish')}</button></div></div>
+      <div class="studio-bar card"><span id="st-status" class="pill" role="status"></span><button type="button" class="btn ghost sm" id="st-save">${a('حفظ المسودة','Save draft')}</button><div class="row"><button type="button" class="btn ghost sm" id="st-toggle-preview" aria-expanded="false">${a('معاينة الموقع','Preview site')}</button><button type="button" class="btn ghost sm" id="st-discard">${a('تجاهل المسودة', 'Discard draft')}</button><button type="button" class="btn sm" id="st-publish">${a('انشر', 'Publish')}</button></div></div>
       <div class="seg" role="tablist">${[['presets', a('التصاميم الجاهزة', 'Ready designs')], ['home',a('الرئيسية','Homepage')],['menu',a('صفحة المنيو','Menu page')],['custom', a('الهوية والتخطيط', 'Identity & layout')], ['versions', a('النسخ والجدولة', 'Versions & schedule')]].map(([k, t]) => `<button type="button" role="tab" data-tab="${k}">${t}</button>`).join('')}</div>
       <div id="st-body"></div><div id="st-msg" role="status"></div>
     </div>
-    <div class="studio-preview" aria-label="${a('معاينة مباشرة', 'Live preview')}"><div class="preview-toolbar"><div class="seg"><button type="button" id="st-page-home" aria-pressed="false">${a('الرئيسية','Homepage')}</button><button type="button" id="st-page-menu" aria-pressed="true">${a('المنيو','Menu')}</button></div><div class="preview-devices">${[[390,a('جوال','Phone')],[768,a('تابلت','Tablet')],[1160,a('كمبيوتر','Desktop')]].map(([width,label])=>`<button type="button" class="btn ghost sm" data-preview-width="${width}" aria-pressed="${width===390}">${label}</button>`).join('')}</div></div><div class="preview-viewport"><div class="phone-frame"><iframe id="st-frame" title="${a('معاينة الصفحة', 'Page preview')}" src="${esc(previewUrl)}" loading="eager"></iframe></div></div><p class="small muted">${a('معاينة من صفحتك الفعلية. اضغط قسمًا في الرئيسية لتعديله.','Your actual page, live. Click a homepage section to edit it.')}</p></div>
+    <div class="studio-preview" aria-label="${a('معاينة مباشرة', 'Live preview')}"><div class="preview-toolbar"><div class="seg"><button type="button" id="st-page-home" aria-pressed="false">${a('الرئيسية','Homepage')}</button><button type="button" id="st-page-menu" aria-pressed="true">${a('المنيو','Menu')}</button></div><div class="preview-devices">${[[390,a('جوال','Phone')],[768,a('تابلت','Tablet')],[1160,a('كمبيوتر','Desktop')]].map(([width,label])=>`<button type="button" class="btn ghost sm" data-preview-width="${width}" aria-pressed="${width===previewWidth}">${label}</button>`).join('')}</div></div><div class="preview-viewport"><div class="phone-frame"><iframe id="st-frame" title="${a('معاينة الصفحة', 'Page preview')}" src="${esc(previewUrl)}" loading="eager"></iframe></div></div><p class="small muted">${a('معاينة من صفحتك الفعلية. اضغط قسمًا في الرئيسية لتعديله.','Your actual page, live. Click a homepage section to edit it.')}</p></div>
   </div>`;
   const frame = el.querySelector('#st-frame'), bodyEl = el.querySelector('#st-body'), msg = el.querySelector('#st-msg');
+  const builder=el.querySelector('.tenant-builder');builder.before(el.querySelector('.studio-bar'));
   const guard=el.querySelector('#studio-guard');watchForm(guard);
   const send = (r) => frame.contentWindow?.postMessage({ type: 'zm-design', recipe: r }, location.origin);
   const onReady = e=>{if(e.origin!==location.origin||e.source!==frame.contentWindow)return;if(e.data?.type==='zm-design-ready')send(recipe);if(e.data?.type==='zm-block-select'){tab='home';render();const block=[...bodyEl.querySelectorAll('[data-editor-block]')].find(node=>node.dataset.editorBlock===e.data.id);if(block){block.open=true;block.scrollIntoView({block:'center'});block.querySelector('summary').focus();}}};
@@ -79,16 +81,21 @@ export async function designStudio(el, me) {
   function statusText(text){el.querySelector('#st-status').textContent=text;}
   function change(path,value){put(recipe,path,value);if(path==='layout')recipe.composition.frame=({list:'atelier',cards:'split',grid:'market',compact:'service',text:'ledger',magazine:'editorial',elegant:'boutique',tiles:'gallery'})[value]||recipe.composition.frame;editVersion++;markFormDirty(guard);dirty=true;status();send(recipe);clearTimeout(saveTimer);saveTimer=setTimeout(()=>{if(el.isConnected)save().catch(()=>{});},700);}
   function preview(page){previewPage=page;frame.src=(page==='home'?`/p/${encodeURIComponent(me.org.slug)}`:`/m/${encodeURIComponent(slug)}`)+'?design_preview=1&lang='+lang;el.querySelector('#st-page-home').setAttribute('aria-pressed',String(page==='home'));el.querySelector('#st-page-menu').setAttribute('aria-pressed',String(page==='menu'));}
+  el.querySelector('#st-page-home').setAttribute('aria-pressed',String(initialHome));el.querySelector('#st-page-menu').setAttribute('aria-pressed',String(!initialHome));
+  el.querySelector('#st-toggle-preview').onclick=event=>{const on=builder.dataset.mobilePreview!=='on';builder.dataset.mobilePreview=on?'on':'off';event.currentTarget.setAttribute('aria-expanded',String(on));event.currentTarget.textContent=on?a('العودة للتعديل','Back to editing'):a('معاينة الموقع','Preview site');requestAnimationFrame(fit);};
   el.querySelector('#st-page-home').onclick=()=>preview('home');el.querySelector('#st-page-menu').onclick=()=>preview('menu');
   const viewport=el.querySelector('.preview-viewport'),phone=el.querySelector('.phone-frame');
-  const fit=()=>{const scale=Math.min(1,Math.max(180,viewport.clientWidth-12)/previewWidth);phone.style.width=previewWidth+'px';phone.style.height='740px';phone.style.transform=`scale(${scale})`;viewport.style.height=740*scale+'px';};
+  const fit=()=>{const scale=Math.min(1,Math.max(180,viewport.clientWidth-12)/previewWidth);phone.style.width=previewWidth+'px';phone.style.height='740px';phone.style.transform=`scale(${scale})`;viewport.style.height=740*scale+'px';phone.style.insetInlineStart=Math.max(0,(viewport.clientWidth-previewWidth*scale)/2)+'px';};
   const observer=new ResizeObserver(fit);observer.observe(viewport);
   el.querySelectorAll('[data-preview-width]').forEach(button=>button.onclick=()=>{previewWidth=Number(button.dataset.previewWidth);el.querySelectorAll('[data-preview-width]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));fit();});
   el.querySelector('#st-save').onclick=()=>save().then(()=>note(a('حُفظت المسودة.','Draft saved.'))).catch(()=>{});
   const dispose=new MutationObserver(()=>{if(!el.isConnected){clearTimeout(saveTimer);observer.disconnect();window.removeEventListener('message',onReady);dispose.disconnect();}});dispose.observe(document.getElementById('main'),{childList:true,subtree:true});
 
   function presetsView() {
-    const list = d.presets.filter((p) => (sector === 'all' || p.sector === sector) && (!query || (p.name_ar + ' ' + p.name_en).toLowerCase().includes(query.toLowerCase())));
+    // Show a different frame and hero in each opening tile, rather than ten
+    // adjacent variations of one family. IDs and persisted choices stay intact.
+    const catalogue=d.presets.map((preset,index)=>({preset,rank:((index%10-Math.floor(index/10)+10)%10)*10+Math.floor(index/10)})).sort((a,b)=>a.rank-b.rank).map(entry=>entry.preset);
+    const list = catalogue.filter((p) => (sector === 'all' || p.sector === sector) && (!query || (p.name_ar + ' ' + p.name_en).toLowerCase().includes(query.toLowerCase())));
     bodyEl.innerHTML = `<div class="row"><label class="visually-hidden" for="st-q">${a('ابحث', 'Search')}</label><button type="button" class="btn ghost sm" id="st-clear" ${query?'':'hidden'}>${a('مسح البحث','Clear search')}</button><input id="st-q" type="search" placeholder="${a('ابحث عن تصميم…', 'Search designs…')}" value="${esc(query)}"></div>
     <div class="chip-row" role="group" aria-label="${a('النشاط', 'Trade')}">${Object.keys(SECTOR).map((k) => `<button type="button" class="chip ${k === sector ? 'on' : ''}" data-sector="${k}">${lbl(SECTOR[k])} <small>${k === 'all' ? d.presets.length : d.presets.filter((p) => p.sector === k).length}</small></button>`).join('')}</div>
     <div class="design-grid">${list.map((p) => miniCard(p, p.id === d.preset_id)).join('') || `<p class="muted">${a('ما في نتائج.', 'No results.')}</p>`}</div>`;
@@ -168,6 +175,7 @@ export async function designStudio(el, me) {
   }
 
   function render() {
+    builder.dataset.view=tab;if(tab==='home')preview('home');if(tab==='menu')preview('menu');
     el.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
     msg.innerHTML = '';
     bodyEl.onclick=null;bodyEl.oninput=null;bodyEl.onchange=null;bodyEl.oncompositionend=null;
@@ -195,8 +203,8 @@ export function miniCard(p, current) {
   const btn = { square: '2px', rounded: '8px', pill: '99px' }[p.recipe.button.shape];
   return `<article class="design-card ${current ? 'current' : ''}">
     <div class="mini" data-frame="${esc(p.recipe.composition?.frame||'atelier')}" data-hero="${esc(p.recipe.composition?.hero||'stacked')}" aria-hidden="true" style="--m-bg:${c.bg};--m-sf:${c.surface};--m-p:${c.primary};--m-a:${c.accent};--m-t:${c.text};--m-r:${r};--m-b:${btn}">
-      <div class="mini-cover"></div><div class="mini-name"></div>
-      <div class="mini-items mini-${esc(p.recipe.layout)}"><i></i><i></i><i></i><i></i></div><div class="mini-btn"></div>
+      <div class="mini-cover"><img src="/editorial/counter.webp" alt="" loading="lazy"></div><div class="mini-name">${a('رواق','Riwaq')}</div>
+      <div class="mini-items mini-${esc(p.recipe.layout)}"><i><img src="/editorial/coffee.webp" alt="" loading="lazy"></i><i><img src="/editorial/pastry.webp" alt="" loading="lazy"></i><i><img src="/editorial/counter.webp" alt="" loading="lazy"></i><i><img src="/editorial/coffee.webp" alt="" loading="lazy"></i></div><div class="mini-btn"></div>
     </div>
     <h4>${esc(pick(p, 'name'))}</h4>
     <div class="row"><button type="button" class="btn ghost sm" data-try="${esc(p.id)}">${a('جرّب', 'Try')}</button><button type="button" class="btn sm" data-use="${esc(p.id)}">${current ? a('مختار ✓', 'Chosen ✓') : a('اعتمد', 'Use')}</button></div>
