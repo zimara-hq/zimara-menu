@@ -4,7 +4,7 @@ The previous controls were more capable than the visual result suggested. This c
 
 - Marketing: large Arabic typography, photographic merchant-site scene, warm Paper/Ember direction, dark variant, restrained entrance motion and a direct studio-demo entry. The interactive pager illustration remains usable in both locales on mobile; its devices no longer cover the call button.
 - Owner overview: merchant identity scene using actual saved assets, content/team/loyalty destinations, actual statistics, collapsible setup and public QR, real menu inventory. Existing navigation is grouped into work, content, operations, growth and account.
-- Studio: compact app rail, full-width publish toolbar, catalogue thumbnails with photographic content, desktop canvas, dedicated home/menu inspectors and a mobile preview/edit toggle that preserves input.
+- Studio: compact app rail, full-width publish toolbar, catalogue thumbnails with photographic content (ten different frame/hero pairs shown first), desktop canvas, dedicated home/menu inspectors and a mobile preview/edit toggle that preserves input.
 - Studio demo: `/demo?view=studio` creates an isolated two-hour sample website with published home content and local stock photography. Ordinary demo creation is unchanged. This does not send mail or activate any provider.
 
 ## Verification

@@ -92,7 +92,10 @@ export async function designStudio(el, me) {
   const dispose=new MutationObserver(()=>{if(!el.isConnected){clearTimeout(saveTimer);observer.disconnect();window.removeEventListener('message',onReady);dispose.disconnect();}});dispose.observe(document.getElementById('main'),{childList:true,subtree:true});
 
   function presetsView() {
-    const list = d.presets.filter((p) => (sector === 'all' || p.sector === sector) && (!query || (p.name_ar + ' ' + p.name_en).toLowerCase().includes(query.toLowerCase())));
+    // Show a different frame and hero in each opening tile, rather than ten
+    // adjacent variations of one family. IDs and persisted choices stay intact.
+    const catalogue=d.presets.map((preset,index)=>({preset,rank:((index%10-Math.floor(index/10)+10)%10)*10+Math.floor(index/10)})).sort((a,b)=>a.rank-b.rank).map(entry=>entry.preset);
+    const list = catalogue.filter((p) => (sector === 'all' || p.sector === sector) && (!query || (p.name_ar + ' ' + p.name_en).toLowerCase().includes(query.toLowerCase())));
     bodyEl.innerHTML = `<div class="row"><label class="visually-hidden" for="st-q">${a('ابحث', 'Search')}</label><button type="button" class="btn ghost sm" id="st-clear" ${query?'':'hidden'}>${a('مسح البحث','Clear search')}</button><input id="st-q" type="search" placeholder="${a('ابحث عن تصميم…', 'Search designs…')}" value="${esc(query)}"></div>
     <div class="chip-row" role="group" aria-label="${a('النشاط', 'Trade')}">${Object.keys(SECTOR).map((k) => `<button type="button" class="chip ${k === sector ? 'on' : ''}" data-sector="${k}">${lbl(SECTOR[k])} <small>${k === 'all' ? d.presets.length : d.presets.filter((p) => p.sector === k).length}</small></button>`).join('')}</div>
     <div class="design-grid">${list.map((p) => miniCard(p, p.id === d.preset_id)).join('') || `<p class="muted">${a('ما في نتائج.', 'No results.')}</p>`}</div>`;

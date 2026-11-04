@@ -21,6 +21,8 @@ try{
  pass('photographic landing fits RTL/LTR and both themes; mobile call remains clickable and reduced motion removes entrance');
  await page.goto(base+'/demo?view=studio');await page.locator('#create').click();await page.locator('[data-role=owner]').click();await page.locator('.design-card').first().waitFor();
  assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('studio-mode')),true);
+ const opening=await page.locator('.design-card .mini').evaluateAll(nodes=>nodes.slice(0,10).map(el=>({frame:el.dataset.frame,hero:el.dataset.hero})));
+ assert.equal(new Set(opening.map(x=>x.frame)).size,10);assert.equal(new Set(opening.map(x=>x.hero)).size,10);
  await page.locator('[data-tab=home]').click();
  const hero=page.locator('[data-editor-block]').first();if(!await hero.evaluate(el=>el.open))await hero.locator('summary').click();
  await hero.locator('[data-edit$="title_ar"]').fill('تفاصيل مقهاي، باختياري');
