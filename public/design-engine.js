@@ -56,10 +56,10 @@ export function applyDesign(r) {
   const curated=document.querySelector('link[data-curated-fonts]');
   if(!curated){const link=document.createElement('link');link.rel='stylesheet';link.href='/fonts/curated.css';link.dataset.curatedFonts='1';document.head.append(link);}
   const custom=r.font_ar==='custom'&&root.dataset.tenantCustomFont==='1';
-  s.setProperty('--font', `${custom?'TenantFont, ':''}'${FONT_FAMILY[ar]}', '${FONT_FAMILY[en]}', system-ui, sans-serif`);
+  s.setProperty('--font', `${custom?'TenantFont, ':''}'${FONT_FAMILY[en]}', '${FONT_FAMILY[ar]}', system-ui, sans-serif`);
   const type=r.typography||{},heading=FONT_FAMILY[type.heading_font]?type.heading_font:ar;
   loadFont(heading);
-  s.setProperty('--tenant-heading-font',`${(r.typography?.heading_font==='custom'||!r.typography?.heading_font&&custom)&&root.dataset.tenantCustomFont==='1'?'TenantFont, ':''}'${FONT_FAMILY[heading]}', '${FONT_FAMILY[en]}', sans-serif`);
+  s.setProperty('--tenant-heading-font',`${(r.typography?.heading_font==='custom'||!r.typography?.heading_font&&custom)&&root.dataset.tenantCustomFont==='1'?'TenantFont, ':''}'${FONT_FAMILY[en]}', '${FONT_FAMILY[heading]}', sans-serif`);
   s.setProperty('--tenant-heading-scale',String(Math.max(100,Math.min(180,type.heading_scale||125))/100));
   s.setProperty('--tenant-leading',String(Math.max(140,Math.min(210,type.line_height||175))/100));
   s.setProperty('--tenant-spacing',`${Math.max(-2,Math.min(4,type.spacing||0))/100}em`);
