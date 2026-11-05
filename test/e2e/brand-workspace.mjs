@@ -62,7 +62,9 @@ try{
   pass('360–1440px, both locales, themes and reduced-motion layout checks pass');
   const cashier=await browser.newPage();cashier.on('pageerror',error=>errors.push(error.message));
   await cashier.goto(base+'/demo#room='+room.token+'&role=cashier');await cashier.waitForURL('**/app');await cashier.locator('#workspace-find').click();
-  assert.equal(await cashier.locator('.finder-result').count(),8);
+  assert.equal(await cashier.locator('.finder-result').count(),10);
+  assert.equal(await cashier.locator('.finder-result',{hasText:'شاشة المطبخ'}).count(),1);
+  assert.equal(await cashier.locator('.finder-result',{hasText:'طلبات الطاولات'}).count(),1);
   await cashier.locator('#workspace-query').fill('فاتورة');assert.equal(await cashier.locator('.finder-result').count(),0);
   await cashier.close();pass('cashier navigation search excludes owner billing and branding tools');
   assert.deepEqual(errors,[]);

@@ -1944,9 +1944,9 @@
     "semantic_hash": ""
   },
   "test/e2e/brand-workspace.mjs": {
-    "mtime": 1793895740.032311,
-    "seen": 1793895783.4015923,
-    "ast_hash": "87169168be7b29422f78d8c5f39dd557",
+    "mtime": 1793895822.4972131,
+    "seen": 1793895859.7988806,
+    "ast_hash": "b97b956105e6ff80888500da85ad72b1",
     "semantic_hash": ""
   },
   "test/e2e/identity-ownership.mjs": {
