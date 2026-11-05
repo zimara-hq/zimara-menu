@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { DatabaseSync } from 'node:sqlite';
 import { backupArgs } from '../scripts/launch-backup.mjs';
 import { checkHealth } from '../scripts/launch-monitor.mjs';
 import { legalReadiness } from '../src/legal.js';
@@ -47,29 +48,59 @@ test('isolated restore verifies full migrated application schema and rejects cor
     writeFileSync(join(directory, 'database.sql'), sql);
     writeFileSync(join(directory, 'manifest.json'), JSON.stringify({ version: 1, created_at: new Date().toISOString(), bytes: Buffer.byteLength(sql), sha256: createHash('sha256').update(sql).digest('hex'), source: 'local', ...extra }));
   };
-  const verify = () => spawnSync('python3', [resolve('scripts/launch-restore-check.py'), directory], { encoding: 'utf8' });
+  const verify = (...args) => spawnSync(process.execPath, [resolve('scripts/launch-restore-check.mjs'), directory, ...args], { encoding: 'utf8' });
   try {
     const schema = readdirSync('migrations').filter(f => f.endsWith('.sql')).sort().map(f => readFileSync(join('migrations', f), 'utf8')).join('\n');
     // Create a real SQLite dump, including a representative relational row pair.
     const seed = "\nINSERT INTO orgs (id,slug,name_ar,name_en,created_at) VALUES ('restore-org','restore-org','مثال','Restore fixture',0);\nINSERT INTO branches (id,org_id,slug,name_ar,name_en,created_at) VALUES ('restore-branch','restore-org','restore-branch','مثال','Restore branch',0);";
-    const generated = spawnSync('python3', ['-c', "import sqlite3,sys\nc=sqlite3.connect(':memory:')\nc.executescript(sys.stdin.read())\nprint('\\n'.join(c.iterdump()))"], { input: schema + seed, encoding: 'utf8' });
-    assert.equal(generated.status, 0, generated.stderr);
-    writeBackup(generated.stdout);
+    const fixture = new DatabaseSync(':memory:');
+    let dump;
+    try {
+      fixture.exec(schema + seed);
+      const objects = fixture.prepare("SELECT type, name, sql FROM sqlite_master WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' ORDER BY rowid").all();
+      const quoteIdentifier = name => '"' + name.replaceAll('"', '""') + '"';
+      const statements = ['PRAGMA foreign_keys=OFF;', 'BEGIN TRANSACTION;'];
+      for (const table of objects.filter(row => row.type === 'table')) {
+        statements.push(table.sql + ';');
+        const columns = fixture.prepare('PRAGMA table_info(' + quoteIdentifier(table.name) + ')').all().map(column => column.name);
+        const rows = fixture.prepare('SELECT ' + columns.map(name => 'quote(' + quoteIdentifier(name) + ')').join(',') + ' FROM ' + quoteIdentifier(table.name)).all();
+        for (const row of rows) statements.push('INSERT INTO ' + quoteIdentifier(table.name) + ' (' + columns.map(quoteIdentifier).join(',') + ') VALUES (' + Object.values(row).join(',') + ');');
+      }
+      for (const object of objects.filter(row => row.type !== 'table')) statements.push(object.sql + ';');
+      statements.push('COMMIT;');
+      dump = statements.join('\n');
+    } finally { fixture.close(); }
+    writeBackup(dump);
     let result = verify();
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.equal(JSON.parse(result.stdout).isolated, true);
     assert.ok(JSON.parse(result.stdout).tables > 20);
     assert.ok(JSON.parse(result.stdout).rows >= 2);
-    writeBackup(generated.stdout, { sha256: '0'.repeat(64) });
+    writeBackup(dump, { sha256: '0'.repeat(64) });
     assert.equal(verify().status, 1);
-    writeBackup(generated.stdout, { created_at: '2000-01-01T00:00:00Z' });
+    writeBackup(dump, { created_at: '2000-01-01T00:00:00Z' });
     assert.equal(verify().status, 1);
-    writeBackup(generated.stdout + '\nPRAGMA foreign_keys=OFF; CREATE TABLE restore_child (parent TEXT REFERENCES orgs(id)); INSERT INTO restore_child VALUES (\'missing\');');
+    writeBackup(dump + '\nPRAGMA foreign_keys=OFF; CREATE TABLE restore_child (parent TEXT REFERENCES orgs(id)); INSERT INTO restore_child VALUES (\'missing\');');
     assert.equal(verify().status, 1);
     const forbidden = join(directory, 'outside.sqlite');
-    writeBackup(generated.stdout + "\nATTACH DATABASE '" + forbidden.replaceAll("'", "''") + "' AS other;");
+    const forbiddenLiteral = "'" + forbidden.replaceAll("'", "''") + "'";
+    for (const unsafe of [
+      'ATTACH DATABASE ' + forbiddenLiteral + ' AS other;',
+      'VACUUM INTO ' + forbiddenLiteral + ';',
+      'SELECT load_extension(' + forbiddenLiteral + ');',
+      'SELECT writefile(' + forbiddenLiteral + ", 'forbidden');",
+      'PRAGMA writable_schema=ON;',
+      'CREATE VIRTUAL TABLE unsafe USING fts5(value);',
+    ]) {
+      writeBackup(dump + '\n' + unsafe);
+      assert.equal(verify().status, 1, unsafe);
+      assert.equal(readdirSync(directory).includes('outside.sqlite'), false, unsafe);
+    }
+    writeBackup(dump, { created_at: 'invalid-date' });
     assert.equal(verify().status, 1);
-    assert.equal(readdirSync(directory).includes('outside.sqlite'), false);
+    writeBackup(dump);
+    assert.equal(verify('--max-age-hours', 'NaN').status, 1);
+    assert.equal(verify('--max-age-hours', '-1').status, 1);
     writeBackup('CREATE TABLE unrelated (id TEXT);');
     assert.equal(verify().status, 1);
   } finally { rmSync(directory, { recursive: true, force: true }); }

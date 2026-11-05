@@ -3,7 +3,10 @@
 These commands are prepared and tested locally. They do not enable a scheduler,
 create remote backups, establish an alert destination, or prove provider recovery.
 Run from the repository root after `source /workspace/toolkit/env.sh`. No dependency
-installation is needed. Node.js and Python 3 with SQLite are required.
+installation is needed. Node.js 24 with built-in SQLite and `DatabaseSync.setAuthorizer`
+is required. The verifier fails closed if SQLite authorization is unavailable.
+Python is not required for deployment tests or these commands; the earlier Python
+checker remains an optional alternative only on hosts with Python's SQLite module.
 
 Verified on 2026-11-05: a separate temporary local Wrangler D1 database accepted
 all application migrations and a synthetic organisation, exported through the
@@ -25,12 +28,12 @@ account information and may include encrypted provider credentials.
 ```sh
 # Local development only; replace the output with a new directory each time.
 node scripts/launch-backup.mjs --config wrangler.jsonc --database zimara-menu-db --output /secure/backups/zimara-local-YYYYMMDD
-python3 scripts/launch-restore-check.py /secure/backups/zimara-local-YYYYMMDD
+node scripts/launch-restore-check.mjs /secure/backups/zimara-local-YYYYMMDD
 
 # Production read-only export, ONLY after replacing the production D1 placeholder,
 # checking account/resource identity, access scopes and the chosen config.
 node scripts/launch-backup.mjs --config wrangler.jsonc --database zimara-menu-db --remote --output /secure/backups/zimara-YYYYMMDD
-python3 scripts/launch-restore-check.py /secure/backups/zimara-YYYYMMDD
+node scripts/launch-restore-check.mjs /secure/backups/zimara-YYYYMMDD
 ```
 
 For named Wrangler environments, include `--env NAME` in the export command.
@@ -41,11 +44,12 @@ It does not encrypt the SQL. A checksum detects corruption; it cannot establish
 authenticity if someone can replace both files. Use storage access controls and
 an independently retained signed/checksummed inventory where required.
 
-Verification creates a brand-new temporary local SQLite database, imports the
+Verification creates a brand-new in-memory local SQLite database, imports the
 dump, checks integrity, foreign keys and core application tables, counts rows,
-then removes the temporary database. No verification option targets a provider,
+then closes the isolated database. No verification option targets a provider,
 production database or persistent test database. It blocks SQL attachments,
-extension loading, virtual tables and unsafe PRAGMAs. Treat backup files as
+`VACUUM INTO`, extension loading, virtual tables and unsafe PRAGMAs through SQLite's
+authorizer, with extensions disabled. Treat backup files as
 sensitive trusted input; run verification with a disk/resource quota for unusually
 large inputs. The default freshness threshold is 48 hours. An intentional older
 recovery drill can specify `--max-age-hours 720`.
