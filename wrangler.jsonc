@@ -30,5 +30,5 @@
   // VAPID_PUBLIC_KEY is not secret, but keeping all four together lets .dev.vars and
   // `wrangler secret put` configure push the same way.
   "secrets": { "required": ["AUTH_SECRET"] },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true, "redact_query_string": true }
 }
