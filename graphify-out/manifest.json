@@ -480,9 +480,9 @@
     "semantic_hash": ""
   },
   "src/addons.js": {
-    "mtime": 1793828569.6457229,
-    "seen": 1793894869.7907033,
-    "ast_hash": "2c54442be72503c35d5851963b95d10a",
+    "mtime": 1793897112.9467158,
+    "seen": 1793897163.8043404,
+    "ast_hash": "4c98ef08f04fcc0e943617fd8abba638",
     "semantic_hash": ""
   },
   "src/ai-import.js": {
@@ -684,9 +684,9 @@
     "semantic_hash": ""
   },
   "test/addons.test.js": {
-    "mtime": 1793828569.6498833,
-    "seen": 1793894869.7907443,
-    "ast_hash": "3f6aee5d0f47c67863158e77cb6ae85a",
+    "mtime": 1793897112.9467158,
+    "seen": 1793897163.8051794,
+    "ast_hash": "241412886a9123ffe25253e2802b8e79",
     "semantic_hash": ""
   },
   "test/app-foundation.test.js": {
@@ -2178,9 +2178,9 @@
     "semantic_hash": ""
   },
   "docs/LAUNCH-COMPLETION-20261105.md": {
-    "mtime": 1793895007.7863574,
-    "seen": 1793895070.5618365,
-    "ast_hash": "5c1adfb38b8cbfe955f0db6eb6f21485",
+    "mtime": 1793897008.9280486,
+    "seen": 1793897163.80939,
+    "ast_hash": "7969dc7610ed25e944eb9fbe2465f60e",
     "semantic_hash": ""
   },
   "scripts/launch-restore-check.mjs": {
