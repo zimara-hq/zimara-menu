@@ -5,6 +5,7 @@ const http = (env) => env.HTTP_FETCH || fetch;
 const targetEnvironment = (env) => env.SIMPLE_FATOORA_ENV === 'live' ? 'live' : 'sandbox';
 
 export function simpleFatooraConfigured(env) {
+  if (!['sandbox', 'live'].includes(env.SIMPLE_FATOORA_ENV)) return false;
   if (env.SIMPLE_FATOORA_ENABLED !== 'true' || env.SIMPLE_FATOORA_SELLER_PROFILE_APPROVED !== 'true' || !env.SIMPLE_FATOORA_API_KEY) return false;
   return targetEnvironment(env) !== 'live' || env.SIMPLE_FATOORA_LIVE_ISSUING_ENABLED === 'true';
 }
@@ -22,7 +23,7 @@ async function request(env, path, payload) {
     // A provider rejection is definite for 4xx. A 5xx may have happened after document creation.
     throw Object.assign(new Error('simple_fatoora_http_' + response.status), { kind: response.status < 500 ? 'rejected' : 'unknown' });
   }
-  if (!data || data.status !== true || !data.response) throw Object.assign(new Error('simple_fatoora_rejected'), { kind: 'rejected' });
+  if (!data || data.status !== true || !data.response) throw Object.assign(new Error('simple_fatoora_rejected'), { kind: data?.status === false ? 'rejected' : 'unknown' });
   return data.response;
 }
 
@@ -36,7 +37,7 @@ export async function validateSimpleFatooraKey(env) {
 
 export async function createSimpleFatooraInvoice(env, payload) {
   const response = await request(env, '/sdk/invoice/create', payload);
-  const receivedEnvironment = response.environment === 'live' ? 'live' : 'sandbox';
+  const receivedEnvironment = response.environment;
   if (receivedEnvironment !== targetEnvironment(env)) throw Object.assign(new Error('simple_fatoora_environment_mismatch'), { kind: 'unknown' });
   if (!response.id || !response.invoice_number) throw Object.assign(new Error('simple_fatoora_incomplete_response'), { kind: 'unknown' });
   return {
@@ -55,7 +56,7 @@ export async function findSimpleFatooraInvoice(env, reference) {
   if (matches.length !== 1) return matches.length ? { ambiguous: true } : null;
   const row = matches[0];
   if (!row.id || !row.invoice_number) return { ambiguous: true };
-  const receivedEnvironment = row.environment === 'live' ? 'live' : 'sandbox';
+  const receivedEnvironment = row.environment;
   if (receivedEnvironment !== targetEnvironment(env)) return { ambiguous: true };
   return {
     id: String(row.id),

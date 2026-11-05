@@ -1,0 +1,43 @@
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync } from 'node:fs';
+const base=process.argv[2]||'http://127.0.0.1:8793', out=process.argv[3]||'output/launch/centre';
+mkdirSync(out,{recursive:true});
+const raw=process.env.HTTPS_PROXY||process.env.HTTP_PROXY, launch={};
+if(raw&&!base.includes('127.0.0.1')&&!base.includes('localhost')){const p=new URL(raw);launch.proxy={server:p.origin,...(p.username?{username:decodeURIComponent(p.username),password:decodeURIComponent(p.password)}:{})};}
+const browser=await chromium.launch(launch), errors=[], checks=[];
+const owner=await browser.newPage({viewport:{width:1280,height:900}}), cashier=await browser.newPage({viewport:{width:1280,height:900}});
+for(const page of [owner,cashier])page.on('pageerror',e=>errors.push(e.message));
+const pass=s=>{checks.push(s);console.log('PASS',s)};
+try{
+ await owner.goto(base+'/demo');
+ const room=await (await owner.request.post(base+'/api/demo',{data:{}})).json();assert.ok(room.token);
+ await owner.request.post(base+'/api/demo/'+room.token+'/session',{data:{role:'owner'}});
+ await owner.goto(base+'/app#launch');
+ await owner.getByRole('heading',{name:'مركز التشغيل',exact:true}).waitFor();
+ assert.equal((await owner.request.get(base+'/api/admin/launch')).status(),403);
+ await owner.getByRole('button',{name:'تحديث الحالة',exact:true}).click();
+ await owner.getByRole('heading',{name:'مركز التشغيل',exact:true}).waitFor();
+ await owner.screenshot({path:out+'/launch-centre.png'});
+ pass('owner sees actual setup and provider states without platform-admin data');
+ await owner.setViewportSize({width:390,height:844});
+ assert.ok(await owner.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ pass('launch centre fits 390px without horizontal overflow');
+ await cashier.goto(base+'/demo#room='+room.token+'&role=cashier');
+ await cashier.waitForURL('**/app');await cashier.locator('#num').waitFor();
+ await cashier.fill('#num','KITCHEN-TEST');await cashier.locator('#nt button').click();
+ await cashier.locator('#issued .ticket-num').waitFor();
+ await cashier.locator('[data-k=kitchen]').click();
+ await cashier.getByRole('heading',{name:'شاشة المطبخ',exact:true}).waitFor();
+ await cashier.locator('[data-ready]').first().waitFor();
+ await cashier.locator('[data-ready]').first().click();
+ await cashier.locator('[data-board] .pill').filter({hasText:'جاهز'}).waitFor();
+ await cashier.screenshot({path:out+'/kitchen.png'});
+ pass('kitchen changes the same versioned pager state used by the cashier');
+ await cashier.locator('[data-k=tables]').click();
+ await cashier.getByRole('heading',{name:'طلبات الطاولات',exact:true}).waitFor();
+ await cashier.getByText('لا توجد طلبات محلية مفتوحة مرتبطة بطاولة.',{exact:true}).waitFor();
+ assert.deepEqual(errors,[]);
+ pass('table board distinguishes open orders from table occupancy and reports an empty state');
+ writeFileSync(out+'/results.json',JSON.stringify({base,checks,errors},null,2));
+}finally{await browser.close();}

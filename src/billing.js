@@ -1,6 +1,5 @@
 import { requireRole, body, audit, rateLimit, PLANS, subscriptionFor } from './context.js';
 import { HttpError, bad, id, notFound, now, hmac } from './util.js';
-import { sendPaymentReceipt } from './notices.js';
 import { simpleFatooraConfigured, validateSimpleFatooraKey } from './providers/simple-fatoora.js';
 
 // Moyasar hosted invoices (SAMA-licensed gateway). Card data never touches this Worker.
@@ -28,14 +27,17 @@ export function priceFor(env, plan, cycle) {
 }
 
 async function moyasar(env, method, path, payload) {
-  const res = await http(env)(API + path, {
+  if (!billingConfigured(env)) throw new HttpError(503, 'billing_not_configured');
+  let res;
+  try { res = await http(env)(API + path, {
     method,
     headers: {
       authorization: 'Basic ' + btoa(env.MOYASAR_SECRET_KEY + ':'),
       ...(payload ? { 'content-type': 'application/json' } : {}),
     },
     body: payload ? JSON.stringify(payload) : undefined,
-  });
+    signal: AbortSignal.timeout(10000),
+  }); } catch { throw new HttpError(502, 'payment_provider_error'); }
   const data = await res.json().catch(() => null);
   if (!res.ok || !data) throw new HttpError(502, 'payment_provider_error');
   return data;
@@ -62,26 +64,39 @@ export async function settleCheckout(env, checkout) {
     throw new HttpError(409, 'payment_amount_mismatch');
   }
   const t = now();
-  // The conditional UPDATE is the idempotency guard: only one caller flips pending -> paid.
-  const flip = await env.DB.prepare("UPDATE billing_checkouts SET status = 'paid', paid_at = ? WHERE id = ? AND status = 'pending'").bind(t, checkout.id).run();
-  if (!flip.meta?.changes) return { status: 'paid' };
-  const sub = await env.DB.prepare('SELECT current_period_end, status FROM subscriptions WHERE org_id = ?').bind(checkout.org_id).first();
-  const base = sub && sub.status === 'active' && sub.current_period_end > t ? sub.current_period_end : t;
-  const end = base + PERIOD[checkout.cycle];
+  // D1 batches are transactional. Every write is gated on pending and the final write
+  // flips paid, so a failure rolls back activation AND the outbox, and concurrent
+  // webhook/sync/cron callers can never extend the period twice.
   const invoiceId = id();
   const invoiceReference = 'ZM-SUB-' + checkout.id;
-  await env.DB.batch([
-    sub
-      ? env.DB.prepare("UPDATE subscriptions SET plan = ?, status = 'active', current_period_end = ?, cancel_at_period_end = 0, updated_at = ? WHERE org_id = ?").bind(checkout.plan, end, t, checkout.org_id)
-      : env.DB.prepare("INSERT INTO subscriptions (org_id, plan, status, current_period_end, created_at, updated_at) VALUES (?, ?, 'active', ?, ?, ?)").bind(checkout.org_id, checkout.plan, end, t, t),
-    // The invoice outbox is durable; it runs only after Moyasar confirms payment.
-    env.DB.prepare("INSERT OR IGNORE INTO subscription_invoices (id, org_id, provider, provider_reference, state, currency, subtotal, vat, total, created_at) VALUES (?, ?, 'simple_fatoora', ?, 'pending', 'SAR', ?, ?, ?, ?)")
-      .bind(invoiceId, checkout.org_id, checkout.provider_invoice_id, checkout.subtotal, checkout.vat, checkout.total, t),
-    env.DB.prepare("INSERT OR IGNORE INTO subscription_invoice_jobs (invoice_id, payment_reference, reference_number, state, next_attempt_at, created_at, updated_at) VALUES (?, ?, ?, 'pending', ?, ?, ?)")
-      .bind(invoiceId, checkout.provider_invoice_id, invoiceReference, t, t, t),
+  const committed = await env.DB.batch([
+    env.DB.prepare(`INSERT INTO subscriptions (org_id, plan, status, current_period_end, created_at, updated_at)
+      SELECT org_id, plan, 'active', ?, ?, ? FROM billing_checkouts WHERE id = ? AND status = 'pending'
+      ON CONFLICT(org_id) DO UPDATE SET plan = excluded.plan, status = 'active',
+      current_period_end = CASE WHEN subscriptions.status = 'active' AND subscriptions.current_period_end > ?
+        THEN subscriptions.current_period_end + ? ELSE excluded.current_period_end END,
+      cancel_at_period_end = 0, updated_at = excluded.updated_at`)
+      .bind(t + PERIOD[checkout.cycle], t, t, checkout.id, t, PERIOD[checkout.cycle]),
+    env.DB.prepare(`INSERT INTO subscription_invoices (id, org_id, provider, provider_reference, state, currency, subtotal, vat, total, created_at)
+      SELECT ?, org_id, 'simple_fatoora', provider_invoice_id, 'pending', 'SAR', subtotal, vat, total, ?
+      FROM billing_checkouts WHERE id = ? AND status = 'pending'`)
+      .bind(invoiceId, t, checkout.id),
+    env.DB.prepare(`INSERT INTO subscription_invoice_jobs (invoice_id, payment_reference, reference_number, state, next_attempt_at, created_at, updated_at)
+      SELECT ?, provider_invoice_id, ?, 'pending', ?, ?, ? FROM billing_checkouts WHERE id = ? AND status = 'pending'`)
+      .bind(invoiceId, invoiceReference, t, t, t, checkout.id),
+    env.DB.prepare(`INSERT INTO subscription_receipt_jobs
+      (checkout_id, user_id, recipient_email, recipient_name, period_end, dashboard_url, next_attempt_at, created_at)
+      SELECT b.id, u.id, u.email, COALESCE(u.name, ''), s.current_period_end, ?, ?, ?
+      FROM billing_checkouts b JOIN subscriptions s ON s.org_id = b.org_id
+      JOIN users u ON u.org_id = b.org_id AND u.role = 'owner' AND u.disabled = 0
+      WHERE b.id = ? AND b.status = 'pending'`)
+      .bind(env.PUBLIC_BASE_URL.replace(/\/$/, '') + '/app#subscription', t, t, checkout.id),
+    env.DB.prepare("UPDATE billing_checkouts SET status = 'paid', paid_at = ? WHERE id = ? AND status = 'pending'").bind(t, checkout.id),
   ]);
+  const sub = await env.DB.prepare('SELECT current_period_end FROM subscriptions WHERE org_id = ?').bind(checkout.org_id).first();
+  const end = sub?.current_period_end;
+  if (!committed[4].meta?.changes) return { status: 'paid', current_period_end: end };
   await audit(env, null, 'billing.paid', { org_id: checkout.org_id, checkout: checkout.id, plan: checkout.plan, cycle: checkout.cycle, total: checkout.total });
-  try { await sendPaymentReceipt(env, checkout, end); } catch { /* the payment stands; the receipt is best effort */ }
   return { status: 'paid', current_period_end: end };
 }
 

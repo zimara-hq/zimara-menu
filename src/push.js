@@ -6,7 +6,7 @@ import { b64url, fromB64url } from './util.js';
 let cachedKey = null;
 
 async function signingKey(env) {
-  if (cachedKey && cachedKey.pub === env.VAPID_PUBLIC_KEY) return cachedKey.key;
+  if (cachedKey && cachedKey.pub === env.VAPID_PUBLIC_KEY && cachedKey.privateKey === env.VAPID_PRIVATE_KEY) return cachedKey.key;
   const pub = fromB64url(env.VAPID_PUBLIC_KEY);
   if (pub.length !== 65 || pub[0] !== 4) throw new Error('VAPID_PUBLIC_KEY must be an uncompressed P-256 point');
   const jwk = {
@@ -18,7 +18,7 @@ async function signingKey(env) {
     ext: true,
   };
   const key = await crypto.subtle.importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
-  cachedKey = { pub: env.VAPID_PUBLIC_KEY, key };
+  cachedKey = { pub: env.VAPID_PUBLIC_KEY, privateKey: env.VAPID_PRIVATE_KEY, key };
   return key;
 }
 
@@ -27,6 +27,7 @@ export function pushConfigured(env) {
 }
 
 export async function vapidHeader(env, endpoint) {
+  if (!validEndpoint(endpoint)) throw new Error('Invalid push endpoint');
   const aud = new URL(endpoint).origin;
   const header = b64url(new TextEncoder().encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
   const claims = b64url(
@@ -66,6 +67,7 @@ const PUSH_HOSTS = [/^fcm\.googleapis\.com$/, /(^|\.)push\.apple\.com$/, /(^|\.)
 
 export function validEndpoint(endpoint) {
   try {
+    if (typeof endpoint !== 'string' || endpoint.length > 1000 || endpoint.trim() !== endpoint || /[\x00-\x20\x7f]/.test(endpoint)) return false;
     const u = new URL(endpoint);
     return u.protocol === 'https:' && !u.username && !u.password && !u.hash && (!u.port || u.port === '443') && endpoint.length <= 1000 && PUSH_HOSTS.some((r) => r.test(u.hostname));
   } catch {

@@ -15,6 +15,9 @@ import { couponsView } from './ordering-admin.js';
 import { waitlistBoard } from './waitlist-board.js';
 import { loyaltyAdmin } from './loyalty-admin.js';
 import { securityPanel } from './security-ui.js';
+import { launchReadiness } from './launch-readiness.js';
+import { operationsBoard } from './operations-board.js';
+import { automationSettings } from './automation-settings.js';
 import { importView, subscriptionView, integrationsView, devicesView, menuOrdersView, branchSettingsView, mfaView, dataControlsView, adminLegalView } from './dashboard-panels.js';
 
 const t = makeT({
@@ -135,7 +138,7 @@ function tabs(list, onPick) {
       e.preventDefault(); buttons[index].focus(); buttons[index].click();
     });
     if(me.user.role==='owner'){
-      const groups={overview:'workspace',stats:'workspace',menu:'site',design:'site',brand:'site',profile:'site',import:'site',templates:'site',branches:'operations',settings:'operations',devices:'operations',loyalty:'operations',coupons:'operations',addons:'growth',domain:'growth',integrations:'growth',subscription:'account',account:'account'};
+      const groups={launch:'workspace',overview:'workspace',stats:'workspace',menu:'site',design:'site',brand:'site',profile:'site',import:'site',templates:'site',branches:'operations',settings:'operations',devices:'operations',loyalty:'operations',coupons:'operations',addons:'growth',domain:'growth',integrations:'growth',subscription:'account',account:'account'};
       b.dataset.navGroup=groups[k]||'workspace';
     }
     nav.append(b);
@@ -690,10 +693,10 @@ if (me.user.role === 'branch') startLive();
 
 const allowed=key=>me.user.role!=='branch'||me.permissions?.[key]!==false;
 const views = {
-  admin: [['orgs', t('orgs'), adminOrgs], ['admins', t('admins'), adminAdmins], ['legal', lang === 'ar' ? 'البيانات القانونية' : 'Legal details', adminLegalView], ['account', t('account'), accountView]],
-  owner: [['overview', lang === 'ar' ? 'نظرة عامة' : 'Overview', ownerOverview], ['menu', t('menu'), ownerMenu], ['brand', lang === 'ar' ? 'استوديو الهوية' : 'Brand studio', ownerBrand], ['profile',lang === 'ar' ? 'صفحة المنشأة' : 'Business page',el=>profileEditor(el,me)], ['branches', t('branches'), ownerBranches], ['loyalty', t('loyalty'), (el) => loyaltyAdmin(el, me)], ['stats', t('stats'), ownerStats], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'إعدادات الفروع' : 'Branch settings', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['design', lang === 'ar' ? 'استوديو التصميم' : 'Design studio', el => designStudio(el, me)], ['coupons', lang === 'ar' ? 'الكوبونات' : 'Coupons', couponsView], ['templates', lang === 'ar' ? 'صفحات جاهزة' : 'Ready pages', templatesView], ['addons', lang === 'ar' ? 'الإضافات' : 'Add-ons', addonsView], ['domain', lang === 'ar' ? 'الدومين الخاص' : 'Own domain', domainView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
-  branch: [['orders', t('orders'), branchOrders], ['waitlist', lang === 'ar' ? 'قائمة الانتظار' : 'Waitlist', waitlistBoard], ['display', t('display'), branchDisplay], ['loyalty', t('loyalty'), branchLoyalty], ['availability', t('availability'), branchAvailability], ['inbox', lang === 'ar' ? 'طلبات المنيو' : 'Menu orders', menuOrdersView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['account', t('account'), accountView]],
-}[me.user.role].filter(([key])=>allowed(({orders:"tickets_view",display:"display",loyalty:"loyalty_view",availability:"availability",inbox:"orders_view",waitlist:"waitlist",devices:"display"})[key]));
+  admin: [['orgs', t('orgs'), adminOrgs], ['launch', lang === 'ar' ? 'مركز التشغيل' : 'Launch centre', el => launchReadiness(el, me)], ['automation', lang === 'ar' ? 'الأتمتة' : 'Automation', automationSettings], ['admins', t('admins'), adminAdmins], ['legal', lang === 'ar' ? 'البيانات القانونية' : 'Legal details', adminLegalView], ['account', t('account'), accountView]],
+  owner: [['overview', lang === 'ar' ? 'نظرة عامة' : 'Overview', ownerOverview], ['launch', lang === 'ar' ? 'مركز التشغيل' : 'Launch centre', el => launchReadiness(el, me)], ['menu', t('menu'), ownerMenu], ['brand', lang === 'ar' ? 'استوديو الهوية' : 'Brand studio', ownerBrand], ['profile',lang === 'ar' ? 'صفحة المنشأة' : 'Business page',el=>profileEditor(el,me)], ['branches', t('branches'), ownerBranches], ['loyalty', t('loyalty'), (el) => loyaltyAdmin(el, me)], ['stats', t('stats'), ownerStats], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'إعدادات الفروع' : 'Branch settings', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['design', lang === 'ar' ? 'استوديو التصميم' : 'Design studio', el => designStudio(el, me)], ['coupons', lang === 'ar' ? 'الكوبونات' : 'Coupons', couponsView], ['templates', lang === 'ar' ? 'صفحات جاهزة' : 'Ready pages', templatesView], ['addons', lang === 'ar' ? 'الإضافات' : 'Add-ons', addonsView], ['domain', lang === 'ar' ? 'الدومين الخاص' : 'Own domain', domainView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
+  branch: [['orders', t('orders'), branchOrders], ['kitchen', lang === 'ar' ? 'شاشة المطبخ' : 'Kitchen display', el => operationsBoard(el)], ['tables', lang === 'ar' ? 'طلبات الطاولات' : 'Table orders', el => operationsBoard(el, 'tables')], ['waitlist', lang === 'ar' ? 'قائمة الانتظار' : 'Waitlist', waitlistBoard], ['display', t('display'), branchDisplay], ['loyalty', t('loyalty'), branchLoyalty], ['availability', t('availability'), branchAvailability], ['inbox', lang === 'ar' ? 'طلبات المنيو' : 'Menu orders', menuOrdersView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['account', t('account'), accountView]],
+}[me.user.role].filter(([key])=>(key!=='kitchen'||allowed('tickets_view'))&&allowed(({kitchen:'orders_view',tables:'orders_view',orders:"tickets_view",display:"display",loyalty:"loyalty_view",availability:"availability",inbox:"orders_view",waitlist:"waitlist",devices:"display"})[key]));
 tabs(views.map(([k, l]) => [k, l]), (k, el) => {
   clearTimeout(boardTimer);
   clearTimeout(displayTimer);

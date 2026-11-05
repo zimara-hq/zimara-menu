@@ -36,13 +36,13 @@ export async function loyaltyAdmin(el, me) {
       <label class="check"><input type="checkbox" name="active" ${p.active ? 'checked' : ''}> ${a('البرنامج مفعّل', 'Programme on')}</label>
       <fieldset class="opt-group"><legend>${a('رسالة الاشتياق التلقائية', 'Automatic win-back')}</legend>
         <label>${a('أرسلها لمن غاب (يوم، 0 = إيقاف)', 'Send to guests away (days, 0 = off)')}<input name="winback_days" type="number" min="0" max="365" inputmode="numeric" value="${p.winback_days || 0}"></label>
-        <label>${a('الرسالة', 'Message')}<textarea name="winback_ar" maxlength="160" rows="2" placeholder="${a('وحشتنا! ختمك القادم مضاعف هالأسبوع', 'We miss you! Double stamps this week')}">${esc(p.winback_ar || '')}</textarea></label>
+        <label>${a('الرسالة', 'Message')}<textarea name="winback_ar" maxlength="160" rows="2" placeholder="${a('وحشتنا! نسعد بزيارتك قريبًا', 'We miss you! Visit us again soon')}">${esc(p.winback_ar || '')}</textarea></label>
         <p class="small muted">${a('تنرسل مرة وحدة لكل غياب، في النهار فقط.', 'Sent once per absence, in daytime only.')}</p></fieldset>
       <div role="status"></div><button class="btn" type="submit">${a('حفظ', 'Save')}</button></form>
     <div class="card share-card"><h3>${a('كود الاشتراك', 'Join QR')}</h3><div class="qr">${qrSvg(joinUrl, 5)}</div><p class="device-link"><a href="/j/${esc(me.org.slug)}" target="_blank" rel="noopener" dir="ltr">${esc(location.host)}/j/${esc(me.org.slug)}</a></p><p class="small muted">${a('اطبعه عند الكاشير. يظهر أيضًا في صفحة البيجر وقائمة الانتظار.', 'Print it at the counter. It also shows on the pager and waitlist pages.')}</p></div>
     </div>
-    <section class="card"><div class="row" style="justify-content:space-between"><h3>${a('شرائح العملاء', 'Guest segments')}</h3><span class="small muted">${a(`${cust.total} بطاقة · ${cust.reachable} تستقبل الإشعارات`, `${cust.total} cards · ${cust.reachable} get notifications`)}</span></div>
-      <div class="seg-grid">${Object.entries(SEG).map(([k, [ar, en, dar, den]]) => `<button type="button" class="seg" data-seg="${k}" aria-pressed="false"><strong>${cust.counts[k]}</strong><span>${a(ar, en)}</span><small>${a(dar, den)}</small></button>`).join('')}</div>
+    <section class="card"><div class="row" style="justify-content:space-between"><h3>${a('شرائح العملاء', 'Guest segments')}</h3><span class="small muted">${a(`${cust.total} بطاقة · ${cust.reachable} مشتركة بالتنبيهات`, `${cust.total} cards · ${cust.reachable} have notification subscriptions`)}</span></div>
+      ${cust.truncated ? `<p class="msg warn">${a(`الإحصاءات والشرائح أدناه مبنية على ${cust.analyzed} بطاقة من ${cust.total}.`, `Statistics and segments below cover ${cust.analyzed} of ${cust.total} cards.`)}</p>` : ''}<div class="seg-grid">${Object.entries(SEG).map(([k, [ar, en, dar, den]]) => `<button type="button" class="seg" data-seg="${k}" aria-pressed="false"><strong>${cust.counts[k]}</strong><span>${a(ar, en)}</span><small>${a(dar, den)}</small></button>`).join('')}</div>
       <div id="seg-list"></div></section>
     <form class="card stack" id="msg-form" novalidate><h3>${a('أرسل رسالة', 'Send a message')}</h3>
       <label>${a('إلى', 'To')}<select name="segment"><option value="all">${a('كل حاملي البطاقة', 'All card holders')} (${cust.total})</option>${Object.entries(SEG).map(([k, [ar, en]]) => `<option value="${k}">${a(ar, en)} (${cust.counts[k]})</option>`).join('')}</select></label>
@@ -50,7 +50,7 @@ export async function loyaltyAdmin(el, me) {
       <label>${a('النص', 'Text')}<textarea name="body_ar" maxlength="240" rows="3" placeholder="${a('خصم 20٪ على المشروبات الباردة لين الأحد', '20% off cold drinks until Sunday')}"></textarea></label>
       <p class="small muted">${a('توصل كإشعار لمن فعّل التنبيهات، وتظهر في بطاقة كل عميل. رسالتين باليوم كحد أقصى.', 'Arrives as a notification for guests who turned alerts on, and shows on every card. Two a day at most.')}</p>
       <div role="status"></div><button class="btn" type="submit">${a('أرسل', 'Send')}</button></form>
-    <section class="card"><h3>${a('الرسائل المرسلة', 'Sent messages')}</h3>${messages.length ? `<div class="table-scroll"><table><thead><tr><th>${a('الرسالة', 'Message')}</th><th>${a('إلى', 'To')}</th><th>${a('وصلت', 'Delivered')}</th><th>${a('متى', 'When')}</th></tr></thead><tbody>${messages.map((m) => `<tr><td><b>${esc(m.title_ar)}</b><br><span class="small">${esc(m.body_ar)}</span></td><td>${m.segment === 'winback' ? a('تلقائي: اشتياق', 'Auto: win-back') : m.segment === 'all' ? a('الكل', 'All') : esc(a(SEG[m.segment][0], SEG[m.segment][1]))}</td><td>${m.recipients} · 📳 ${m.sent}</td><td class="small">${esc(relTime(Date.now() - m.created_at))}</td></tr>`).join('')}</tbody></table></div>` : `<p class="empty">${a('ما أرسلت رسائل بعد.', 'No messages yet.')}</p>`}</section>`;
+    <section class="card"><h3>${a('الرسائل المرسلة', 'Sent messages')}</h3>${messages.length ? `<div class="table-scroll"><table><thead><tr><th>${a('الرسالة', 'Message')}</th><th>${a('إلى', 'To')}</th><th>${a('البطاقات · طلبات الإشعار المقبولة', 'Cards · accepted push requests')}</th><th>${a('متى', 'When')}</th></tr></thead><tbody>${messages.map((m) => `<tr><td><b>${esc(m.title_ar)}</b><br><span class="small">${esc(m.body_ar)}</span></td><td>${m.segment === 'winback' ? a('تلقائي: اشتياق', 'Auto: win-back') : m.segment === 'all' ? a('الكل', 'All') : esc(a(SEG[m.segment][0], SEG[m.segment][1]))}</td><td>${m.recipients} · 📳 ${m.sent}</td><td class="small">${esc(relTime(Date.now() - m.created_at))}</td></tr>`).join('')}</tbody></table></div>` : `<p class="empty">${a('ما أرسلت رسائل بعد.', 'No messages yet.')}</p>`}</section>`;
 
   const f = el.querySelector('#lp-form');
   let k = kind;
@@ -88,7 +88,7 @@ export async function loyaltyAdmin(el, me) {
     const btn = m.querySelector('[type=submit]'); btn.disabled = true;
     try {
       const r = await api('/api/owner/loyalty/messages', { method: 'POST', body: { segment: m.segment.value, title_ar: m.title_ar.value.trim(), body_ar: m.body_ar.value.trim() } });
-      announce(a(`وصلت ${r.recipients} بطاقة، و${r.sent} إشعار.`, `Reached ${r.recipients} cards and ${r.sent} phones.`));
+      announce(a(`أضيفت الرسالة إلى ${r.recipients} بطاقة، وقُبل ${r.sent} طلب إشعار.`, `Added to ${r.recipients} card inboxes; ${r.sent} push requests accepted.`));
       await loyaltyAdmin(el, me);
     } catch (err) { msg.innerHTML = `<p class="msg error">${esc(errText(err, a('تعذر الإرسال.', 'Could not send.')))}</p>`; btn.disabled = false; }
   };

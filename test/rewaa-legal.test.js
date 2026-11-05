@@ -110,3 +110,75 @@ test('trial and renewal reminders are sent once per period', async () => {
   assert.equal(mails.length, 2);
   assert.match(mails[1].html, /جدّد الآن/);
 });
+
+test('Rewaa validates mapped locations and protects credential-bearing requests', async () => {
+  const r = fakeRewaa();
+  const original = r.env.HTTP_FETCH;
+  r.env.HTTP_FETCH = async (url, init) => {
+    assert.equal(init.redirect, 'error');
+    assert.ok(init.signal instanceof AbortSignal);
+    return original(url, init);
+  };
+  const env = makeEnv(r.env), c = client(env);
+  await c.post('/api/register', signup('rw-validation'));
+  const branch = await env.DB.prepare('SELECT id FROM branches LIMIT 1').first();
+  assert.equal((await c.post('/api/owner/rewaa-connections', { ...creds, branch_id: branch.id, location_id: 'missing' })).json.error, 'rewaa_location_unavailable');
+  env.HTTP_FETCH = async () => Response.json({ data: { not: 'a list' } });
+  assert.equal((await c.post('/api/owner/rewaa/locations', creds)).status, 502);
+  let requests = 0;
+  env.HTTP_FETCH = async () => { requests++; throw new Error('credentials must not be sent'); };
+  env.REWAA_API_BASE = 'http://api.platform.rewaatech.com';
+  assert.equal((await c.post('/api/owner/rewaa/locations', creds)).status, 503);
+  assert.equal(requests, 0);
+});
+
+test('Rewaa failed ticket transactions remain retryable, legacy incomplete claims recover, and poll errors are redacted', async () => {
+  const r = fakeRewaa(), env = makeEnv(r.env), c = client(env);
+  await c.post('/api/register', signup('rw-recovery'));
+  const branch = await env.DB.prepare('SELECT id FROM branches LIMIT 1').first();
+  const made = await c.post('/api/owner/rewaa-connections', { ...creds, branch_id: branch.id, location_id: '77' });
+  await env.DB.prepare('UPDATE rewaa_connections SET since = ?').bind(now() - 10000).run();
+  r.state.invoices = [{ id: 101, stockLocationId: 77, createdAt: new Date().toISOString() }];
+  const batch = env.DB.batch;
+  env.DB.batch = async () => { throw new Error('provider credential: do-not-disclose'); };
+  await pollRewaa(env);
+  assert.equal((await env.DB.prepare('SELECT COUNT(*) AS n FROM rewaa_invoices').first()).n, 0);
+  assert.equal((await env.DB.prepare('SELECT COUNT(*) AS n FROM tickets').first()).n, 0);
+  assert.equal((await env.DB.prepare('SELECT last_error FROM rewaa_connections').first()).last_error, 'rewaa_poll_failed');
+  env.DB.batch = batch;
+  await env.DB.prepare('INSERT INTO rewaa_invoices (connection_id, invoice_id, created_at) VALUES (?, ?, ?)').bind(made.json.id, '101', now()).run();
+  await env.DB.prepare('UPDATE rewaa_connections SET last_polled_at = 0').run();
+  await Promise.all([pollRewaa(env), pollRewaa(env)]);
+  assert.equal((await env.DB.prepare('SELECT COUNT(*) AS n FROM tickets').first()).n, 1);
+  assert.equal((await env.DB.prepare('SELECT imported FROM rewaa_connections').first()).imported, 1);
+});
+
+test('Rewaa paginates sales and skips disabled branches and organizations', async () => {
+  const r = fakeRewaa();
+  const original = r.env.HTTP_FETCH;
+  const offsets = [];
+  r.env.HTTP_FETCH = async (url, init) => {
+    const u = new URL(url);
+    if (u.pathname !== '/pos/invoices') return original(url, init);
+    const offset = Number(u.searchParams.get('offset'));
+    offsets.push(offset);
+    return Response.json({ data: r.state.invoices.slice(offset, offset + 50) });
+  };
+  const env = makeEnv(r.env), c = client(env);
+  await c.post('/api/register', signup('rw-pages'));
+  const branch = await env.DB.prepare('SELECT id FROM branches LIMIT 1').first();
+  await c.post('/api/owner/rewaa-connections', { ...creds, branch_id: branch.id, location_id: '77' });
+  await env.DB.prepare('UPDATE rewaa_connections SET since = ?').bind(now() - 10000).run();
+  r.state.invoices = Array.from({ length: 51 }, (_, i) => ({ id: i + 1, stockLocationId: 77, createdAt: new Date().toISOString() }));
+  await pollRewaa(env);
+  assert.deepEqual(offsets, [0, 50]);
+  assert.equal((await env.DB.prepare('SELECT COUNT(*) AS n FROM tickets').first()).n, 51);
+  for (const table of ['branches', 'orgs']) {
+    await env.DB.prepare('UPDATE rewaa_connections SET last_polled_at = 0').run();
+    await env.DB.prepare(`UPDATE ${table} SET active = 0`).run();
+    offsets.length = 0;
+    await pollRewaa(env);
+    assert.deepEqual(offsets, []);
+    await env.DB.prepare(`UPDATE ${table} SET active = 1`).run();
+  }
+});

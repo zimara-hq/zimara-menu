@@ -103,6 +103,7 @@ test('POS signed create and ready are scoped, retry safe and reject forged/repla
   assert.equal((await signed(guest, s.connection, ready)).json.duplicate, true);
   assert.equal((await signed(guest, s.connection, { id: 'cross-scope', type: 'order.created', external_order_id: 'bad', branch_id: 'other' })).status, 400);
   assert.equal((await s.owner.post('/api/owner/pos-connections/' + s.connection.id + '/revoke', {})).status, 200);
+  assert.equal((await env.DB.prepare('SELECT secret_ciphertext FROM pos_connections WHERE id = ?').bind(s.connection.id).first()).secret_ciphertext, '');
   assert.equal((await signed(guest, s.connection, { ...created, id: 'after-revoke', external_order_id: 'new' })).status, 404);
 });
 

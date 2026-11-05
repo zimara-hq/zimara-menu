@@ -10,19 +10,24 @@ export const mailConfigured = (env) => Boolean(env.RESEND_API_KEY && env.MAIL_FR
 const http = (env) => env.HTTP_FETCH || fetch;
 const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
 
-export async function send(env, to, subject, lines, link, cta, footer = 'إذا ما طلبت هذا، تجاهل الرسالة.') {
+export async function send(env, to, subject, lines, link, cta, footer = 'إذا ما طلبت هذا، تجاهل الرسالة.', options = {}) {
+  if (!mailConfigured(env)) throw new HttpError(503, 'mail_not_configured');
   const html = `<div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;background:#faf8fb;padding:24px;color:#23003f">
 <div style="max-width:520px;margin:auto;background:#fff;border:1px solid #ded5e6;border-radius:16px;padding:28px">
 <p style="margin:0 0 16px;font-weight:700;letter-spacing:.12em">ZIMARA · زيمارا منيو</p>
 ${lines.map((l) => `<p style="margin:0 0 12px;line-height:1.7">${esc(l)}</p>`).join('')}
 <p style="margin:24px 0"><a href="${esc(link)}" style="background:#23003f;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:700">${esc(cta)}</a></p>
 <p style="margin:0;color:#65536f;font-size:13px">${esc(footer)}</p></div></div>`;
-  const res = await http(env)('https://api.resend.com/emails', {
+  let res;
+  try { res = await http(env)('https://api.resend.com/emails', {
     method: 'POST',
-    headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json' },
-    body: JSON.stringify({ from: env.MAIL_FROM, to: [to], subject, html }),
-  });
-  if (!res.ok) throw new HttpError(502, 'mail_provider_error');
+    headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json', ...(options.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {}) },
+    body: JSON.stringify({ from: options.from || env.MAIL_FROM, to: [to], subject, html }),
+    signal: AbortSignal.timeout(10000),
+  }); } catch { throw new HttpError(502, 'mail_provider_error'); }
+  const accepted = await res.json().catch(() => null);
+  if (!res.ok || typeof accepted?.id !== 'string' || !accepted.id) throw new HttpError(502, 'mail_provider_error');
+  return accepted.id;
 }
 
 async function issue(env, userId, purpose) {
@@ -64,8 +69,12 @@ export function registerMail(app) {
     if (user && !user.disabled) {
       const token = await issue(c.env, user.id, 'reset');
       const link = `${c.env.PUBLIC_BASE_URL.replace(/\/$/, '')}/reset#${encodeURIComponent(token)}`;
-      await send(c.env, user.email, 'استعادة كلمة المرور · زيمارا منيو', ['وصلنا طلب لتغيير كلمة مرور حسابك.', 'الرابط صالح لمدة 30 دقيقة ولمرة واحدة.'], link, 'تعيين كلمة مرور جديدة');
-      await audit(c.env, { id: user.id }, 'password.reset_requested', null);
+      let delivered = false;
+      try {
+        await send(c.env, user.email, 'استعادة كلمة المرور · زيمارا منيو', ['وصلنا طلب لتغيير كلمة مرور حسابك.', 'الرابط صالح لمدة 30 دقيقة ولمرة واحدة.'], link, 'تعيين كلمة مرور جديدة');
+        delivered = true;
+      } catch { /* Keep the same public response for existing and unknown accounts during an outage. */ }
+      await audit(c.env, { id: user.id }, delivered ? 'password.reset_requested' : 'password.reset_delivery_failed', null);
     }
     return c.json({ ok: true });
   });

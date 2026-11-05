@@ -13,9 +13,9 @@ A configured secret is not a successful integration test.
 | Payment webhook | Authenticated signal triggers server-side Moyasar invoice verification; never trusts a browser success URL | Needs merchant configuration and a real sandbox payment |
 | Simple Fatoora | Server-side SDK adapter, durable post-payment outbox and ambiguous-result reconciliation | Needs a runtime API key, explicit environment flags, complete billing profile and sandbox verification |
 | Generic POS bridge | Encrypted connection keys, HMAC-authenticated create/ready events, replay/idempotency checks, tenant-bound mapping, revocation | Locally tested; external vendor deployment not verified |
-| Rewaa | Referenced official docs | Direct adapter is not built |
+| Rewaa | Credential-encrypted polling adapter; verified location mapping, bounded pagination and atomic invoice-to-ticket deduplication | Needs Rewaa test account and confirmation of sale-invoice path, pagination and field mapping |
 | Foodics | Status and provider boundary | OAuth adapter, partner approval and tests are not built |
-| Apple / Google Wallet | Capability readiness and existing planning document | Signing, issuance, updates and real-device tests not built |
+| Apple / Google Wallet | Offline Google pager object and RS256 Save JWT helpers; capability readiness and acceptance plan | Customer issuance routes, Apple package signing, provider update lifecycle and real-device tests are not built |
 | Web Push | Existing VAPID sender retained | Needs configured keys and real-device delivery tests |
 | SMS / WhatsApp | Honest disabled status | No runtime implementation |
 
@@ -135,3 +135,22 @@ a tax invoice in the merchant's POS.
 - Moyasar payment documentation request: https://docs.moyasar.com/api/payments/09-retrieve-payment/
   (HTTP 403 in this environment, 2026-10-31; no inferred signature implementation).
 - Simple Fatoora read-only connected-account status, current environment Live.
+
+## Rewaa polling safeguards and acceptance
+
+Owner connection setup verifies authentication and confirms that the selected stock
+location exists and is active. Credentials and cached access tokens remain encrypted
+with connection-specific authenticated encryption. Requests use HTTPS, reject
+redirects and time out after ten seconds; provider error text is not persisted.
+Polling skips disabled organizations/branches and read-only subscriptions.
+
+Each run reads up to ten pages of 50 invoices. Reaching the limit records
+`rewaa_poll_page_limit` rather than claiming full synchronization. Ticket creation,
+invoice deduplication and the imported counter commit in one D1 transaction; a
+failed commit remains retryable and legacy incomplete invoice claims can recover.
+Only the matching location and recent, non-cancelled invoices enter the pager.
+The current 30-minute lookback is not an outage recovery guarantee: after a longer
+outage, reconcile missing invoice IDs with the provider before extending/replaying
+history. Pagination order/filter semantics and `/pos/invoices` remain unverified
+against Rewaa. A real account must confirm these contracts and throughput before
+customer activation; local fake-provider tests do not establish vendor support.

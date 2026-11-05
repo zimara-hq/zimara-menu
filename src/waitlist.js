@@ -66,7 +66,7 @@ async function entryByToken(env, token) {
     `SELECT w.*, b.slug AS branch_slug, b.name_ar AS branch_ar, b.name_en AS branch_en,
             o.slug AS org_slug, o.name_ar AS org_ar, o.name_en AS org_en, o.brand_color, o.logo_url,
             (SELECT active FROM loyalty_programs p WHERE p.org_id=w.org_id) AS loyalty
-       FROM waitlist w JOIN branches b ON b.id=w.branch_id JOIN orgs o ON o.id=w.org_id WHERE w.token=?`,
+       FROM waitlist w JOIN branches b ON b.id=w.branch_id JOIN orgs o ON o.id=w.org_id WHERE w.token=? AND b.active=1 AND o.active=1`,
   ).bind(String(token).slice(0, 64)).first();
   if (!e) throw notFound();
   return e;
@@ -107,18 +107,19 @@ export async function alertEntry(env, entryId, fetcher) {
 // Cron: repeat an unseen call every minute (3 repeats), expire stale entries.
 export async function waitlistCron(env, fetcher) {
   const t = now();
-  const { results } = await env.DB.prepare("SELECT id FROM waitlist WHERE status='called' AND seen_at IS NULL AND alerts_sent<? AND last_alert_at<=?")
-    .bind(WAIT_MAX_ALERTS, t - REPEAT_EVERY_MS).all();
+  const { results } = await env.DB.prepare("SELECT w.id FROM waitlist w JOIN branches b ON b.id=w.branch_id JOIN orgs o ON o.id=w.org_id WHERE b.active=1 AND o.active=1 AND w.status='called' AND w.seen_at IS NULL AND w.alerts_sent<? AND w.last_alert_at<=? AND w.created_at>=?")
+    .bind(WAIT_MAX_ALERTS, t - REPEAT_EVERY_MS, t - OPEN_TTL_MS).all();
+  let recalled = 0;
   for (const r of results) {
-    const res = await env.DB.prepare("UPDATE waitlist SET alerts_sent=alerts_sent+1, last_alert_at=? WHERE id=? AND status='called' AND seen_at IS NULL AND alerts_sent<?")
-      .bind(t, r.id, WAIT_MAX_ALERTS).run();
-    if (res.meta.changes) await alertEntry(env, r.id, fetcher);
+    const res = await env.DB.prepare("UPDATE waitlist SET alerts_sent=alerts_sent+1, last_alert_at=? WHERE id=? AND status='called' AND seen_at IS NULL AND alerts_sent<? AND last_alert_at<=?")
+      .bind(t, r.id, WAIT_MAX_ALERTS, t - REPEAT_EVERY_MS).run();
+    if (res.meta.changes) { recalled++; await alertEntry(env, r.id, fetcher); }
   }
   await env.DB.batch([
     env.DB.prepare(`UPDATE waitlist SET status='cancelled', done_at=?, version=version+1 WHERE status IN ${OPEN} AND created_at<?`).bind(t, t - OPEN_TTL_MS),
     env.DB.prepare(`DELETE FROM waitlist_push WHERE entry_id IN (SELECT id FROM waitlist WHERE status NOT IN ${OPEN})`),
   ]);
-  return { recalled: results.length };
+  return { recalled };
 }
 
 const STAFF_COLS = 'id, number, name, phone, party, note, source, status, called_at, seen_at, done_at, alerts_sent, last_alert_at, created_at, version';
@@ -136,6 +137,7 @@ export function registerWaitlist(app) {
     const br = await c.env.DB.prepare('SELECT id FROM branches WHERE id=? AND org_id=?').bind(c.req.param('branchId'), c.get('user').org_id).first();
     if (!br) throw notFound();
     const b = await body(c), cur = await waitSettings(c.env, br.id);
+    if (b.active !== undefined && typeof b.active !== 'boolean') throw bad('invalid_active');
     const s = {
       active: b.active === undefined ? cur.active : Boolean(b.active),
       minutes_per_party: b.minutes_per_party === undefined ? cur.minutes_per_party : int(b.minutes_per_party, 'minutes_per_party', { min: 1, max: 120 }),

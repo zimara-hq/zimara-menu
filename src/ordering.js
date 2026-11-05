@@ -62,8 +62,8 @@ function couponDiscount(coupon, subtotal, at = now()) {
 
 const findCoupon = (env, orgId, code) => env.DB.prepare('SELECT * FROM coupons WHERE org_id=? AND code=?').bind(orgId, String(code).trim().toUpperCase()).first();
 
-// Validates the guest's order choices and returns the priced extras. `statements`
-// are run only when the order is actually inserted (not on an idempotent replay).
+// Validates choices and prices extras. The caller atomically reserves a coupon
+// use with the order insertion; coupon_id is internal, never a guest price.
 export async function orderExtras(env, branch, b, subtotal) {
   const o = await getOrdering(env, branch.id);
   const type = b.order_type === undefined ? o.types[0] : b.order_type;
@@ -92,9 +92,8 @@ export async function orderExtras(env, branch, b, subtotal) {
   }
   const delivery_fee = type === 'delivery' ? o.delivery_fee : 0;
   return {
-    order_type: type, details, discount, delivery_fee, coupon_code: coupon?.code ?? null,
+    order_type: type, details, discount, delivery_fee, coupon_code: coupon?.code ?? null, coupon_id: coupon?.id ?? null,
     total: subtotal - discount + delivery_fee,
-    statements: coupon ? [env.DB.prepare('UPDATE coupons SET used=used+1 WHERE id=?').bind(coupon.id)] : [],
   };
 }
 
@@ -156,4 +155,28 @@ export function registerOrdering(app) {
     const coupon = await findCoupon(c.env, branch.org_id, str(b.code, 'code', { max: 20 }));
     return c.json({ code: coupon?.code, discount: couponDiscount(coupon, subtotal) });
   });
+}
+
+// Replay validation uses the original order contract, so a retry still returns
+// its receipt after the menu, table count, or coupon availability changes.
+export function replayOrderDetails(b, previous) {
+  const type = b.order_type ?? previous.order_type;
+  const details = {};
+  if (type === 'dine_in' && b.table !== undefined && b.table !== null && b.table !== '') {
+    const table = String(b.table).trim();
+    const original = JSON.parse(previous.details_json || '{}').table;
+    details.table = table === original ? table : /^\d+$/.test(table) ? String(Number(table)) : str(table, 'table', { max: 10 });
+  }
+  if (type === 'delivery') {
+    details.name = str(b.name, 'name', { max: 60 });
+    details.phone = normalPhone(b.phone);
+    details.address = str(b.address, 'address', { max: 300 });
+  } else {
+    const name = str(b.name, 'name', { optional: true, max: 60 });
+    if (name) details.name = name;
+    const phone = normalPhone(b.phone, 'phone', true);
+    if (phone) details.phone = phone;
+  }
+  if (type === 'car') details.car = str(b.car, 'car', { max: 60 });
+  return { order_type: type, details, coupon_code: b.coupon ? str(b.coupon, 'coupon', { max: 20 }).toUpperCase() : null };
 }

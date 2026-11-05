@@ -4,7 +4,7 @@ import { itemView, priceWithOptions } from './menu-extras.js';
 import { DEFAULT_THEME, validateTheme } from './identity.js';
 import { publicAddons, notifyTelegram, orderMessage, orderButtons, later } from './addons.js';
 import { loadUser, verifyPassword } from './auth.js';
-import { orderExtras } from './ordering.js';
+import { orderExtras, replayOrderDetails } from './ordering.js';
 import { acceptOrder, rejectOrder } from './orders.js';
 import {
   requireRole,
@@ -975,11 +975,24 @@ export function registerFeatures(app) {
     )
       .bind(branch.id)
       .first();
-    if (!settings?.orders_enabled) throw conflict('ordering_disabled');
     const b = await body(c);
     const key = str(b.idem_key, 'idem_key', { min: 16, max: 100 });
     const requested = list(b.items, 'items', 40);
     if (!requested.length) throw bad('empty_order');
+    const prior = await c.env.DB.prepare('SELECT * FROM customer_orders WHERE branch_id=? AND idem_key=?').bind(branch.id, key).first();
+    if (prior) {
+      const extra = replayOrderDetails(b, prior);
+      const requestedLines = requested.map((line) => {
+        const itemId = str(line?.item_id, 'item_id', { max: 60 });
+        const options = line.options ?? [];
+        if (!Array.isArray(options) || options.some((x) => typeof x !== 'string')) throw bad('invalid_options');
+        return [itemId + '|' + [...options].sort().join(','), int(line.quantity, 'quantity', { min: 1, max: 20 })];
+      }).sort((a, b) => a[0].localeCompare(b[0]));
+      const fingerprint = await hmac(c.env.AUTH_SECRET, JSON.stringify([requestedLines, str(b.note, 'note', { optional: true, max: 300 }), extra.order_type, extra.details, extra.coupon_code]));
+      if (prior.fingerprint !== fingerprint) throw conflict('idem_key_reused');
+      return c.json({ order: orderView(prior), duplicate: true });
+    }
+    if (!settings?.orders_enabled) throw conflict('ordering_disabled');
     const ids = new Set();
     const lines = [];
     for (const line of requested) {
@@ -1019,11 +1032,12 @@ export function registerFeatures(app) {
         ],
       ),
     );
-    const inserted = await c.env.DB.prepare(
-      'INSERT INTO customer_orders(id,org_id,branch_id,token,idem_key,fingerprint,total,items_json,note,created_at,order_type,details_json,subtotal,discount,delivery_fee,coupon_code) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(branch_id,idem_key) DO NOTHING',
+    const orderId = id(), createdAt = now();
+    const insertOrder = c.env.DB.prepare(
+      'INSERT INTO customer_orders(id,org_id,branch_id,token,idem_key,fingerprint,total,items_json,note,created_at,order_type,details_json,subtotal,discount,delivery_fee,coupon_code) SELECT ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? WHERE (? IS NULL OR EXISTS(SELECT 1 FROM coupons WHERE id=? AND org_id=? AND active=1 AND (max_uses IS NULL OR used<max_uses) AND (starts_at IS NULL OR starts_at<=?) AND (ends_at IS NULL OR ends_at>?))) ON CONFLICT(branch_id,idem_key) DO NOTHING',
     )
       .bind(
-        id(),
+        orderId,
         branch.org_id,
         branch.id,
         randomToken(24),
@@ -1032,22 +1046,25 @@ export function registerFeatures(app) {
         total,
         JSON.stringify(lines),
         note,
-        now(),
+        createdAt,
         extra.order_type,
         JSON.stringify(extra.details),
         subtotal,
         extra.discount,
         extra.delivery_fee,
         extra.coupon_code,
-      )
-      .run();
-    if (inserted.meta?.changes && extra.statements.length) await c.env.DB.batch(extra.statements);
+        extra.coupon_id, extra.coupon_id, branch.org_id, createdAt, createdAt,
+      );
+    const statements = [insertOrder];
+    if (extra.coupon_id) statements.push(c.env.DB.prepare('UPDATE coupons SET used=used+1 WHERE id=? AND EXISTS(SELECT 1 FROM customer_orders WHERE id=?)').bind(extra.coupon_id, orderId));
+    const [inserted] = await c.env.DB.batch(statements);
     if (inserted.meta?.changes) await publish(c.env, branch.id, 'order', { status: 'pending' });
     const order = await c.env.DB.prepare(
       'SELECT * FROM customer_orders WHERE branch_id=? AND idem_key=?',
     )
       .bind(branch.id, key)
       .first();
+    if (!order) throw bad('coupon_used_up');
     if (order.fingerprint !== fingerprint) throw conflict('idem_key_reused');
     if (inserted.meta?.changes) {
       const pending = later(c, notifyTelegram(c.env, branch.org_id, branch.id, 'orders', (format) => orderMessage(order, branch.name_ar, c.env.PUBLIC_BASE_URL, format), undefined, { markup: orderButtons(order.id) }));

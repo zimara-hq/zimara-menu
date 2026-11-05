@@ -1,6 +1,6 @@
 # Apple Wallet and Google Wallet: phase 2 plan
 
-Status: **not built yet.** It cannot be tested without ZIMARA's real Apple and Google
+Status: **issuance and delivery are not built yet.** It cannot be tested without ZIMARA's real Apple and Google
 issuer credentials, and an untested pass that never updates would be worse than none.
 Phase 1 ships the web pager (page + Web Push + sound) and web loyalty cards, which
 this plan extends rather than replaces.
@@ -56,3 +56,40 @@ insert (stamp/redeem) triggers a pass update so the stamp count stays in sync.
 On a real iPhone and a real Android phone, with the phone locked: add the pass,
 press Ready on the cashier screen, and confirm the lock-screen alert and sound.
 Repeat for a stamp on the loyalty pass. Record device, OS version and result.
+
+## Credential-free foundation available now
+
+`src/wallet.js` builds a Google Generic pager object with a stable issuer-scoped ID,
+public ticket URL barcode, preparing/ready status and an inactive state for collected
+or cancelled tickets. It signs a five-minute, origin-bound Save JWT with a supplied,
+non-extractable RS256 key. Unit tests generate a throwaway key locally and verify
+the signature, lifecycle state, origin validation and omission of private tenant data.
+No provider call is made and no pass is issued by these helpers. No Wallet route or
+button is enabled. The readiness API continues to report both Wallet providers as
+unimplemented because the complete signing/update lifecycle is still absent.
+
+Before exposing a Save URL, add token-scoped issuance authorization, verify active
+org/branch/ticket state, rate-limit issuance, and load the issuer configuration and
+private key only on the server. Never expose service-account JSON or private keys.
+Do not cache a Save JWT in public HTML, analytics, logs or shared responses.
+The Google class must exist under the approved issuer; a locally verified JWT is
+not evidence that Google will accept the object.
+
+## Implementation and acceptance gates
+
+| Gate | Evidence required before enabling customer buttons |
+| --- | --- |
+| Apple package signing | Real Pass Type ID and certificate chain; signed `.pkpass` installs on a physical iPhone |
+| Apple update protocol | Authenticated registration/deletion/pass-fetch routes; per-pass authorization tokens, monotonic update tags and conditional fetch tests |
+| Apple delivery | APNs HTTP/2 transport tested with the issued pass; invalid device tokens removed without exposing provider details |
+| Google issuance | Approved issuer/class, server-side service-account key, Save JWT accepted by an Android device |
+| Google updates | OAuth access token acquisition, idempotent object update and notification lifecycle tested with a real object |
+| Lifecycle/privacy | Collected/cancelled/expired tickets deactivate passes; revoked cards stop updates; device registrations have documented retention and deletion |
+| Observability | Separate persisted ticket state, provider acceptance and device observation; never call a provider HTTP success proof of delivery |
+
+Record each device check with date, app build, device model, OS/browser, installed
+PWA/pass state, notification permission, Focus/silent settings, connectivity,
+provider response category and observed alert. Cover preparing → ready, repeat,
+collect/cancel, revoked access, duplicate events, expired/revoked credentials and
+an offline-to-online recovery. Do not record bearer ticket URLs, JWTs, signing keys
+or APNs device tokens in acceptance reports. Sound remains subject to device rules.
