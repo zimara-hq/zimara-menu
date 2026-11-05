@@ -13,6 +13,15 @@ const PERIOD = { monthly: 30 * DAY, annual: 365 * DAY };
 export const billingConfigured = (env) => Boolean(env.MOYASAR_SECRET_KEY && env.MOYASAR_WEBHOOK_SECRET && env.PUBLIC_BASE_URL);
 export const subscriptionCheckoutConfigured = (env) => billingConfigured(env) && simpleFatooraConfigured(env);
 
+// Synthetic rooms never become billable, even after their room/session expires.
+export async function isDemoBillingOrg(env, orgId) {
+  return Boolean(await env.DB.prepare('SELECT 1 FROM demo_rooms WHERE org_id = ? LIMIT 1').bind(orgId).first());
+}
+
+async function assertBillableOrg(env, orgId) {
+  if (await isDemoBillingOrg(env, orgId)) throw new HttpError(403, 'demo_billing_unavailable');
+}
+
 const http = (env) => env.HTTP_FETCH || fetch;
 
 // VAT is added only once ZIMARA is VAT-registered (VAT_RATE_BPS=1500). Prices are listed before VAT.
@@ -52,6 +61,8 @@ async function safeEqual(env, a, b) {
 export async function settleCheckout(env, checkout) {
   if (!checkout.provider_invoice_id) return { status: checkout.status };
   if (checkout.status !== 'pending') return { status: checkout.status };
+  if (checkout.org_id) await assertBillableOrg(env, checkout.org_id);
+  if (!billingConfigured(env)) throw new HttpError(503, 'billing_not_configured');
   const inv = await moyasar(env, 'GET', '/invoices/' + encodeURIComponent(checkout.provider_invoice_id));
   if (inv.id !== checkout.provider_invoice_id) throw new HttpError(502, 'payment_provider_mismatch');
   if (inv.status === 'expired' || inv.status === 'canceled' || inv.status === 'failed') {
@@ -102,6 +113,7 @@ export async function settleCheckout(env, checkout) {
 
 export function registerBilling(app) {
   app.post('/api/owner/billing/checkout', requireRole('owner'), async (c) => {
+    await assertBillableOrg(c.env, c.get('user').org_id);
     if (!billingConfigured(c.env)) throw new HttpError(503, 'billing_not_configured');
     if (!simpleFatooraConfigured(c.env)) throw new HttpError(503, 'invoicing_not_configured');
     await rateLimit(c, 'checkout', { limit: 10, window: 3600000 });
@@ -135,6 +147,7 @@ export function registerBilling(app) {
 
   // Called by the dashboard after the hosted page redirects back. Never trusts query params.
   app.post('/api/owner/billing/sync', requireRole('owner'), async (c) => {
+    await assertBillableOrg(c.env, c.get('user').org_id);
     if (!billingConfigured(c.env)) throw new HttpError(503, 'billing_not_configured');
     const b = await body(c);
     const row = await c.env.DB.prepare('SELECT * FROM billing_checkouts WHERE id = ? AND org_id = ?').bind(String(b.checkout_id || ''), c.get('user').org_id).first();
