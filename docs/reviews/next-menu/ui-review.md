@@ -23,6 +23,12 @@ Quality verdict remains **pass; no new blocker found** for the small change at `
 
 This final delta received **source-only independent review**. The controller reports the complete customer E2E passing under `review-optimized`; this reviewer did not rerun a browser, Lighthouse or CPU measurement while the sequential Lighthouse run was active. Earlier independent browser results above remain evidence for the behavior before this measurement optimization, not a claim of a separate browser rerun on this exact delta. No performance improvement is inferred solely from the source review.
 
+## Final initial-layout stability review
+
+Quality verdict remains **pass; no blocker found** in the small loading-state delta: `public/menu.html` now supplies `body.menu-page`, `main.wrap.menu-wrap`, an initial busy state and bilingual visually hidden loading status before JavaScript runs. `public/menu-next.css:94` reserves a minimum viewport-height content area without imposing a fixed height or clipping loaded content. `public/menu.js:444` clears the busy state after normal/empty rendering, and the error path clears it at line453 before installing the retry view. Existing menu behavior is retained.
+
+This delta received source-only independent review; no browser or CPU measurement was started. The controller reports the complete customer E2E passing in `release-customer`. Independently read `performance-stable/summary.json`: timestamp2026-11-05T23:36:13.341Z, local synthetic fixture `demo-qeladkefvao-hail`, **94 performance / 100 accessibility / 91 SEO**, **132,221 encoded non-image bytes**, runtimeError:null and no warnings. These current recorded measurements supersede the earlier95/100/91,130,778-byte reference for this later implementation. They remain local recipe measurements with the same custom-font, remote-preview and indexing limits; no Lighthouse rerun is claimed by this reviewer.
+
 ## Closed findings — original reproductions retained for traceability
 
 ### CLOSED P1 — A refreshed price can be submitted while the customer still sees the old total
