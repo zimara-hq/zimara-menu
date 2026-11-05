@@ -1998,9 +1998,9 @@
     "semantic_hash": ""
   },
   "test/launch-operations.test.js": {
-    "mtime": 1793894543.9350326,
-    "seen": 1793894869.79113,
-    "ast_hash": "e7a2da3f45e15459717f91475585a0d2",
+    "mtime": 1793896288.5372531,
+    "seen": 1793896375.1031585,
+    "ast_hash": "9139889461c31cf9361ed7f6b834d34a",
     "semantic_hash": ""
   },
   "test/launch-readiness.test.js": {
@@ -2076,9 +2076,9 @@
     "semantic_hash": ""
   },
   "docs/LAUNCH-OPERATIONS.md": {
-    "mtime": 1793894603.7944307,
-    "seen": 1793894869.7912574,
-    "ast_hash": "0fa85e0a68eb989588b160aa0511185a",
+    "mtime": 1793896289.5332432,
+    "seen": 1793896375.1072557,
+    "ast_hash": "fcc157a62f21cc2ede67936bf428deec",
     "semantic_hash": ""
   },
   "docs/MOBILE-FOUNDATION-20261105.md": {
@@ -2181,6 +2181,12 @@
     "mtime": 1793895007.7863574,
     "seen": 1793895070.5618365,
     "ast_hash": "5c1adfb38b8cbfe955f0db6eb6f21485",
+    "semantic_hash": ""
+  },
+  "scripts/launch-restore-check.mjs": {
+    "mtime": 1793896287.5412633,
+    "seen": 1793896375.1014223,
+    "ast_hash": "294de48ba433d28773f13c5e3b806a60",
     "semantic_hash": ""
   },
   "package-lock.json": {
