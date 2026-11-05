@@ -40,7 +40,7 @@ try{
  await guest.screenshot({path:out+'/merchant-desktop.png',fullPage:true});
  pass('studio demo opens a published synthetic site; mobile editor/preview toggle preserves edits and publication reaches an independent visitor');
  await page.locator('[data-k=overview]').click();await page.locator('.workspace-launchpad').waitFor();await page.evaluate(()=>scrollTo(0,0));
- assert.equal(await page.locator('.workspace-metrics article').count(),4);assert.equal(await page.locator('.workspace-service').count(),3);assert.equal(await page.locator('nav [role=tab]').count(),18);
+ assert.equal(await page.locator('.workspace-metrics article').count(),4);assert.equal(await page.locator('.workspace-service').count(),3);assert.equal(await page.locator('nav [role=tab]').count(),19);assert.equal(await page.locator('nav [data-k=launch]').count(),1);
  await page.screenshot({path:out+'/overview-desktop.png'});
  for(const width of [360,768,1440]){await page.setViewportSize({width,height:1000});await fits()}
  await page.locator('[data-k=design]').click();await page.locator('.studio-outline').waitFor({state:'attached'});await page.locator('[data-tab=presets]').click();await page.locator('.design-card').first().waitFor();await page.frameLocator('#st-frame').getByRole('heading',{name:'تفاصيل مقهاي، باختياري'}).waitFor();await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+'/catalogue-desktop.png'});

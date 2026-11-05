@@ -39,7 +39,7 @@ try{
   await page.locator('#workspace-query').press('Enter');await page.locator('#panel-subscription').waitFor();
   assert.equal(await page.locator('#workspace-section').innerText(),'باقتي وفواتيري');
   await page.locator('#workspace-find').click();await page.locator('#workspace-query').fill('لايوجدقسمبهذاالاسم');await page.locator('.finder-empty').waitFor();
-  await page.locator('#finder-clear').click();assert.equal(await page.locator('.finder-result').count(),18);
+  await page.locator('#finder-clear').click();assert.equal(await page.locator('.finder-result').count(),19);assert.equal(await page.locator('.finder-result',{hasText:'مركز التشغيل'}).count(),1);
   await page.keyboard.press('Escape');assert.equal(await page.locator('#workspace-find').evaluate(el=>el===document.activeElement),true);
   await page.keyboard.press('Control+k');await page.locator('#workspace-query').fill('الوان');await page.locator('#workspace-query').press('ArrowDown');await page.keyboard.press('Enter');await page.locator('#identity-form').waitFor();
   pass('role-scoped finder supports Arabic normalization, task keywords, clear, empty state, keyboard activation and focus restoration');
