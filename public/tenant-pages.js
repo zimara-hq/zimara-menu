@@ -1,4 +1,8 @@
 import {esc,lang,pick,money} from './common.js';
+let editorSelection=null;
+const editorMode=new URLSearchParams(location.search).has('design_preview')&&window.parent!==window;
+function paintEditorSelection(){document.querySelectorAll('[data-block-id]').forEach(node=>{node.dataset.editorSelected=String(node.dataset.blockId===editorSelection);});}
+window.addEventListener('message',event=>{if(!editorMode||event.origin!==location.origin||event.source!==window.parent||event.data?.type!=='zm-highlight-block')return;editorSelection=event.data.id;paintEditorSelection();document.querySelector('[data-editor-selected=true]')?.scrollIntoView({block:'nearest',behavior:'instant'});});
 const a=(ar,en)=>lang==='ar'?ar:en;
 const text=(value)=>esc(value||'').replace(/\n/g,'<br>');
 const image=(src,alt='',eager=false)=>src?`<img src="${esc(src)}" alt="${esc(alt)}" ${eager?'fetchpriority="high"':'loading="lazy"'} decoding="async">`:'';
@@ -37,7 +41,7 @@ export function renderHome(main,data,recipe,products=[]){
  };
  main.className='site-home';
  main.innerHTML=(!firstHero?`<h1 class="site-page-title" id="org-name">${esc(name)}</h1>`:'')+blocks.filter(b=>render[b.type]).map(b=>`<section class="site-block site-${esc(b.type)}" data-block-id="${esc(b.id)}" data-align="${b.align==='center'?'center':'start'}" data-tone="${['surface','brand','quiet'].includes(b.tone)?b.tone:'surface'}" data-variant="${['standard','split','cover','columns'].includes(b.variant)?b.variant:'standard'}">${render[b.type](b)}</section>`).join('');
- tenantChrome(org,recipe);if(new URLSearchParams(location.search).has('design_preview')&&window.parent!==window)main.querySelectorAll('[data-block-id]').forEach(section=>section.addEventListener('click',event=>{event.preventDefault();window.parent.postMessage({type:'zm-block-select',id:section.dataset.blockId},location.origin);}));return true;
+ tenantChrome(org,recipe);if(editorMode){main.querySelectorAll('[data-block-id]').forEach(section=>{section.tabIndex=0;section.setAttribute('aria-label',a('تعديل القسم: ','Edit section: ')+(section.querySelector('h1,h2')?.textContent||''));const choose=event=>{event.preventDefault();editorSelection=section.dataset.blockId;paintEditorSelection();window.parent.postMessage({type:'zm-block-select',id:section.dataset.blockId},location.origin);};section.addEventListener('click',choose);section.addEventListener('keydown',event=>{if(event.target===section&&['Enter',' '].includes(event.key))choose(event);});});paintEditorSelection();}return true;
 }
 
 export function applyMenuContent(main,recipe,org){

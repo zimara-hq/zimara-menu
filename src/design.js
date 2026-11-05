@@ -268,6 +268,7 @@ export function registerDesign(app) {
       preset_id: d?.preset_id || null,
       published_at: d?.published_at || null,
       revision:d?.revision||0,
+      owns_appearance:Boolean(d),
       compositions:COMPOSITION_OPTIONS,
       versions: versions.map(versionView),
       schedules,

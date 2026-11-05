@@ -644,6 +644,12 @@ export function registerFeatures(app) {
         .first(),
     );
     const p = validateProfile(await body(c), current);
+    // Once the design studio has a saved recipe, presentation belongs to that
+    // revisioned draft/publish workflow. Accept unchanged legacy form values.
+    if (Object.keys(p.theme).some(key => p.theme[key] !== current.theme[key]) &&
+        await c.env.DB.prepare('SELECT org_id FROM org_designs WHERE org_id=?').bind(u.org_id).first()) {
+      throw conflict('design_owned_appearance');
+    }
     if (p.font_url) {
       const asset = await c.env.DB.prepare(
         "SELECT id FROM tenant_assets WHERE id=? AND org_id=? AND kind='font'",

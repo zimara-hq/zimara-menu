@@ -123,13 +123,27 @@ export async function magicStart(me, { onClose } = {}) {
   const previewUrl = branch ? `/m/${encodeURIComponent(branch.slug)}?design_preview=1` : `/p/${encodeURIComponent(me.org.slug)}?design_preview=1`;
   let step = 0, trade = TRADES.find((t) => t[4] === profile.sector)?.[0] || 'cafe', itemCount = menu.items.length;
   let chosen = design.preset_id;
+  let chosenColor = (design.owns_appearance || design.revision > 0 ? design.draft.colors.primary : me.org.brand_color) || '#3b2a6b';
+  const stripDerived = ({ derived: _derived, ...recipe }) => recipe;
+  const previewRecipe = () => {
+    const preset = design.presets.find(p => p.id === chosen);
+    if (!preset) return null;
+    const recipe = structuredClone(preset.recipe);
+    // Match preset application: keep the merchant's copy and menu choices.
+    if (design.owns_appearance || design.revision > 0) {
+      if (design.draft.home.enabled) recipe.home = structuredClone(design.draft.home);
+      recipe.menu = structuredClone(design.draft.menu);
+    }
+    recipe.colors.primary = chosenColor;
+    return recipe;
+  };
   const dlg = document.createElement('dialog');
   dlg.className = 'app-dialog magic';
   dlg.setAttribute('aria-labelledby', 'magic-title');
   document.body.append(dlg);
   const titles = [a('وش نشاطك؟', 'What do you do?'), a('هويتك', 'Your brand'), a('اختر تصميمك', 'Pick your design'), a('منيوك', 'Your menu'), a('جاهز! 🎉', 'You are live! 🎉')];
   const sendPreview = (recipe) => dlg.querySelector('#mg-frame')?.contentWindow?.postMessage({ type: 'zm-design', recipe }, location.origin);
-  const onMsg = (e) => { if (e.origin === location.origin && e.data?.type === 'zm-design-ready') { const p = design.presets.find((x) => x.id === chosen); if (p) sendPreview(p.recipe); } };
+  const onMsg = (e) => { if (e.origin === location.origin && e.source === dlg.querySelector('#mg-frame')?.contentWindow && e.data?.type === 'zm-design-ready') { const recipe = previewRecipe(); if (recipe) sendPreview(recipe); } };
   window.addEventListener('message', onMsg);
   dlg.addEventListener('close', () => { window.removeEventListener('message', onMsg); dlg.remove(); onClose?.(); });
 
@@ -152,10 +166,12 @@ export async function magicStart(me, { onClose } = {}) {
     } else if (step === 1) {
       frame(`<div class="row"><div><label for="mg-ar">${a('الاسم بالعربي', 'Arabic name')}</label><input id="mg-ar" maxlength="80" value="${esc(me.org.name_ar)}"></div><div><label for="mg-en">${a('الاسم بالإنجليزي', 'English name')}</label><input id="mg-en" dir="ltr" maxlength="80" value="${esc(me.org.name_en)}"></div></div>
         ${imageField('logo_url', a('شعارك', 'Your logo'), me.org.logo_url || '', 'mg')}
-        <label class="color-row"><input type="color" id="mg-color" value="${esc(me.org.brand_color || '#3b2a6b')}"><span>${a('لونك الأساسي', 'Your main colour')}</span></label>`);
+        <label class="color-row"><input type="color" id="mg-color" value="${esc(chosenColor)}"><span>${a('لونك الأساسي', 'Your main colour')}</span></label>`);
       wireImageFields(dlg);
+      dlg.querySelector('#mg-color').addEventListener('input', e => { chosenColor = e.target.value; });
       dlg.querySelector('#mg-next').onclick = (e) => advance(e.target, async () => {
-        const body = { name_ar: dlg.querySelector('#mg-ar').value.trim(), name_en: dlg.querySelector('#mg-en').value.trim(), brand_color: dlg.querySelector('#mg-color').value, logo_url: dlg.querySelector('#mg-logo_url').value.trim() || null };
+        const body = { name_ar: dlg.querySelector('#mg-ar').value.trim(), name_en: dlg.querySelector('#mg-en').value.trim(), logo_url: dlg.querySelector('#mg-logo_url').value.trim() || null };
+        chosenColor = dlg.querySelector('#mg-color').value;
         await api('/api/owner/org', { method: 'PATCH', body });
         Object.assign(me.org, body);
       });
@@ -167,14 +183,20 @@ export async function magicStart(me, { onClose } = {}) {
       const grid = dlg.querySelector('.magic-design .design-grid');
       const bind = () => grid.querySelectorAll('[data-try],[data-use]').forEach((b) => (b.onclick = () => {
         chosen = b.dataset.try || b.dataset.use;
-        sendPreview(design.presets.find((x) => x.id === chosen).recipe);
+        sendPreview(previewRecipe());
         grid.innerHTML = picks.map((p) => miniCard(p, p.id === chosen)).join('');
         bind();
       }));
       bind();
       dlg.querySelector('#mg-next').onclick = (e) => advance(e.target, async () => {
-        await api('/api/owner/design/presets/' + encodeURIComponent(chosen) + '/apply', { method: 'POST', body: {} });
-        await api('/api/owner/design/publish', { method: 'POST', body: {} });
+        const applied = await api('/api/owner/design/presets/' + encodeURIComponent(chosen) + '/apply', { method: 'POST', body: { revision: design.revision } });
+        Object.assign(design, applied, { owns_appearance: true, preset_id: chosen });
+        const recipe = stripDerived(applied.draft);
+        recipe.colors = { ...recipe.colors, primary: chosenColor };
+        const saved = await api('/api/owner/design/draft', { method: 'PUT', body: { recipe, revision: design.revision } });
+        Object.assign(design, saved);
+        const published = await api('/api/owner/design/publish', { method: 'POST', body: { revision: design.revision } });
+        Object.assign(design, published, { published: structuredClone(stripDerived(saved.draft)), owns_appearance: true, has_unpublished: false });
       });
     } else if (step === 3) {
       frame(`${itemCount ? `<p class="msg">${a(`منيوك فيه ${itemCount} صنف ✓. تقدر تضيف أكثر أو تكمل.`, `Your menu has ${itemCount} items ✓. Add more or continue.`)}</p>` : ''}

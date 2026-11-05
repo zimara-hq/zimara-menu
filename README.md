@@ -1,5 +1,11 @@
 # zimara-menu
 
+### Subscriber studio — 5 November 2026
+
+The owner site editor now has a section outline, actual page canvas and selected properties; drag/arrow reordering, an accessible section library, undo/redo, private template trials and phone/tablet views. `/demo?view=studio` opens it directly after creating an isolated room. Authenticated entry points: `/app?studio=home#design` and `/app?studio=identity#design`. The normal `/demo` remains the connected cashier/display/customer demonstration.
+
+Appearance has one canonical owner: Design studio. Name/logo saves remain independent; fonts are uploaded as resources and selected in the design recipe. Hidden item creation, duplicate option actions, subscription recovery and wizard colour publication have regression coverage. See [release evidence and limits](docs/SUBSCRIBER-WORKBENCH-20261105.md).
+
 نظام زيمارا للمطاعم والمقاهي: منيو إلكتروني، وبيجر ذكي يحوّل جوال العميل إلى بيجر وينبّهه بصوت، وبطاقات ولاء رقمية. لوحة تحكم بـ4 حسابات إدارية لزيمارا، وحساب مالك لكل منشأة، وحساب لكل فرع. يبدأ موقعًا، ثم تطبيقًا على Android وiOS.
 
 **ZIMARA Menu**: e-menu, a pager on the customer's phone, and loyalty cards, for restaurants and cafés. Runs on one Cloudflare Worker, separate from the zimara-website Worker and its databases. The public trial on zimara.co (`/منيو/تجربة`) stays in zimara-website; this repo is the commercial product.
