@@ -29,7 +29,7 @@ try {
   for(let round=0;round<4;round++) {
     await page.locator('[data-item-edit]').click();
     const form=page.locator('form[data-item]');
-    await form.locator('details.item-more').evaluate(el=>el.open=true);
+    await form.locator('details.item-more').filter({has:page.locator('[data-add-group]')}).evaluate(el=>el.open=true);
     await form.locator('[data-add-group]').click();
     assert.equal(await form.locator('.option-group-editor').count(),1,'one click adds exactly one group after '+round+' rerenders');
     await form.locator('[data-del-group]').click();

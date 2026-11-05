@@ -1974,9 +1974,9 @@
     "semantic_hash": ""
   },
   "test/e2e/subscriber-menu-regression.mjs": {
-    "mtime": 1793875551.792326,
-    "seen": 1793894869.7911198,
-    "ast_hash": "f34b4cae81e58ccbbf747ab59b75cac2",
+    "mtime": 1793922040.715415,
+    "seen": 1793922086.975759,
+    "ast_hash": "d59499be24c053e63a34f0bf78f123d4",
     "semantic_hash": ""
   },
   "test/e2e/tenant-studio.mjs": {
@@ -2274,9 +2274,9 @@
     "semantic_hash": ""
   },
   "docs/NEXT-LEVEL-REPORT.md": {
-    "mtime": 1793921790.618578,
-    "seen": 1793921841.2363677,
-    "ast_hash": "1befba818539eecc52896009ffb74660",
+    "mtime": 1793921895.0533693,
+    "seen": 1793922086.9789944,
+    "ast_hash": "c081cb23e7a64baadaf5e404c9a70967",
     "semantic_hash": ""
   },
   "docs/PERFORMANCE.md": {
@@ -2997,6 +2997,30 @@
     "mtime": 1793902866.9418008,
     "seen": 1793921841.2376583,
     "ast_hash": "37c825a104e95e68141c6133c119f5df",
+    "semantic_hash": ""
+  },
+  "docs/performance/menu-phase1-summary.json": {
+    "mtime": 1793921807.8557863,
+    "seen": 1793922086.973356,
+    "ast_hash": "7e3a806de6b743443843fcb4d4fc4e84",
+    "semantic_hash": ""
+  },
+  "docs/performance/menu-phase1-transfer.json": {
+    "mtime": 1793921807.8574698,
+    "seen": 1793922086.973358,
+    "ast_hash": "24762da0d3ef7e195679873f8e59c7cb",
+    "semantic_hash": ""
+  },
+  "docs/reviews/next-menu/server-review.md": {
+    "mtime": 1793921807.8540847,
+    "seen": 1793922086.9798005,
+    "ast_hash": "70a0ede9f67a3e39171ea711a9c12952",
+    "semantic_hash": ""
+  },
+  "docs/reviews/next-menu/ui-review.md": {
+    "mtime": 1793921895.0414083,
+    "seen": 1793922086.9798021,
+    "ast_hash": "99f31866fc08f0835b66c044646d02aa",
     "semantic_hash": ""
   },
   "package-lock.json": {
