@@ -1938,9 +1938,9 @@
     "semantic_hash": ""
   },
   "test/e2e/agency.mjs": {
-    "mtime": 1793895740.0318832,
-    "seen": 1793895783.401589,
-    "ast_hash": "6e26b607348a6c9e9237c25f98a70798",
+    "mtime": 1793897291.1702552,
+    "seen": 1793897334.5937884,
+    "ast_hash": "cc1c424b4c8c23dd6a61f3ce29228d98",
     "semantic_hash": ""
   },
   "test/e2e/brand-workspace.mjs": {
@@ -2178,9 +2178,9 @@
     "semantic_hash": ""
   },
   "docs/LAUNCH-COMPLETION-20261105.md": {
-    "mtime": 1793897008.9280486,
-    "seen": 1793897163.80939,
-    "ast_hash": "7969dc7610ed25e944eb9fbe2465f60e",
+    "mtime": 1793897181.0847347,
+    "seen": 1793897334.5972269,
+    "ast_hash": "b8125a4378d4dc8885c759a037577f15",
     "semantic_hash": ""
   },
   "scripts/launch-restore-check.mjs": {

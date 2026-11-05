@@ -27,6 +27,8 @@ try{
  const hero=page.locator('[data-editor-block]').first();if(!await hero.evaluate(el=>el.open))await hero.locator('summary').click();
  await hero.locator('[data-edit$="title_ar"]').fill('تفاصيل مقهاي، باختياري');
  await page.locator('#st-toggle-preview').click();await page.frameLocator('#st-frame').getByRole('heading',{name:'تفاصيل مقهاي، باختياري'}).waitFor();await fits();
+ // The preview is fitted by ResizeObserver/requestAnimationFrame after its pane becomes visible.
+ await page.waitForFunction(()=>{const phone=document.querySelector('.phone-frame')?.getBoundingClientRect(),viewport=document.querySelector('.preview-viewport')?.getBoundingClientRect();return viewport?.width>0&&phone?.width>=viewport.width*.85;});
  const phone=await page.locator('.phone-frame').boundingBox(),viewport=await page.locator('.preview-viewport').boundingBox();assert.ok(phone.width>=viewport.width*.85,'mobile preview must fill its canvas');
  assert.ok(await page.frameLocator('#st-frame').locator('html').evaluate(()=>innerWidth>=370&&innerWidth<=390));
  await page.screenshot({path:out+'/studio-mobile-preview.png'});
