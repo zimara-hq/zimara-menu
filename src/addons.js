@@ -108,6 +108,21 @@ const tgCall = (env, method, payload, fetcher = fetch) => fetcher(`https://api.t
   method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload),
 });
 
+// Points the bot at this Worker the first time an owner links a chat, so setup needs no manual setWebhook call.
+// Remembered per isolate; Telegram treats a repeat call with the same settings as a no-op.
+let webhookSetFor = null;
+export async function ensureWebhook(env, fetcher = fetch) {
+  if (!env.PUBLIC_BASE_URL) return false;
+  const url = env.PUBLIC_BASE_URL.replace(/\/$/, '') + '/api/telegram/webhook';
+  const key = url + '|' + env.TELEGRAM_WEBHOOK_SECRET;
+  if (webhookSetFor === key) return true;
+  try {
+    const res = await tgCall(env, 'setWebhook', { url, secret_token: env.TELEGRAM_WEBHOOK_SECRET, allowed_updates: ['message', 'callback_query'] }, fetcher);
+    if (res.ok) webhookSetFor = key;
+    return res.ok;
+  } catch { return false; }
+}
+
 // Accept / reject buttons under a new-order message.
 export const orderButtons = (orderId) => ({ inline_keyboard: [[{ text: '✅ قبول', callback_data: 'zo:a:' + orderId }, { text: '✖️ رفض', callback_data: 'zo:r:' + orderId }]] });
 const TYPE_AR = { dine_in: '🍽 محلي', pickup: '🛍 استلام', delivery: '🛵 توصيل', car: '🚗 سيارة' };
@@ -308,6 +323,7 @@ export function registerAddons(app, { fetcher } = {}) {
         "INSERT INTO org_addons(org_id,addon,config_json,updated_at) VALUES(?,'telegram','{}',?) ON CONFLICT(org_id,addon) DO NOTHING",
       ).bind(user.org_id, now()),
     ]);
+    await ensureWebhook(c.env, fetcher);
     return c.json({ code, expires_at: expires, link: `https://t.me/${c.env.TELEGRAM_BOT_USERNAME}?start=${code}` }, 201);
   });
 
