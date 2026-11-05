@@ -142,3 +142,16 @@ test('Telegram messages follow the parts and heading the owner picks per chat', 
     cap.restore();
   }
 });
+
+test('Telegram: linking a chat points the bot webhook at this Worker once', async () => {
+  const { ensureWebhook } = await import('../src/addons.js');
+  const calls = [];
+  const fake = async (u, init) => { calls.push({ u: String(u), body: JSON.parse(init.body) }); return new Response('{"ok":true}'); };
+  const env = { ...TG, PUBLIC_BASE_URL: 'https://menu.example/' };
+  assert.equal(await ensureWebhook(env, fake), true);
+  assert.equal(await ensureWebhook(env, fake), true);
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].u, /\/bot123:abc\/setWebhook$/);
+  assert.deepEqual(calls[0].body, { url: 'https://menu.example/api/telegram/webhook', secret_token: 'hook-secret-123', allowed_updates: ['message', 'callback_query'] });
+  assert.equal(await ensureWebhook({ ...TG }, fake), false);
+});
