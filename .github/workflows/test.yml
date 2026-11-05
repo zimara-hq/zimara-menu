@@ -55,6 +55,8 @@ jobs:
           npm run test:design -- http://127.0.0.1:8787 output/playwright/design
           npm run test:magic -- http://127.0.0.1:8787 output/playwright/magic
           npm run test:ordering -- http://127.0.0.1:8787 output/playwright/ordering
+          npm run test:customer-menu -- http://127.0.0.1:8787 output/playwright/next-menu
+          npm run test:menu-merchandising -- http://127.0.0.1:8787 output/playwright/menu-owner-phase1
           npm run test:waitlist -- http://127.0.0.1:8787 output/playwright/waitlist
           npm run test:loyalty -- http://127.0.0.1:8787 output/playwright/loyalty
           npm run test:security -- http://localhost:8787 output/playwright/security

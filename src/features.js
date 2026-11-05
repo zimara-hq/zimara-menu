@@ -1,3 +1,4 @@
+import { discoverMenu, categoryAvailable } from './menu-discovery.js';
 import { activeDesign } from './design.js';
 import { publish } from './realtime.js';
 import { itemView, priceWithOptions } from './menu-extras.js';
@@ -206,11 +207,11 @@ async function menuFor(env, orgId, branchId) {
     .bind(orgId)
     .all();
   const { results: items } = await env.DB.prepare(
-    `SELECT i.id,i.category_id,i.name_ar,i.name_en,i.desc_ar,i.desc_en,i.price,i.compare_price,i.calories,i.caffeine_mg,i.sodium_mg,i.allergens,i.options_json,i.badges,i.image_url,i.sort,CASE WHEN u.item_id IS NULL THEN 1 ELSE 0 END AS available FROM items i JOIN categories c ON c.id=i.category_id LEFT JOIN branch_unavailable u ON u.item_id=i.id AND u.branch_id=? WHERE i.org_id=? AND i.active=1 AND i.is_sample=0 AND c.active=1 ORDER BY i.sort,i.name_ar`,
+    `SELECT i.id,i.category_id,i.name_ar,i.name_en,i.desc_ar,i.desc_en,i.price,i.compare_price,i.calories,i.caffeine_mg,i.sodium_mg,i.allergens,i.options_json,i.badges,i.gallery_json,i.dietary_json,i.complementary_ids_json,i.image_url,i.sort,CASE WHEN u.item_id IS NULL THEN 1 ELSE 0 END AS available FROM items i JOIN categories c ON c.id=i.category_id LEFT JOIN branch_unavailable u ON u.item_id=i.id AND u.branch_id=? WHERE i.org_id=? AND i.active=1 AND i.is_sample=0 AND c.active=1 ORDER BY i.sort,i.name_ar`,
   )
     .bind(branchId, orgId)
     .all();
-  return { categories, items: items.map(itemView) };
+  return discoverMenu(env, orgId, branchId, { categories, items: items.map(itemView) });
 }
 
 // Bounded RFC-4180 parser: quoted fields, embedded line breaks, BOM; no code evaluation.
@@ -1004,13 +1005,13 @@ export function registerFeatures(app) {
       ids.add(lineKey);
       const quantity = int(line.quantity, 'quantity', { min: 1, max: 20 });
       const item = await c.env.DB.prepare(
-        'SELECT i.id,i.name_ar,i.name_en,i.price,i.options_json FROM items i JOIN categories c ON c.id=i.category_id WHERE i.id=? AND i.org_id=? AND i.active=1 AND i.is_sample=0 AND c.active=1 AND NOT EXISTS(SELECT 1 FROM branch_unavailable u WHERE u.branch_id=? AND u.item_id=i.id)',
+        'SELECT i.id,i.category_id,i.name_ar,i.name_en,i.price,i.options_json FROM items i JOIN categories c ON c.id=i.category_id WHERE i.id=? AND i.org_id=? AND i.active=1 AND i.is_sample=0 AND c.active=1 AND NOT EXISTS(SELECT 1 FROM branch_unavailable u WHERE u.branch_id=? AND u.item_id=i.id)',
       )
         .bind(itemId, branch.org_id, branch.id)
         .first();
-      if (!item) throw bad('item_unavailable');
+      if (!item || !await categoryAvailable(c.env, branch.id, item.category_id)) throw bad('item_unavailable');
       const { unit, options } = priceWithOptions(item, picked);
-      const { options_json, ...base } = item;
+      const { options_json, category_id, ...base } = item;
       lines.push({ ...base, price: unit, options, quantity, total: unit * quantity });
     }
     const note = str(b.note, 'note', { optional: true, max: 300 });
@@ -1018,6 +1019,10 @@ export function registerFeatures(app) {
     if (subtotal > 100_000_000) throw bad('order_total_limit');
     const extra = await orderExtras(c.env, branch, b, subtotal);
     const total = extra.total;
+    if (b.expected_total !== undefined) {
+      if (!Number.isSafeInteger(b.expected_total) || b.expected_total < 0) throw bad('invalid_expected_total');
+      if (b.expected_total !== total) throw conflict('price_changed');
+    }
     const fingerprint = await hmac(
       c.env.AUTH_SECRET,
       JSON.stringify(

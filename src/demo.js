@@ -51,8 +51,7 @@ export function registerDemo(app) {
    statements.push(
     c.env.DB.prepare('UPDATE orgs SET brand_color=? WHERE id=?').bind('#2d4639',oid),
     c.env.DB.prepare('UPDATE org_profiles SET banners_json=? WHERE org_id=?').bind(JSON.stringify([{image_url:'/editorial/counter.webp',alt_ar:'صورة مقهى توضيحية من Unsplash',alt_en:'Illustrative café photograph from Unsplash'}]),oid),
-    c.env.DB.prepare('INSERT INTO org_designs(org_id,draft_json,published_json,published_at,updated_at,revision) VALUES(?,?,?,?,?,1)').bind(oid,JSON.stringify(recipe),JSON.stringify(recipe),t,t),
-    c.env.DB.prepare("UPDATE items SET image_url=CASE WHEN name_ar LIKE '%كروسان%' THEN '/editorial/pastry.webp' ELSE '/editorial/coffee.webp' END WHERE org_id=? AND (name_ar LIKE '%كروسان%' OR name_ar LIKE '%لاتيه%' OR name_ar='كابتشينو' OR name_ar='فلات وايت' OR name_ar='إسبريسو')").bind(oid)
+    c.env.DB.prepare('INSERT INTO org_designs(org_id,draft_json,published_json,published_at,updated_at,revision) VALUES(?,?,?,?,?,1)').bind(oid,JSON.stringify(recipe),JSON.stringify(recipe),t,t)
    );
   }
   await c.env.DB.batch(statements);

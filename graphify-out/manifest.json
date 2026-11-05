@@ -198,9 +198,9 @@
     "semantic_hash": ""
   },
   ".github/workflows/test.yml": {
-    "mtime": 1793894891.953171,
-    "seen": 1793895070.5562055,
-    "ast_hash": "ecf8870d4cd1099d26f64b2324992edc",
+    "mtime": 1793902837.8993464,
+    "seen": 1793921841.230505,
+    "ast_hash": "ea512ae4d38b625810679d2ca42f57fe",
     "semantic_hash": ""
   },
   ".mcp.json": {
@@ -222,9 +222,9 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1793894891.9527855,
-    "seen": 1793895070.5562637,
-    "ast_hash": "e2bfc29e9423d6dfee3dfc8cf141cd71",
+    "mtime": 1793902837.8820894,
+    "seen": 1793921841.2305622,
+    "ast_hash": "bae7347e7014194e6974ec71d7dcc6f8",
     "semantic_hash": ""
   },
   "premium-ui.json": {
@@ -276,9 +276,9 @@
     "semantic_hash": ""
   },
   "public/dashboard.js": {
-    "mtime": 1793894768.3477206,
-    "seen": 1793894869.790656,
-    "ast_hash": "c3e0b352bb9f87843284f1fc4c9138d8",
+    "mtime": 1793902824.022231,
+    "seen": 1793921841.2307127,
+    "ast_hash": "90920ee426453c46d1d44b2460e57c4c",
     "semantic_hash": ""
   },
   "public/demo.js": {
@@ -294,9 +294,9 @@
     "semantic_hash": ""
   },
   "public/design-studio.js": {
-    "mtime": 1793878412.9176886,
-    "seen": 1793894869.7906585,
-    "ast_hash": "b9bba93c558c8189b40103e308e76bf6",
+    "mtime": 1793902824.024931,
+    "seen": 1793921841.230746,
+    "ast_hash": "a97a03dc991af7810bcd0e701ea18a6a",
     "semantic_hash": ""
   },
   "public/display.js": {
@@ -354,9 +354,9 @@
     "semantic_hash": ""
   },
   "public/menu.js": {
-    "mtime": 1793830917.8850632,
-    "seen": 1793894869.7906709,
-    "ast_hash": "f22efb736e3e3eeeb79fa70a126336af",
+    "mtime": 1793921760.6071734,
+    "seen": 1793921841.2309487,
+    "ast_hash": "ea94e5a13a774732597550c81bea07b0",
     "semantic_hash": ""
   },
   "public/order-inbox.js": {
@@ -492,9 +492,9 @@
     "semantic_hash": ""
   },
   "src/app.js": {
-    "mtime": 1793894748.9110644,
-    "seen": 1793894869.7907052,
-    "ast_hash": "3a6d3d072051aca02a41cd7231b1e3de",
+    "mtime": 1793903408.2727711,
+    "seen": 1793921841.2315433,
+    "ast_hash": "ce040e4826807d8e01d3e98c48e8b11e",
     "semantic_hash": ""
   },
   "src/auth.js": {
@@ -516,9 +516,9 @@
     "semantic_hash": ""
   },
   "src/demo.js": {
-    "mtime": 1793833588.2413597,
-    "seen": 1793894869.7907102,
-    "ast_hash": "0aed68f61269b78750b9f537f4b5b9f8",
+    "mtime": 1793902906.4173918,
+    "seen": 1793921841.2316096,
+    "ast_hash": "1e1975fcf4e5849046f663a43d2be12f",
     "semantic_hash": ""
   },
   "src/design.js": {
@@ -534,9 +534,9 @@
     "semantic_hash": ""
   },
   "src/features.js": {
-    "mtime": 1793894651.361642,
-    "seen": 1793894869.7907143,
-    "ast_hash": "23c6bee5c78e1b27c26520c653880f57",
+    "mtime": 1793921098.6757088,
+    "seen": 1793921841.2316606,
+    "ast_hash": "386759c8aadc241d7011c68a32854cd5",
     "semantic_hash": ""
   },
   "src/identity.js": {
@@ -570,9 +570,9 @@
     "semantic_hash": ""
   },
   "src/menu-extras.js": {
-    "mtime": 1793828569.6457229,
-    "seen": 1793894869.7907205,
-    "ast_hash": "e343c602cb44a153415c7bb82bcb3466",
+    "mtime": 1793902802.4155765,
+    "seen": 1793921841.231759,
+    "ast_hash": "fb2299b4c7b17e8e5457d7fd14eab86a",
     "semantic_hash": ""
   },
   "src/mfa.js": {
@@ -636,9 +636,9 @@
     "semantic_hash": ""
   },
   "src/sample-menu.js": {
-    "mtime": 1793828569.6485763,
-    "seen": 1793894869.7907314,
-    "ast_hash": "99a83fd1d12b7d3288dca886e7b2cfae",
+    "mtime": 1793902906.4173918,
+    "seen": 1793921841.2321045,
+    "ast_hash": "db914a036b196e67326cb4b724135816",
     "semantic_hash": ""
   },
   "src/security.js": {
@@ -1662,9 +1662,9 @@
     "semantic_hash": ""
   },
   "public/menu.html": {
-    "mtime": 1793894542.0808084,
-    "seen": 1793894869.7912824,
-    "ast_hash": "8ed29347f30574c46841222761ace5c6",
+    "mtime": 1793921760.6059568,
+    "seen": 1793921841.2369828,
+    "ast_hash": "4a008f5fa3a3e1e02846a94340b3f64e",
     "semantic_hash": ""
   },
   "public/privacy.html": {
@@ -2195,10 +2195,814 @@
     "ast_hash": "3cc1fbc752be17105fafe3501e4799d0",
     "semantic_hash": ""
   },
+  "public/menu-discovery.js": {
+    "mtime": 1793902708.7914407,
+    "seen": 1793921841.230946,
+    "ast_hash": "00356f146c78fdcfd16c9657a0e46260",
+    "semantic_hash": ""
+  },
+  "public/menu-merchandising.js": {
+    "mtime": 1793903038.7680206,
+    "seen": 1793921841.2309475,
+    "ast_hash": "d1195580180a3909de9df8d81fb4abec",
+    "semantic_hash": ""
+  },
+  "scripts/menu-performance.mjs": {
+    "mtime": 1793903015.2785084,
+    "seen": 1793921841.231492,
+    "ast_hash": "e6f9e574918e72373df03ff8b2aedfcd",
+    "semantic_hash": ""
+  },
+  "src/menu-discovery.js": {
+    "mtime": 1793903521.00529,
+    "seen": 1793921841.2317579,
+    "ast_hash": "410d85a27265879c2503b264502119e9",
+    "semantic_hash": ""
+  },
+  "test/e2e/customer-menu.mjs": {
+    "mtime": 1793921215.5479505,
+    "seen": 1793921841.2324736,
+    "ast_hash": "a6c65caa34ddd18f061003c295374ae9",
+    "semantic_hash": ""
+  },
+  "test/e2e/menu-owner-phase1.mjs": {
+    "mtime": 1793903789.9793406,
+    "seen": 1793921841.2326827,
+    "ast_hash": "1deea2c4f5357783731e333219b156f5",
+    "semantic_hash": ""
+  },
+  "test/menu-assets.test.js": {
+    "mtime": 1793902989.4605274,
+    "seen": 1793921841.233063,
+    "ast_hash": "fe62c1fd4ea4c7594cad11ec9837618e",
+    "semantic_hash": ""
+  },
+  "test/menu-discovery-client.test.js": {
+    "mtime": 1793902699.3474321,
+    "seen": 1793921841.2330804,
+    "ast_hash": "6340fb461d98ded385c670e0e1ebdbbc",
+    "semantic_hash": ""
+  },
+  "test/menu-discovery.test.js": {
+    "mtime": 1793903506.9952922,
+    "seen": 1793921841.2330813,
+    "ast_hash": "1af6d34d939fc10f209a784984c98588",
+    "semantic_hash": ""
+  },
+  "test/menu-price-consent.test.js": {
+    "mtime": 1793920988.546416,
+    "seen": 1793921841.2330985,
+    "ast_hash": "ebc53075d855004bb39e3126600efc25",
+    "semantic_hash": ""
+  },
+  "docs/AZ-ACTIONS.md": {
+    "mtime": 1793902919.629252,
+    "seen": 1793921841.2362127,
+    "ast_hash": "b39a6c0880613c66afd68c9404e09869",
+    "semantic_hash": ""
+  },
+  "docs/MENU-ASSETS.md": {
+    "mtime": 1793903717.5131288,
+    "seen": 1793921841.2363482,
+    "ast_hash": "9476aaf62233f00f01c8dd4486ed4429",
+    "semantic_hash": ""
+  },
+  "docs/NEXT-LEVEL-PLAN.md": {
+    "mtime": 1793921688.3833184,
+    "seen": 1793921841.2363665,
+    "ast_hash": "77482670297390ba3245b0f2f89a479f",
+    "semantic_hash": ""
+  },
+  "docs/NEXT-LEVEL-REPORT.md": {
+    "mtime": 1793921790.618578,
+    "seen": 1793921841.2363677,
+    "ast_hash": "1befba818539eecc52896009ffb74660",
+    "semantic_hash": ""
+  },
+  "docs/PERFORMANCE.md": {
+    "mtime": 1793921790.6184359,
+    "seen": 1793921841.236385,
+    "ast_hash": "c19f5039980eb16c6c38d6c21e9e348d",
+    "semantic_hash": ""
+  },
+  "docs/plans/codex-menu-review-2026-11-05.md": {
+    "mtime": 1793902535.0492382,
+    "seen": 1793921841.2366884,
+    "ast_hash": "332f2c78292368e95ca198eb15bc6295",
+    "semantic_hash": ""
+  },
+  "docs/plans/codex-next-level-prompt-2026-11-05.md": {
+    "mtime": 1793902535.0532382,
+    "seen": 1793921841.2366898,
+    "ast_hash": "cd67df20fed4be02473ecf3584bb20b1",
+    "semantic_hash": ""
+  },
+  "docs/plans/zimara-menu-master-plan.md": {
+    "mtime": 1793902535.0532382,
+    "seen": 1793921841.2366908,
+    "ast_hash": "32246e2175c736d49a1ddca2109e6d91",
+    "semantic_hash": ""
+  },
+  "docs/screenshots/next-menu/after/1440-dark.png": {
+    "mtime": 1793921389.839149,
+    "seen": 1793921841.2374103,
+    "ast_hash": "a2c359e1801bc198bedf2c6ced7034ba",
+    "semantic_hash": ""
+  },
+  "docs/screenshots/next-menu/after/1440-light.png": {
+    "mtime": 1793921389.2071557,
+    "seen": 1793921841.2374117,
+    "ast_hash": "2b1f6313189ab42ce54e3d599ea8b219",
+    "semantic_hash": ""
+  },
+  "docs/screenshots/next-menu/after/390-dark.png": {
+    "mtime": 1793921388.5271628,
+    "seen": 1793921841.237413,
+    "ast_hash": "6d94019050b57ac38494ec169bb9751e",
+    "semantic_hash": ""
+  },
+  "docs/screenshots/next-menu/after/390-light.png": {
+    "mtime": 1793921387.9511688,
+    "seen": 1793921841.2374136,
+    "ast_hash": "9ee15313debf06df87dd23a32ca41492",
+    "semantic_hash": ""
+  },
+  "docs/screenshots/next-menu/before/1440-dark.png": {
+    "mtime": 1793902535.068451,
+    "seen": 1793921841.2374144,
+    "ast_hash": "23c1b8eff68ba524b1b518589416acda",
+    "semantic_hash": ""
+  },
+  "docs/screenshots/next-menu/before/1440-light.png": {
+    "mtime": 1793902535.0665455,
+    "seen": 1793921841.237415,
+    "ast_hash": "d4162f0e903f2cb39922f3ba532defb3",
+    "semantic_hash": ""
+  },
+  "docs/screenshots/next-menu/before/390-dark.png": {
+    "mtime": 1793902535.064538,
+    "seen": 1793921841.237416,
+    "ast_hash": "ea680c42fcf28d49d6df0994da43e6f6",
+    "semantic_hash": ""
+  },
+  "docs/screenshots/next-menu/before/390-light.png": {
+    "mtime": 1793902535.0626137,
+    "seen": 1793921841.2374167,
+    "ast_hash": "727d7c1e856a90307dde57de16df3752",
+    "semantic_hash": ""
+  },
+  "public/menu-art/americano-320.webp": {
+    "mtime": 1793903700.4773395,
+    "seen": 1793921841.2375705,
+    "ast_hash": "c8063aba95dec21550fff836746207bd",
+    "semantic_hash": ""
+  },
+  "public/menu-art/americano-640.webp": {
+    "mtime": 1793903700.5453384,
+    "seen": 1793921841.2375715,
+    "ast_hash": "11e650ac08af4ad3961299010214b989",
+    "semantic_hash": ""
+  },
+  "public/menu-art/americano-960.webp": {
+    "mtime": 1793903700.6813364,
+    "seen": 1793921841.2375727,
+    "ast_hash": "bfaafc19392db62030990299e7a19451",
+    "semantic_hash": ""
+  },
+  "public/menu-art/americano.svg": {
+    "mtime": 1793903699.4213514,
+    "seen": 1793921841.2375734,
+    "ast_hash": "23645f7324ee63b716aee4bc849e0d98",
+    "semantic_hash": ""
+  },
+  "public/menu-art/butter-croissant-320.webp": {
+    "mtime": 1793902871.3857555,
+    "seen": 1793921841.2375743,
+    "ast_hash": "17e645267c88972172d63cc0e95064ee",
+    "semantic_hash": ""
+  },
+  "public/menu-art/butter-croissant-640.webp": {
+    "mtime": 1793902871.4417548,
+    "seen": 1793921841.237575,
+    "ast_hash": "a5a5e58d45f41e9a1e0a60a4481f8be8",
+    "semantic_hash": ""
+  },
+  "public/menu-art/butter-croissant-960.webp": {
+    "mtime": 1793902871.5377538,
+    "seen": 1793921841.2375762,
+    "ast_hash": "f288c21e26ce0b35fc85d8432ef0e869",
+    "semantic_hash": ""
+  },
+  "public/menu-art/butter-croissant.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.237577,
+    "ast_hash": "a50d8aebec8f3cb4a593026e1f2c921c",
+    "semantic_hash": ""
+  },
+  "public/menu-art/cappuccino-320.webp": {
+    "mtime": 1793902869.581774,
+    "seen": 1793921841.2375777,
+    "ast_hash": "a4731e569234b8e5023565fe9293ce04",
+    "semantic_hash": ""
+  },
+  "public/menu-art/cappuccino-640.webp": {
+    "mtime": 1793902869.677773,
+    "seen": 1793921841.2375784,
+    "ast_hash": "c6e2b06842a1deb679251d077218f348",
+    "semantic_hash": ""
+  },
+  "public/menu-art/cappuccino-960.webp": {
+    "mtime": 1793902869.8857708,
+    "seen": 1793921841.2375793,
+    "ast_hash": "c2ad2842fb7cced87d1a2832e36a1362",
+    "semantic_hash": ""
+  },
+  "public/menu-art/cappuccino.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.23758,
+    "ast_hash": "1423d94d0fd6649cdc9e86d55e68a360",
+    "semantic_hash": ""
+  },
+  "public/menu-art/cheese-sambousa-320.webp": {
+    "mtime": 1793902872.6097429,
+    "seen": 1793921841.2375808,
+    "ast_hash": "dc6825af6e867ed0832873dddded4602",
+    "semantic_hash": ""
+  },
+  "public/menu-art/cheese-sambousa-640.webp": {
+    "mtime": 1793902872.6417425,
+    "seen": 1793921841.2375815,
+    "ast_hash": "7d5085d929d525cbfd0223e6dade9be5",
+    "semantic_hash": ""
+  },
+  "public/menu-art/cheese-sambousa-960.webp": {
+    "mtime": 1793902872.7217417,
+    "seen": 1793921841.2375824,
+    "ast_hash": "30d469ab844f87bde132780d0e2c4628",
+    "semantic_hash": ""
+  },
+  "public/menu-art/cheese-sambousa.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.2375832,
+    "ast_hash": "3527b0a6784f9e676008fa785bf8ba44",
+    "semantic_hash": ""
+  },
+  "public/menu-art/chicken-kabsa-320.webp": {
+    "mtime": 1793902872.793741,
+    "seen": 1793921841.2375839,
+    "ast_hash": "65fc11b8f535151c38e6bd2996ce5ce3",
+    "semantic_hash": ""
+  },
+  "public/menu-art/chicken-kabsa-640.webp": {
+    "mtime": 1793902872.8777401,
+    "seen": 1793921841.2375846,
+    "ast_hash": "78575fdf75a95a54ff4b5ea4232db718",
+    "semantic_hash": ""
+  },
+  "public/menu-art/chicken-kabsa-960.webp": {
+    "mtime": 1793902872.9417393,
+    "seen": 1793921841.2375853,
+    "ast_hash": "d94d3b41d7b24ff5ccf35b37771bf2b4",
+    "semantic_hash": ""
+  },
+  "public/menu-art/chicken-kabsa.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.2375863,
+    "ast_hash": "627d5fd34fd2fb2f601357f1235a7148",
+    "semantic_hash": ""
+  },
+  "public/menu-art/chocolate-cookie-320.webp": {
+    "mtime": 1793902871.713752,
+    "seen": 1793921841.2375872,
+    "ast_hash": "d473d20bee172b773faeefefab4902bf",
+    "semantic_hash": ""
+  },
+  "public/menu-art/chocolate-cookie-640.webp": {
+    "mtime": 1793902871.7817514,
+    "seen": 1793921841.2375882,
+    "ast_hash": "17a7c4b7d6ce06b37016403fe8807757",
+    "semantic_hash": ""
+  },
+  "public/menu-art/chocolate-cookie-960.webp": {
+    "mtime": 1793902871.8297508,
+    "seen": 1793921841.2375894,
+    "ast_hash": "c3153d494b596ae962bc3ef22ab88793",
+    "semantic_hash": ""
+  },
+  "public/menu-art/chocolate-cookie.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.23759,
+    "ast_hash": "f7d5f4b43c881f437e67ff0a7a0912b9",
+    "semantic_hash": ""
+  },
+  "public/menu-art/classic-burger-320.webp": {
+    "mtime": 1793902873.2897358,
+    "seen": 1793921841.2375908,
+    "ast_hash": "867f7618a2f1c5a4917e9b34efad2d43",
+    "semantic_hash": ""
+  },
+  "public/menu-art/classic-burger-640.webp": {
+    "mtime": 1793902873.3297353,
+    "seen": 1793921841.2375915,
+    "ast_hash": "757519210ef502e316477044cc259c85",
+    "semantic_hash": ""
+  },
+  "public/menu-art/classic-burger-960.webp": {
+    "mtime": 1793902873.4137344,
+    "seen": 1793921841.2375922,
+    "ast_hash": "31a07ab1cb510b9f81e0bb45cc549e80",
+    "semantic_hash": ""
+  },
+  "public/menu-art/classic-burger.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.2375932,
+    "ast_hash": "0edd8cc301e18df01a0bb1ab3fb15889",
+    "semantic_hash": ""
+  },
+  "public/menu-art/cold-brew-320.webp": {
+    "mtime": 1793902870.7217622,
+    "seen": 1793921841.2375941,
+    "ast_hash": "e8c02f7ac9ee4b3c31d9b182d535d438",
+    "semantic_hash": ""
+  },
+  "public/menu-art/cold-brew-640.webp": {
+    "mtime": 1793902870.7857616,
+    "seen": 1793921841.2375948,
+    "ast_hash": "215d81fdee19f753bd96ba4a92e5b705",
+    "semantic_hash": ""
+  },
+  "public/menu-art/cold-brew-960.webp": {
+    "mtime": 1793902870.9071631,
+    "seen": 1793921841.2375956,
+    "ast_hash": "e7d018913b89f62a2d0d712d5c1a75ca",
+    "semantic_hash": ""
+  },
+  "public/menu-art/cold-brew.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.2375965,
+    "ast_hash": "81cef7c8e3a6fa63fcde53e72bc7db91",
+    "semantic_hash": ""
+  },
+  "public/menu-art/crispy-chicken-burger-320.webp": {
+    "mtime": 1793902873.4297345,
+    "seen": 1793921841.2375972,
+    "ast_hash": "f4d60ea543353832272481a22893749b",
+    "semantic_hash": ""
+  },
+  "public/menu-art/crispy-chicken-burger-640.webp": {
+    "mtime": 1793902873.4857337,
+    "seen": 1793921841.237598,
+    "ast_hash": "52d5ce166a0431bbeba4007c2d2a0a82",
+    "semantic_hash": ""
+  },
+  "public/menu-art/crispy-chicken-burger-960.webp": {
+    "mtime": 1793902873.5937326,
+    "seen": 1793921841.2375987,
+    "ast_hash": "d189f607b15d3cb9960748e81c6d9c90",
+    "semantic_hash": ""
+  },
+  "public/menu-art/crispy-chicken-burger.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.2375994,
+    "ast_hash": "1891afa3e81e935f5d9820c565527364",
+    "semantic_hash": ""
+  },
+  "public/menu-art/date-cake-320.webp": {
+    "mtime": 1793902872.1817472,
+    "seen": 1793921841.2376003,
+    "ast_hash": "e861b4d518196cfdb38039c4b2fd9dcf",
+    "semantic_hash": ""
+  },
+  "public/menu-art/date-cake-640.webp": {
+    "mtime": 1793902872.2097468,
+    "seen": 1793921841.237601,
+    "ast_hash": "6b1e56893486920cd24769e7bab027d3",
+    "semantic_hash": ""
+  },
+  "public/menu-art/date-cake-960.webp": {
+    "mtime": 1793902872.289746,
+    "seen": 1793921841.2376018,
+    "ast_hash": "2d1107d6b4567c70a75d3e09f4957902",
+    "semantic_hash": ""
+  },
+  "public/menu-art/date-cake.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.2376025,
+    "ast_hash": "d5cba385db5bcff998c7cf485644d6eb",
+    "semantic_hash": ""
+  },
+  "public/menu-art/espresso-320.webp": {
+    "mtime": 1793903700.1853437,
+    "seen": 1793921841.2376034,
+    "ast_hash": "939de378cdd99e96ee51ea01085d7c06",
+    "semantic_hash": ""
+  },
+  "public/menu-art/espresso-640.webp": {
+    "mtime": 1793903700.2853422,
+    "seen": 1793921841.237604,
+    "ast_hash": "a3a36a591cea41e53e0f261c299efa96",
+    "semantic_hash": ""
+  },
+  "public/menu-art/espresso-960.webp": {
+    "mtime": 1793903700.4293401,
+    "seen": 1793921841.2376049,
+    "ast_hash": "031a86a02270017c91dbf8cb60f1084d",
+    "semantic_hash": ""
+  },
+  "public/menu-art/espresso.svg": {
+    "mtime": 1793903699.4213514,
+    "seen": 1793921841.2376056,
+    "ast_hash": "4b9f96d9d06ba4d40ccd6a8fcc94a5fb",
+    "semantic_hash": ""
+  },
+  "public/menu-art/flat-white-320.webp": {
+    "mtime": 1793902869.9097705,
+    "seen": 1793921841.2376063,
+    "ast_hash": "bfcc37139650065da0e86727ed8a23c2",
+    "semantic_hash": ""
+  },
+  "public/menu-art/flat-white-640.webp": {
+    "mtime": 1793902870.0057695,
+    "seen": 1793921841.2376072,
+    "ast_hash": "d46731c309099fd865dd8032a77006d2",
+    "semantic_hash": ""
+  },
+  "public/menu-art/flat-white-960.webp": {
+    "mtime": 1793902870.1337683,
+    "seen": 1793921841.237608,
+    "ast_hash": "16510c1307722537eb629d7075c8dea2",
+    "semantic_hash": ""
+  },
+  "public/menu-art/flat-white.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.2376087,
+    "ast_hash": "eb536e360cbec842fc6fb7cae5406d50",
+    "semantic_hash": ""
+  },
+  "public/menu-art/fresh-orange-juice-320.webp": {
+    "mtime": 1793902873.6137323,
+    "seen": 1793921841.2376094,
+    "ast_hash": "c22cf86b3332e778b287f11af9f9f18d",
+    "semantic_hash": ""
+  },
+  "public/menu-art/fresh-orange-juice-640.webp": {
+    "mtime": 1793902873.6777318,
+    "seen": 1793921841.2376103,
+    "ast_hash": "b0bd453055bf7010b578d5d473efe156",
+    "semantic_hash": ""
+  },
+  "public/menu-art/fresh-orange-juice-960.webp": {
+    "mtime": 1793902873.7297313,
+    "seen": 1793921841.2376113,
+    "ast_hash": "a5ffb5f6eb793d85c3dfe932cc89011d",
+    "semantic_hash": ""
+  },
+  "public/menu-art/fresh-orange-juice.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.237612,
+    "ast_hash": "3f25726f3b8b695af690366917ce515b",
+    "semantic_hash": ""
+  },
+  "public/menu-art/hummus-320.webp": {
+    "mtime": 1793902872.3057458,
+    "seen": 1793921841.2376127,
+    "ast_hash": "8d3b828481863891cc536d09ab865028",
+    "semantic_hash": ""
+  },
+  "public/menu-art/hummus-640.webp": {
+    "mtime": 1793902872.3417456,
+    "seen": 1793921841.2376137,
+    "ast_hash": "9e7211107464cdead4121e8be1d33c0a",
+    "semantic_hash": ""
+  },
+  "public/menu-art/hummus-960.webp": {
+    "mtime": 1793902872.4257448,
+    "seen": 1793921841.2376144,
+    "ast_hash": "a3d4eefef374d4f94b92b316c39db41f",
+    "semantic_hash": ""
+  },
+  "public/menu-art/hummus.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.237615,
+    "ast_hash": "585cb8a34814061a0846d4a8f5a1f50f",
+    "semantic_hash": ""
+  },
+  "public/menu-art/iced-latte-320.webp": {
+    "mtime": 1793902870.4217653,
+    "seen": 1793921841.2376158,
+    "ast_hash": "37692fa0a98ed82b4474975da0a9617f",
+    "semantic_hash": ""
+  },
+  "public/menu-art/iced-latte-640.webp": {
+    "mtime": 1793902870.5057645,
+    "seen": 1793921841.2376165,
+    "ast_hash": "9a4e5042814eb5931dd076f7e00d36a6",
+    "semantic_hash": ""
+  },
+  "public/menu-art/iced-latte-960.webp": {
+    "mtime": 1793902870.7057624,
+    "seen": 1793921841.2376175,
+    "ast_hash": "32d875966b4fc8d8b2334721bcb6f507",
+    "semantic_hash": ""
+  },
+  "public/menu-art/iced-latte.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.2376182,
+    "ast_hash": "788481ee03219ea979466981c85f54f3",
+    "semantic_hash": ""
+  },
+  "public/menu-art/laban-320.webp": {
+    "mtime": 1793902873.7777307,
+    "seen": 1793921841.2376187,
+    "ast_hash": "5e00c4369a48882683a44c01bf20d516",
+    "semantic_hash": ""
+  },
+  "public/menu-art/laban-640.webp": {
+    "mtime": 1793902873.8057306,
+    "seen": 1793921841.2376194,
+    "ast_hash": "5022dd59a201496a717fa895b3f6c2ee",
+    "semantic_hash": ""
+  },
+  "public/menu-art/laban-960.webp": {
+    "mtime": 1793902873.8897295,
+    "seen": 1793921841.23762,
+    "ast_hash": "5ffd0e5b82247006c853342a0b6226f1",
+    "semantic_hash": ""
+  },
+  "public/menu-art/laban.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.237621,
+    "ast_hash": "e051d6554ec14b2b2d1a1e34e2344db0",
+    "semantic_hash": ""
+  },
+  "public/menu-art/lamb-mandi-320.webp": {
+    "mtime": 1793902872.993739,
+    "seen": 1793921841.2376218,
+    "ast_hash": "a6ab778b1ab30d2b2d129357ac8676d3",
+    "semantic_hash": ""
+  },
+  "public/menu-art/lamb-mandi-640.webp": {
+    "mtime": 1793902873.0257385,
+    "seen": 1793921841.2376225,
+    "ast_hash": "081a576f41efd67300bdcb9bd1b74508",
+    "semantic_hash": ""
+  },
+  "public/menu-art/lamb-mandi-960.webp": {
+    "mtime": 1793902873.1137376,
+    "seen": 1793921841.2376232,
+    "ast_hash": "584cba4f5fc51b5e94e5436263e072e0",
+    "semantic_hash": ""
+  },
+  "public/menu-art/lamb-mandi.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.2376242,
+    "ast_hash": "8620f10890503de4fa63b3df28b07130",
+    "semantic_hash": ""
+  },
+  "public/menu-art/latte-320.webp": {
+    "mtime": 1793902869.1977777,
+    "seen": 1793921841.2376251,
+    "ast_hash": "4a28b6564bb7962bfd9cffebba991d92",
+    "semantic_hash": ""
+  },
+  "public/menu-art/latte-640.webp": {
+    "mtime": 1793902869.2937768,
+    "seen": 1793921841.2376258,
+    "ast_hash": "89d7750b54f4b9658429b97ccf58e48b",
+    "semantic_hash": ""
+  },
+  "public/menu-art/latte-960.webp": {
+    "mtime": 1793902869.5137746,
+    "seen": 1793921841.2376266,
+    "ast_hash": "a20c3340463a8e2a58ead26c72522b90",
+    "semantic_hash": ""
+  },
+  "public/menu-art/latte.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.2376277,
+    "ast_hash": "3cf4404cac9622691001bfd3f26beeba",
+    "semantic_hash": ""
+  },
+  "public/menu-art/lemon-mint-320.webp": {
+    "mtime": 1793902871.137758,
+    "seen": 1793921841.2376285,
+    "ast_hash": "5bd96aadc1f547d1ed6f8b4b4862d340",
+    "semantic_hash": ""
+  },
+  "public/menu-art/lemon-mint-640.webp": {
+    "mtime": 1793902871.230482,
+    "seen": 1793921841.2376292,
+    "ast_hash": "b2fa8a3ab50d3be6fc065a958560272c",
+    "semantic_hash": ""
+  },
+  "public/menu-art/lemon-mint-960.webp": {
+    "mtime": 1793902871.325756,
+    "seen": 1793921841.23763,
+    "ast_hash": "503eb8a97351397650832275f16f101b",
+    "semantic_hash": ""
+  },
+  "public/menu-art/lemon-mint.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.237631,
+    "ast_hash": "dbd4d1845aef1768c99e322ead43b978",
+    "semantic_hash": ""
+  },
+  "public/menu-art/mixed-grill-320.webp": {
+    "mtime": 1793902873.1297374,
+    "seen": 1793921841.237632,
+    "ast_hash": "9b7a67f05d2f1490f0a4406978d5b022",
+    "semantic_hash": ""
+  },
+  "public/menu-art/mixed-grill-640.webp": {
+    "mtime": 1793902873.185737,
+    "seen": 1793921841.2376328,
+    "ast_hash": "669cf9df24f69ab94f9c6760686f81e8",
+    "semantic_hash": ""
+  },
+  "public/menu-art/mixed-grill-960.webp": {
+    "mtime": 1793902873.277736,
+    "seen": 1793921841.2376332,
+    "ast_hash": "a828858b85b2f0ca5fece0a7078dc7df",
+    "semantic_hash": ""
+  },
+  "public/menu-art/mixed-grill.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.237634,
+    "ast_hash": "0306048e411cc682c0e8327b9d4d662b",
+    "semantic_hash": ""
+  },
+  "public/menu-art/moutabal-320.webp": {
+    "mtime": 1793902872.4417446,
+    "seen": 1793921841.2376351,
+    "ast_hash": "06249d1fc8bb5fa266ced85ce86ab036",
+    "semantic_hash": ""
+  },
+  "public/menu-art/moutabal-640.webp": {
+    "mtime": 1793902872.505744,
+    "seen": 1793921841.2376359,
+    "ast_hash": "34c9cbdf597af191891e73e96678bbd5",
+    "semantic_hash": ""
+  },
+  "public/menu-art/moutabal-960.webp": {
+    "mtime": 1793902872.597743,
+    "seen": 1793921841.2376366,
+    "ast_hash": "21e8aeb8291800504b8c273520f52c52",
+    "semantic_hash": ""
+  },
+  "public/menu-art/moutabal.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.2376375,
+    "ast_hash": "a70b25c7cbd2e1da46c2ad9241a6e955",
+    "semantic_hash": ""
+  },
+  "public/menu-art/san-sebastian-cheesecake-320.webp": {
+    "mtime": 1793902871.8777504,
+    "seen": 1793921841.2376387,
+    "ast_hash": "ee527e66ecc5ad4cd83d5b4adce65052",
+    "semantic_hash": ""
+  },
+  "public/menu-art/san-sebastian-cheesecake-640.webp": {
+    "mtime": 1793902871.90575,
+    "seen": 1793921841.2376397,
+    "ast_hash": "340afc9c6b66282b3ffcc8503c804a73",
+    "semantic_hash": ""
+  },
+  "public/menu-art/san-sebastian-cheesecake-960.webp": {
+    "mtime": 1793902871.997749,
+    "seen": 1793921841.2376406,
+    "ast_hash": "2f083d44cd67852ed9e6062bc4ed1d85",
+    "semantic_hash": ""
+  },
+  "public/menu-art/san-sebastian-cheesecake.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.2376418,
+    "ast_hash": "e53a968e180e803344ac8462cfcfa7e7",
+    "semantic_hash": ""
+  },
+  "public/menu-art/saudi-coffee-320.webp": {
+    "mtime": 1793902870.1937678,
+    "seen": 1793921841.2376425,
+    "ast_hash": "918de7b288b50bb41d2dbd445208530c",
+    "semantic_hash": ""
+  },
+  "public/menu-art/saudi-coffee-640.webp": {
+    "mtime": 1793902870.2377672,
+    "seen": 1793921841.2376432,
+    "ast_hash": "c6a9110d0ee4d66dfcf5ee321a1992f4",
+    "semantic_hash": ""
+  },
+  "public/menu-art/saudi-coffee-960.webp": {
+    "mtime": 1793902870.3857658,
+    "seen": 1793921841.237644,
+    "ast_hash": "7fe18ba8a4496ee7fe142e694dffd022",
+    "semantic_hash": ""
+  },
+  "public/menu-art/saudi-coffee.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.237645,
+    "ast_hash": "5e330722599c7d030b7b2d7309f06297",
+    "semantic_hash": ""
+  },
+  "public/menu-art/spanish-latte-320.webp": {
+    "mtime": 1793902870.9257603,
+    "seen": 1793921841.2376459,
+    "ast_hash": "139b4a82232953e57d2b9a5a11e957d9",
+    "semantic_hash": ""
+  },
+  "public/menu-art/spanish-latte-640.webp": {
+    "mtime": 1793902870.9977593,
+    "seen": 1793921841.2376463,
+    "ast_hash": "b3d792527e56d0fa6add518ffb12a835",
+    "semantic_hash": ""
+  },
+  "public/menu-art/spanish-latte-960.webp": {
+    "mtime": 1793902871.1137583,
+    "seen": 1793921841.237647,
+    "ast_hash": "70ad0eeb5f002d70e43079b215f3f301",
+    "semantic_hash": ""
+  },
+  "public/menu-art/spanish-latte.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.237648,
+    "ast_hash": "ce0c62acc8f8317293bcd640071e2077",
+    "semantic_hash": ""
+  },
+  "public/menu-art/tiramisu-320.webp": {
+    "mtime": 1793902872.009749,
+    "seen": 1793921841.2376492,
+    "ast_hash": "fd535de642a394ede4568f9bff3fc1ea",
+    "semantic_hash": ""
+  },
+  "public/menu-art/tiramisu-640.webp": {
+    "mtime": 1793902872.0337489,
+    "seen": 1793921841.23765,
+    "ast_hash": "2af967b6dae1e3d8e8920b206b16821e",
+    "semantic_hash": ""
+  },
+  "public/menu-art/tiramisu-960.webp": {
+    "mtime": 1793902872.1337478,
+    "seen": 1793921841.2376509,
+    "ast_hash": "cdf1e7b862d94ccb1949326765e0dcf2",
+    "semantic_hash": ""
+  },
+  "public/menu-art/tiramisu.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.2376518,
+    "ast_hash": "9ab7a99e32d02e64d608198b4b943cc7",
+    "semantic_hash": ""
+  },
+  "public/menu-art/water-320.webp": {
+    "mtime": 1793902873.9017296,
+    "seen": 1793921841.2376525,
+    "ast_hash": "5abd4f0f75375b5dc139faca00c744d2",
+    "semantic_hash": ""
+  },
+  "public/menu-art/water-640.webp": {
+    "mtime": 1793902873.9297292,
+    "seen": 1793921841.2376533,
+    "ast_hash": "cc38ef73a2cb96438b809f719e3a0e74",
+    "semantic_hash": ""
+  },
+  "public/menu-art/water-960.webp": {
+    "mtime": 1793902874.0137284,
+    "seen": 1793921841.237654,
+    "ast_hash": "979a177dec85d988a52de71fdcadf9b4",
+    "semantic_hash": ""
+  },
+  "public/menu-art/water.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.237655,
+    "ast_hash": "dbb864676211a235f4346b6e50c3a53a",
+    "semantic_hash": ""
+  },
+  "public/menu-art/zaatar-cheese-croissant-320.webp": {
+    "mtime": 1793902871.5857534,
+    "seen": 1793921841.2376559,
+    "ast_hash": "b415512d8c3408fd4a7f1a36ec47807b",
+    "semantic_hash": ""
+  },
+  "public/menu-art/zaatar-cheese-croissant-640.webp": {
+    "mtime": 1793902871.617753,
+    "seen": 1793921841.2376566,
+    "ast_hash": "d4f4e78781df3ecb92ff0a29d12e460d",
+    "semantic_hash": ""
+  },
+  "public/menu-art/zaatar-cheese-croissant-960.webp": {
+    "mtime": 1793902871.6977522,
+    "seen": 1793921841.2376575,
+    "ast_hash": "e69c325baa1479279f889ad49a4fea6b",
+    "semantic_hash": ""
+  },
+  "public/menu-art/zaatar-cheese-croissant.svg": {
+    "mtime": 1793902866.9418008,
+    "seen": 1793921841.2376583,
+    "ast_hash": "37c825a104e95e68141c6133c119f5df",
+    "semantic_hash": ""
+  },
   "package-lock.json": {
-    "mtime": 1793828569.6129498,
-    "seen": 1793894869.791311,
-    "ast_hash": "7ea8890a9952b03ff40948030b1caa20",
+    "mtime": 1793902783.1186593,
+    "seen": 1793921841.2376595,
+    "ast_hash": "c80090be15703e99a12b672b928c674f",
     "semantic_hash": ""
   }
 }

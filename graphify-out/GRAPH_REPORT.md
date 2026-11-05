@@ -1,17 +1,17 @@
 # Graph Report - zimara-menu-refresh  (2026-11-05)
 
 ## Corpus Check
-- 316 files · ~261,127 words
+- 335 files · ~289,969 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 116 file(s) not represented in the graph (top: .ttf 54, .woff2 25, .csv 17)
+- Unclassified: 119 file(s) not represented in the graph (top: .ttf 54, .woff2 27, .csv 17)
 
 ## Summary
-- 3526 nodes · 7016 edges · 217 communities (189 shown, 28 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 162 edges (avg confidence: 0.86)
+- 3675 nodes · 7283 edges · 228 communities (200 shown, 28 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 164 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ed377ba8`
+- Built from commit: `ac3865ce`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -25,7 +25,7 @@
 - common.js
 - test_sync_brand_to_tokens.py
 - api
-- accounts.js
+- mfa.js
 - argparse
 - Tailwind CSS Utility Reference
 - ref_node_fs
@@ -67,13 +67,13 @@
 - Tailwind CSS Customization
 - object
 - spacing
-- bad
+- util.js
 - addons-store.js
 - design-studio.js
 - Routing by Task Type
 - fetch-background.py
 - shadcn/ui Theming & Customization
-- now
+- زيمارا منيو: الملف الرئيسي النهائي (المنافسين، الناقص، الخطة)
 - Asset Organization Guide
 - Primary Color Meanings
 - Core Logo Types
@@ -85,8 +85,8 @@
 - CIP Mockup Prompt Engineering
 - Color Semantics
 - TailwindConfigGenerator
-- money
-- subprocess
+- wait.js
+- addons.js
 - Design Principles
 - Design Principles
 - fontSize
@@ -108,7 +108,7 @@
 - Logo Design Reference
 - Token Architecture
 - design-tokens-starter.json
-- .test_node_check_parses_generated_config
+- logo/core.py
 - mobile.js
 - landing.js
 - app-foundation.test.js
@@ -132,20 +132,21 @@
 - button
 - duration
 - main
-- build-preview.mjs
+- connected.mjs
 - pwa.py
 - qrSvg
 - BM25
 - ZIMARA Menu design context
 - Integration status and runtime contracts
-- studio-extras.js
+- Shared phase-1 interfaces
 - notices.js
 - input
 - Free LLM API Setup
+- .add_colors
 - README.md
 - الامتثال وحدود التنبيه — سجل تنفيذ ومراجعة
 - _this
-- waitlist-board.js
+- search-slides.py
 - Connected visit and subscriber workspace
 - workbench.mjs
 - Slides Reference
@@ -220,24 +221,34 @@
 - billing-launch-operations.md
 - EDITORIAL-ASSETS.md
 - TENANT-STUDIO.md
-- bugs
-- subscriber-recovery.test.js
+- برومبت Codex: نقل ZIMARA Menu لمستوى أعلى من كل المنافسين
+- Brand
 - security-ui.js
 - automation.test.js
 - workspace.mjs
-- ordering.mjs
+- مراجعة شغل Codex على ZIMARA Menu — 5 نوفمبر 2026
+- wallet.js
+- addons.test.js
+- زيمارا منيو — المرحلة الأولى: منيو العميل
+- Customer menu performance — phase 1
+- resilience.mjs
+- security.mjs
+- demo-billing-safety.test.js
+- خطوات Az — المرحلة الأولى
+- createDesignHistory
+- check
 
 ## God Nodes (most connected - your core abstractions)
-1. `esc()` - 150 edges
-2. `api()` - 109 edges
+1. `esc()` - 156 edges
+2. `api()` - 114 edges
 3. `now()` - 89 edges
-4. `bad()` - 75 edges
+4. `bad()` - 80 edges
 5. `HttpError` - 74 edges
 6. `TailwindConfigGenerator` - 60 edges
-7. `pick()` - 56 edges
-8. `announce()` - 51 edges
-9. `notFound()` - 47 edges
-10. `requireRole()` - 46 edges
+7. `pick()` - 60 edges
+8. `announce()` - 52 edges
+9. `notFound()` - 50 edges
+10. `requireRole()` - 48 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Results and errors` --references--> `message()`  [INFERRED]
@@ -254,50 +265,50 @@
 ## Import Cycles
 - None detected.
 
-## Communities (217 total, 28 thin omitted)
+## Communities (228 total, 28 thin omitted)
 
 ### Community 0 - "app.js"
 Cohesion: 0.11
-Nodes (25): admin, aiLimit, app, branch, MAX_ADMINS, MAX_ALERTS, normalLimit, owner (+17 more)
+Nodes (37): admin, aiLimit, app, branch, MAX_ADMINS, MAX_ALERTS, normalLimit, owner (+29 more)
 
 ### Community 1 - "ShadcnInstaller"
 Cohesion: 0.05
 Nodes (3): main(), ShadcnInstaller, TestShadcnInstaller
 
 ### Community 2 - "HttpError"
-Cohesion: 0.10
-Nodes (40): subscriptionCheckoutConfigured(), assertOrgWritable(), subscriptionFor(), bridgeEntitlement(), integrationReadiness(), registerIntegrations(), invoiceProvider, paymentProvider (+32 more)
+Cohesion: 0.09
+Nodes (56): registerAccounts(), assertBillableOrg(), billingConfigured(), http(), isDemoBillingOrg(), moyasar(), PERIOD, priceFor() (+48 more)
 
 ### Community 3 - "bad"
-Cohesion: 0.10
-Nodes (52): RFC-4180, later(), orderButtons(), itemFields(), orgMenu(), branchPublic(), DEFAULT_PROFILE, DEFAULT_SETTINGS (+44 more)
+Cohesion: 0.08
+Nodes (62): RFC-4180, orgMenu(), activeBranch(), branchPublic(), DEFAULT_PROFILE, DEFAULT_SETTINGS, deviceList(), EXPORT_DATASETS (+54 more)
 
 ### Community 4 - "gray"
 Cohesion: 0.05
 Nodes (53): $type, $value, $type, $value, $type, $value, $type, $value (+45 more)
 
 ### Community 5 - "pick"
-Cohesion: 0.07
-Nodes (47): a(), consent(), gtag(), load(), PIXELS, purchaseHooks, renderAddons(), startPixels() (+39 more)
+Cohesion: 0.06
+Nodes (55): a(), consent(), gtag(), load(), PIXELS, purchaseHooks, renderAddons(), startPixels() (+47 more)
 
 ### Community 6 - "common.js"
-Cohesion: 0.09
-Nodes (28): load(), main, t, applyTenantFont(), DICT, lang, makeT(), toggleLang() (+20 more)
+Cohesion: 0.08
+Nodes (40): load(), main, t, applyTenantFont(), DICT, lang, makeT(), setBrandColor() (+32 more)
 
 ### Community 7 - "test_sync_brand_to_tokens.py"
-Cohesion: 0.09
-Nodes (18): _run(), test_creates_default_output_directory_when_missing(), test_dark_base_color_does_not_collapse_shades_to_black(), test_discovered_css_without_tokens_does_not_block_sync(), test_force_allows_sync_with_existing_css_token_source(), test_ignores_commented_root_custom_properties(), test_ignores_custom_properties_outside_root(), test_ignores_external_css_imports() (+10 more)
+Cohesion: 0.07
+Nodes (21): _run(), test_creates_default_output_directory_when_missing(), test_dark_base_color_does_not_collapse_shades_to_black(), test_discovered_css_without_tokens_does_not_block_sync(), test_force_allows_sync_with_existing_css_token_source(), test_ignores_commented_root_custom_properties(), test_ignores_custom_properties_outside_root(), test_ignores_external_css_imports() (+13 more)
 
 ### Community 8 - "api"
-Cohesion: 0.13
-Nodes (39): a(), automationSettings(), statusLabel(), api(), ApiError, A(), accountView(), adminAdmins() (+31 more)
+Cohesion: 0.10
+Nodes (50): a(), automationSettings(), statusLabel(), esc(), A(), accountView(), adminAdmins(), adminOrgs() (+42 more)
 
-### Community 9 - "accounts.js"
-Cohesion: 0.16
-Nodes (36): registerAccounts(), createSession(), deviceLabel(), hashPassword(), sessionCookie(), validPassword(), body(), isSecure() (+28 more)
+### Community 9 - "mfa.js"
+Cohesion: 0.39
+Nodes (8): consumeMfa(), decode32(), enc, encryptionKey(), openSecret(), sealSecret(), totp(), verifyTotp()
 
 ### Community 10 - "argparse"
-Cohesion: 0.12
+Cohesion: 0.13
 Nodes (11): _e(), generate_chart_slide(), generate_cta_slide(), generate_deck(), generate_metrics_slide(), generate_problem_slide(), generate_solution_slide(), generate_testimonial_slide() (+3 more)
 
 ### Community 11 - "Tailwind CSS Utility Reference"
@@ -305,20 +316,20 @@ Cohesion: 0.05
 Nodes (43): Arbitrary Values, Aspect Ratio, Background Colors, Border Color, Border Radius, Border Style, Border Width, Borders (+35 more)
 
 ### Community 12 - "ref_node_fs"
-Cohesion: 0.04
-Nodes (19): playwright, checks, errors, checks, errors, errors, failures, checks (+11 more)
+Cohesion: 0.05
+Nodes (17): playwright, checks, errors, checks, errors, errors, errors, failures (+9 more)
 
 ### Community 13 - "ref_node_assert"
-Cohesion: 0.07
-Nodes (32): AI_DAILY_LIMIT, REALERT_EVERY_MS, root, PRESETS, TG, gateway, invoicing, pendingCheckout() (+24 more)
+Cohesion: 0.08
+Nodes (29): AI_DAILY_LIMIT, REALERT_EVERY_MS, FONTS_AR, PRESETS, SECTORS, gateway, invoicing, pendingCheckout() (+21 more)
 
 ### Community 14 - "scripts"
-Cohesion: 0.08
-Nodes (26): scripts, admin:create, build, build:preview, db:migrate:local, deploy, dev, test (+18 more)
+Cohesion: 0.07
+Nodes (29): scripts, admin:create, build, build:preview, db:migrate:local, deploy, dev, test (+21 more)
 
 ### Community 15 - "announce"
-Cohesion: 0.14
-Nodes (44): a(), branchSettingsEditor(), dayNames, a(), branchesView(), renderBranch(), updateSummary(), error() (+36 more)
+Cohesion: 0.13
+Nodes (49): a(), branchSettingsEditor(), dayNames, a(), branchesView(), renderBranch(), updateSummary(), error() (+41 more)
 
 ### Community 16 - "Brand Guidelines v1.0"
 Cohesion: 0.05
@@ -337,12 +348,12 @@ Cohesion: 0.06
 Nodes (35): 1. Visual Communication First, 2. Minimal Text Integration, 3. Expert Craftsmanship, 4. Systematic Patterns, Analog Meditation, Approach, Canvas Boundaries, Canvas Design System (+27 more)
 
 ### Community 20 - "slide_search_core.py"
-Cohesion: 0.10
-Nodes (16): format_context(), format_result(), main(), calculate_pattern_break(), detect_domain(), get_background_config(), get_color_for_emotion(), get_layout_for_goal() (+8 more)
+Cohesion: 0.16
+Nodes (9): calculate_pattern_break(), detect_domain(), get_background_config(), get_color_for_emotion(), get_layout_for_goal(), get_typography_for_slide(), _load_decision_csv(), search_with_context() (+1 more)
 
 ### Community 21 - "requireRole"
-Cohesion: 0.16
-Nodes (19): aiConfigured(), contentFor(), decodeBase64(), IMAGE_TYPES, KINDS, MENU_SCHEMA, pageText(), registerAiImport() (+11 more)
+Cohesion: 0.11
+Nodes (36): expireSubscriptions(), aiConfigured(), contentFor(), decodeBase64(), IMAGE_TYPES, KINDS, MENU_SCHEMA, pageText() (+28 more)
 
 ### Community 22 - "Form & Input Components"
 Cohesion: 0.06
@@ -365,16 +376,16 @@ Cohesion: 0.12
 Nodes (12): get_context(), is_allowed_exception(), is_allowed_rgba(), is_inside_block(), load_css_variables(), main(), print_result(), print_summary() (+4 more)
 
 ### Community 27 - "build-preview.mjs"
-Cohesion: 0.11
-Nodes (9): args, dir, email, file, q(), remote, backupArgs(), checkHealth() (+1 more)
+Cohesion: 0.07
+Nodes (22): args, dir, email, file, q(), remote, assets, collect() (+14 more)
 
 ### Community 28 - "Logo Usage Rules"
 Cohesion: 0.07
 Nodes (28): Absolute Don'ts, Approved Backgrounds, Before Using Logo, Clear Space, Co-branding, Color Rules, Color Usage, Color Variants (+20 more)
 
 ### Community 29 - "cip/core.py"
-Cohesion: 0.10
-Nodes (11): detect_domain(), get_cip_brief(), _load_csv(), search(), search_all(), _search_csv(), detect_domain(), _load_csv() (+3 more)
+Cohesion: 0.17
+Nodes (6): detect_domain(), get_cip_brief(), _load_csv(), search(), search_all(), _search_csv()
 
 ### Community 30 - "Component Specifications"
 Cohesion: 0.07
@@ -385,16 +396,16 @@ Cohesion: 0.07
 Nodes (28): Accordion, Alert, ARIA Labels, Checkbox and Radio, Color Contrast, Command Palette Navigation, Component-Specific Patterns, Dialog/Modal Navigation (+20 more)
 
 ### Community 32 - "money"
-Cohesion: 0.22
-Nodes (17): money(), a(), orderDetails(), orderInbox(), act(), refresh(), render(), state() (+9 more)
+Cohesion: 0.18
+Nodes (22): money(), a(), operationsBoard(), status(), a(), orderDetails(), orderInbox(), act() (+14 more)
 
 ### Community 33 - "api"
-Cohesion: 0.40
-Nodes (16): esc(), requestValue(), a(), adminLegalView(), billingProfilePanel(), dataControlsView(), date(), devicesView() (+8 more)
+Cohesion: 0.20
+Nodes (24): api(), ApiError, requestValue(), a(), adminLegalView(), billingProfilePanel(), dataControlsView(), date() (+16 more)
 
 ### Community 34 - "waitlist.js"
-Cohesion: 0.11
-Nodes (31): RFC-8291, RFC-8292, alertTicket(), cardView(), publicTicket(), customers(), deliver(), messageFields() (+23 more)
+Cohesion: 0.14
+Nodes (24): RFC-8291, RFC-8292, alertTicket(), cardView(), publicTicket(), PUSH_HOSTS, pushConfigured(), sendPush() (+16 more)
 
 ### Community 35 - "Asset Approval Checklist"
 Cohesion: 0.08
@@ -421,8 +432,8 @@ Cohesion: 0.08
 Nodes (24): Accessibility, Accessibility Requirements, ARIA States, Color Contrast, Color Variants, Disabled States, Error Messages, Error States (+16 more)
 
 ### Community 41 - "design.js"
-Cohesion: 0.10
-Nodes (30): BASE_RECIPE, best(), clone(), COLOR_KEYS, contrast(), derived(), E, fixContrast() (+22 more)
+Cohesion: 0.11
+Nodes (33): activeDesign(), BASE_RECIPE, best(), clone(), COLOR_KEYS, contrast(), derived(), E (+25 more)
 
 ### Community 42 - "Agent Reach"
 Cohesion: 0.08
@@ -456,17 +467,17 @@ Nodes (6): AtlasGenerationTests, ExitStatusTests, _fake_genai(), GeminiImageType
 Cohesion: 0.09
 Nodes (22): $type, $value, $type, $value, $type, $value, $type, $value (+14 more)
 
-### Community 51 - "bad"
-Cohesion: 0.07
-Nodes (53): ADDONS, DEFAULT_FIELDS, ensureWebhook(), EVENTS, handleOrderButton(), handleUpdate(), normalizeFormat(), notifyTelegram() (+45 more)
+### Community 51 - "util.js"
+Cohesion: 0.11
+Nodes (30): cardByCode(), ticketByToken(), uniqueToConflict(), assertPlan(), cf(), customHostRedirect(), domainsConfigured(), normalizeHostname() (+22 more)
 
 ### Community 52 - "addons-store.js"
 Cohesion: 0.22
 Nodes (20): a(), addonsView(), card(), DEFAULT_FIELDS, ERR, errText(), faqRow(), field() (+12 more)
 
 ### Community 53 - "design-studio.js"
-Cohesion: 0.08
-Nodes (51): Brand, Brand Sync Workflow, Quick Start, References, Routing, Script Paths, Scripts, Subcommands (+43 more)
+Cohesion: 0.11
+Nodes (41): Subcommands, a(), CAT, COLORS, day(), designStudio(), change(), clearPreview() (+33 more)
 
 ### Community 54 - "Routing by Task Type"
 Cohesion: 0.10
@@ -480,9 +491,9 @@ Nodes (9): generate_css_for_background(), get_background_image(), get_curated_im
 Cohesion: 0.10
 Nodes (19): Base Color Presets, Best Practices, Color Customization, Color Format, Component Customization, CSS Variable System, Customize Styles, Customize Variants (+11 more)
 
-### Community 57 - "now"
-Cohesion: 0.16
-Nodes (27): expireSubscriptions(), scheduled(), automationCron(), automationReadiness(), registerAutomation(), STATUSES, ticketAutomationStatement(), assertBillableOrg() (+19 more)
+### Community 57 - "زيمارا منيو: الملف الرئيسي النهائي (المنافسين، الناقص، الخطة)"
+Cohesion: 0.05
+Nodes (39): 0) القرار الأساسي: زيمارا = موقع + تطبيق آيفون + تطبيق أندرويد, 10) "اشترك عند الصح": تجربة المشترك من أول دقيقة, 11) التسويق (ملخص), 12) سجل المنافسين المدروسين, 1) كل المنافسين ووش عندهم (9 منافسين سعوديين وعرب + 8 عالميين في القسم 3.ك), 2) وش عندنا الحين (بعد آخر تحديثين), 3) وش ناقص زيمارا منيو (القائمة الكاملة), 4) 100 تصميم + المشترك يصمم كل شي بنفسه (+31 more)
 
 ### Community 58 - "Asset Organization Guide"
 Cohesion: 0.11
@@ -497,7 +508,7 @@ Cohesion: 0.11
 Nodes (18): 1. Wordmark (Logotype), 2. Lettermark (Monogram), 3. Pictorial Mark (Brand Mark), 4. Abstract Mark, 5. Mascot, 6. Emblem, 7. Combination Mark, Aesthetic Styles (+10 more)
 
 ### Community 61 - "cip/generate.py"
-Cohesion: 0.19
+Cohesion: 0.18
 Nodes (7): build_cip_prompt(), check_logo_required(), generate_cip_set(), generate_with_nano_banana(), load_env(), load_logo_image(), main()
 
 ### Community 62 - "color"
@@ -505,8 +516,8 @@ Cohesion: 0.11
 Nodes (19): $type, $value, background, foreground, muted-foreground, primary, primary-hover, secondary (+11 more)
 
 ### Community 63 - "magic-start.js"
-Cohesion: 0.25
-Nodes (18): miniCard(), a(), aiImportPanel(), render(), review(), run(), ERR, errText() (+10 more)
+Cohesion: 0.15
+Nodes (24): ownerOverview(), tabs(), miniCard(), a(), aiImportPanel(), render(), review(), run() (+16 more)
 
 ### Community 64 - "3. Logo Usage"
 Cohesion: 0.11
@@ -524,13 +535,13 @@ Nodes (17): Apparel (Polo/T-Shirt), Base Prompt Structure, Business Card, CIP Mo
 Cohesion: 0.11
 Nodes (17): Accent, Applying Semantic Tokens, Background & Foreground, Border & Ring, Color Semantics, Dark Mode Overrides, Destructive, Interactive States (+9 more)
 
-### Community 69 - "money"
-Cohesion: 0.11
-Nodes (38): chime(), setBrandColor(), unlockAudio(), branchDisplay(), refresh(), a(), known, main (+30 more)
+### Community 69 - "wait.js"
+Cohesion: 0.26
+Nodes (16): a(), act(), enableAlerts(), ERR, errText(), joinPage(), keepAwake(), [, kind, key] (+8 more)
 
-### Community 70 - "subprocess"
-Cohesion: 0.14
-Nodes (4): main(), _run(), test_flags_hardcoded_hex_sharing_line_with_token(), test_token_only_line_reports_no_violation()
+### Community 70 - "addons.js"
+Cohesion: 0.12
+Nodes (29): ADDONS, DEFAULT_FIELDS, ensureWebhook(), EVENTS, handleOrderButton(), handleUpdate(), later(), normalizeFormat() (+21 more)
 
 ### Community 71 - "Design Principles"
 Cohesion: 0.12
@@ -569,8 +580,8 @@ Cohesion: 0.13
 Nodes (14): AIDA (Attention-Interest-Desire-Action), Before-After-Bridge, Contrast Patterns, Copywriting Formulas, Core Formulas, Cost of Inaction, FAB (Features-Advantages-Benefits), Formula-to-Slide Mapping (+6 more)
 
 ### Community 81 - "util.js"
-Cohesion: 0.14
-Nodes (16): assertPlanQuota(), planFor(), DEFAULT_THEME, CAFE, RESTAURANT, sampleItemCount(), sampleMenu(), sampleMenuStatements() (+8 more)
+Cohesion: 0.18
+Nodes (13): Original sample menu artwork, ART, CAFE, RESTAURANT, sampleItemCount(), sampleItemMedia(), sampleMenu(), sampleMenuStatements() (+5 more)
 
 ### Community 82 - "Banner Design - Multi-Format Creative Banner System"
 Cohesion: 0.14
@@ -616,6 +627,10 @@ Nodes (12): Categories, Dark Mode, File Organization, Layer 1: Primitive Tokens,
 Cohesion: 0.15
 Nodes (12): component, $type, $value, dark, semantic, $schema, $type, $value (+4 more)
 
+### Community 93 - "logo/core.py"
+Cohesion: 0.21
+Nodes (5): detect_domain(), _load_csv(), search(), search_all(), _search_csv()
+
 ### Community 94 - "mobile.js"
 Cohesion: 0.17
 Nodes (12): mobileReadiness(), readMobileEnvironment(), guide, install, notifications, offline, panel, render() (+4 more)
@@ -629,8 +644,8 @@ Cohesion: 0.16
 Nodes (6): BranchHub, b64(), cbor(), makeEnvNoHub(), sha256(), softKey()
 
 ### Community 97 - "pick"
-Cohesion: 0.19
-Nodes (19): pick(), a(), ICONS, main, openNow(), renderWebsite(), slug, statusPill() (+11 more)
+Cohesion: 0.13
+Nodes (26): pick(), a(), couponsView(), ERR, halalas(), orderingPanel(), sar(), TYPES (+18 more)
 
 ### Community 98 - "Primitive Tokens"
 Cohesion: 0.17
@@ -661,16 +676,16 @@ Cohesion: 0.31
 Nodes (10): extractColorsFromTable(), extractCoreAttributes(), extractHexColors(), extractImageStyle(), extractTypography(), extractVoice(), fs, generatePromptAddition() (+2 more)
 
 ### Community 105 - "package.json"
-Cohesion: 0.18
-Nodes (13): dependencies, @anthropic-ai/sdk@^1.4.0, hono@^4.13.14, @simplewebauthn/server@14.0.3, description, homepage, name, private (+5 more)
+Cohesion: 0.13
+Nodes (17): bugs, url, dependencies, @anthropic-ai/sdk@^1.4.0, hono@^4.13.14, @simplewebauthn/server@14.0.3, description, engines (+9 more)
 
 ### Community 106 - "CIP Design Style Guide"
 Cohesion: 0.18
 Nodes (10): Bold Dynamic, CIP Design Style Guide, Classic Traditional, Color Psychology, Corporate Minimal, Fresh Modern, Luxury Premium, Modern Tech (+2 more)
 
 ### Community 107 - "pathlib"
-Cohesion: 0.08
-Nodes (10): generate_html(), get_deliverable_info(), get_image_base64(), main(), format_brief(), format_results(), main(), format_output() (+2 more)
+Cohesion: 0.07
+Nodes (11): generate_html(), get_deliverable_info(), get_image_base64(), main(), format_brief(), format_results(), main(), format_output() (+3 more)
 
 ### Community 108 - "Provider APIs - Setup Guides"
 Cohesion: 0.18
@@ -685,7 +700,7 @@ Cohesion: 0.20
 Nodes (9): Common Structures, Duarte Sparkline Pattern, Matching Strategy to Context, Product Demo (6 slides), Sales Pitch (9 slides), Search Commands, Slide Strategies, Strategy Selection (+1 more)
 
 ### Community 112 - "test_cip_generate.py"
-Cohesion: 0.10
+Cohesion: 0.11
 Nodes (14): GeminiModelIdTests, _load_module(), cip(), _Config, _image_response(), load_cip(), _run_main(), test_main_exits_0_when_part_of_a_set_is_generated() (+6 more)
 
 ### Community 113 - "Component Tokens"
@@ -704,13 +719,17 @@ Nodes (10): fg, font-size, hover-bg, button, $type, $value, $type, $value (+2 mo
 Cohesion: 0.20
 Nodes (10): fast, normal, slow, $type, $value, $type, $value, duration (+2 more)
 
-### Community 119 - "build-preview.mjs"
-Cohesion: 0.08
-Nodes (16): assets, collect(), esbuild, manifest, MIME, outDir, publicDir, root (+8 more)
+### Community 119 - "connected.mjs"
+Cohesion: 0.22
+Nodes (4): checks, errors, launch, require
 
 ### Community 121 - "qrSvg"
-Cohesion: 0.15
-Nodes (20): qrSvg(), relTime(), ownerOverview(), qrBlock(), tabs(), show(), a(), ERR (+12 more)
+Cohesion: 0.22
+Nodes (16): chime(), qrSvg(), relTime(), branchDisplay(), refresh(), qrBlock(), a(), ERR (+8 more)
+
+### Community 122 - "BM25"
+Cohesion: 0.18
+Nodes (3): BM25, _load_csv(), _search_csv()
 
 ### Community 124 - "ZIMARA Menu design context"
 Cohesion: 0.15
@@ -720,13 +739,13 @@ Nodes (12): Agency workspace revision (2026-11-05), Canonical owners, Connected 
 Cohesion: 0.22
 Nodes (9): Before enabling a vendor integration, Current status, Enable explicitly, Generic POS bridge v1, Integration status and runtime contracts, Payment and invoice rules, Rewaa polling safeguards and acceptance, Send events (+1 more)
 
-### Community 126 - "studio-extras.js"
-Cohesion: 0.47
-Nodes (8): a(), card(), domainView(), fail(), PURPOSE, sectorName(), STATUS, templatesView()
+### Community 126 - "Shared phase-1 interfaces"
+Cohesion: 0.15
+Nodes (12): Customer Menu — Next Level Implementation Plan, Global Constraints, Pre-flight rulings, Review Focus, Review mapping and phase gates, Shared phase-1 interfaces, Task1: truthful public discovery and owner data contract, Task2: compact customer browsing and product detail (+4 more)
 
 ### Community 127 - "notices.js"
-Cohesion: 0.30
-Nodes (13): esc(), http(), mailConfigured(), send(), base(), NAMES, once(), owners() (+5 more)
+Cohesion: 0.20
+Nodes (21): notifyTelegram(), hashPassword(), validPassword(), consume(), esc(), http(), issue(), mailConfigured() (+13 more)
 
 ### Community 128 - "input"
 Cohesion: 0.29
@@ -744,17 +763,17 @@ Nodes (3): Inputs and resolved scope, Preserved behavior and remaining decisions
 Cohesion: 0.29
 Nodes (7): Apple وGoogle عند إصدار التطبيق لاحقًا, الامتثال وحدود التنبيه — سجل تنفيذ ومراجعة, السعودية: مصفوفة المسؤوليات قبل التشغيل التجاري, دليل المصادر المفتوحة في هذا الفحص, قبول الإطلاق, ما صححناه في المرفقات, مصفوفة قنوات التنبيه
 
-### Community 135 - "waitlist-board.js"
-Cohesion: 0.29
-Nodes (11): a(), operationsBoard(), status(), connect(), onLive(), startLive(), a(), printQr() (+3 more)
+### Community 135 - "search-slides.py"
+Cohesion: 0.24
+Nodes (5): format_context(), format_result(), main(), search(), search_all()
 
 ### Community 136 - "Connected visit and subscriber workspace"
 Cohesion: 0.25
 Nodes (7): Connected visit and subscriber workspace, Installation prerequisite, Result, Review deployment and rollback, Screenshots, Static audit qualification, Verification
 
 ### Community 137 - "workbench.mjs"
-Cohesion: 0.29
-Nodes (3): checks, errors, frame
+Cohesion: 0.20
+Nodes (5): errors, checks, data(), errors, frame
 
 ### Community 138 - "Slides Reference"
 Cohesion: 0.29
@@ -985,8 +1004,8 @@ Cohesion: 0.33
 Nodes (5): Reproduced failures fixed, Review and rollback, Subscriber workbench and functional recovery, Verification, What changed
 
 ### Community 203 - "devDependencies"
-Cohesion: 0.33
-Nodes (6): devDependencies, playwright@^1.64.1, qrcode-generator@^1.4.4, wrangler@^4.156.0, qrcode-generator, wrangler
+Cohesion: 0.25
+Nodes (8): devDependencies, lighthouse@13.0.3, playwright@^1.64.1, qrcode-generator@^1.4.4, wrangler@^4.156.0, lighthouse, qrcode-generator, wrangler
 
 ### Community 204 - "Merchant experience redesign"
 Cohesion: 0.40
@@ -1000,6 +1019,14 @@ Nodes (4): Mobile foundation — 5 November 2026, Native implementation boundary
 Cohesion: 0.67
 Nodes (3): repository, type, url
 
+### Community 210 - "برومبت Codex: نقل ZIMARA Menu لمستوى أعلى من كل المنافسين"
+Cohesion: 0.18
+Nodes (10): 0. قواعد ثابتة, التسليم في آخر كل مرحلة, المرحلة 1 — صفحة منيو العميل (الأولوية القصوى), المرحلة 2 — الاستوديو: تعديل مباشر على المعاينة, المرحلة 3 — الثيمات الموسمية والتقويم الهجري, المرحلة 4 — دومين المشترك + SEO, المرحلة 5 — تقرير القيمة للمشترك ("زيمارا جاب لك كذا"), المرحلة 6 — الطاولة: حجز، دفع، تقسيم، إكرامية (+2 more)
+
+### Community 212 - "Brand"
+Cohesion: 0.20
+Nodes (9): Brand, Brand Sync Workflow, Quick Start, References, Routing, Script Paths, Scripts, Templates (+1 more)
+
 ### Community 213 - "security-ui.js"
 Cohesion: 0.44
 Nodes (8): a(), createCredential(), getCredential(), passkeyLogin(), passkeysSupported(), securityPanel(), toB64(), toBuf()
@@ -1012,25 +1039,53 @@ Nodes (5): configured, enqueueAutomation(), event, fixture(), createD1()
 Cohesion: 0.25
 Nodes (3): checks, errors, launch
 
+### Community 216 - "مراجعة شغل Codex على ZIMARA Menu — 5 نوفمبر 2026"
+Cohesion: 0.22
+Nodes (8): 1) وش أضاف Codex (بالترتيب), 2) الزين, 3) اللي شفته بعيني ويحتاج تعديل (مقارنة بالمنافسين), 4) رأيي, الاستوديو, صفحة منيو العميل (أهم صفحة، وهي أضعف شي الحين), مراجعة شغل Codex على ZIMARA Menu — 5 نوفمبر 2026, ميزات في خطتنا وما انبنت للحين
+
+### Community 217 - "wallet.js"
+Cohesion: 0.39
+Nodes (7): encoder, googlePagerObject(), originFor(), required(), signGoogleSaveJwt(), config, ticket
+
+### Community 218 - "addons.test.js"
+Cohesion: 0.25
+Nodes (3): root, TG, CF
+
+### Community 219 - "زيمارا منيو — المرحلة الأولى: منيو العميل"
+Cohesion: 0.29
+Nodes (6): الإطلاق والرجوع, الاختبارات والمراجعة, المتبقي من الملاحظات الأربع عشرة, زيمارا منيو — المرحلة الأولى: منيو العميل, قبل وبعد, ما تغيّر
+
+### Community 220 - "Customer menu performance — phase 1"
+Cohesion: 0.29
+Nodes (6): Actual measurements, Customer menu performance — phase 1, Final-head diagnostic follow-up, Font build provenance, Reproduction and accounting, Visual and competitor evidence
+
+### Community 221 - "resilience.mjs"
+Cohesion: 0.29
+Nodes (3): checks, errors, options
+
+### Community 224 - "demo-billing-safety.test.js"
+Cohesion: 0.50
+Nodes (3): billingProfile, configured, demoOwner()
+
 ## Knowledge Gaps
 - **6 isolated node(s):** `npx`, `@21st-dev/magic`, `API_KEY`, `RFC-4180`, `RFC-8291` (+1 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1830 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1921 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **28 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `esc()` connect `api` to `money`, `pick`, `pick`, `common.js`, `money`, `api`, `waitlist-board.js`, `announce`, `addons-store.js`, `design-studio.js`, `security-ui.js`, `qrSvg`, `studio-extras.js`, `magic-start.js`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+- **Why does `esc()` connect `api` to `money`, `api`, `pick`, `pick`, `common.js`, `wait.js`, `announce`, `addons-store.js`, `design-studio.js`, `security-ui.js`, `qrSvg`, `magic-start.js`?**
+  _High betweenness centrality (0.040) - this node is a cross-community bridge._
 - **What connects `npx`, `@21st-dev/magic`, `API_KEY` to the rest of the system?**
   _6 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `app.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.10574712643678161 - nodes in this community are weakly interconnected._
-- **Why does `key()` connect `money` to `ref_node_assert`, `workspace.mjs`?**
-  _High betweenness centrality (0.037) - this node is a cross-community bridge._
+  _Cohesion score 0.10852713178294573 - nodes in this community are weakly interconnected._
+- **Why does `key()` connect `wait.js` to `ref_node_assert`, `workspace.mjs`?**
+  _High betweenness centrality (0.034) - this node is a cross-community bridge._
 - **Should `ShadcnInstaller` be split into smaller, more focused modules?**
   _Cohesion score 0.053555750658472345 - nodes in this community are weakly interconnected._
-- **Why does `joinPage()` connect `money` to `api`, `api`?**
-  _High betweenness centrality (0.029) - this node is a cross-community bridge._
+- **Why does `joinPage()` connect `wait.js` to `api`, `api`, `common.js`?**
+  _High betweenness centrality (0.026) - this node is a cross-community bridge._
 - **Should `HttpError` be split into smaller, more focused modules?**
-  _Cohesion score 0.10412299091544375 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09076682316118936 - nodes in this community are weakly interconnected._
