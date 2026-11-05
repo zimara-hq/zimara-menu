@@ -20,6 +20,13 @@ try{
  await owner.getByRole('heading',{name:'مركز التشغيل',exact:true}).waitFor();
  await owner.screenshot({path:out+'/launch-centre.png'});
  pass('owner sees actual setup and provider states without platform-admin data');
+ await owner.locator('[data-k=subscription]').click();
+ await owner.getByText('تجربة بدون دفع',{exact:true}).waitFor();
+ assert.equal(await owner.locator('[data-pay]').count(),0);
+ assert.equal((await owner.request.post(base+'/api/owner/billing/checkout',{data:{plan:'basic',cycle:'monthly'}})).status(),403);
+ pass('demo rooms cannot offer or create a commercial payment');
+ await owner.locator('[data-k=launch]').click();
+ await owner.getByRole('heading',{name:'مركز التشغيل',exact:true}).waitFor();
  await owner.setViewportSize({width:390,height:844});
  assert.ok(await owner.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
  pass('launch centre fits 390px without horizontal overflow');

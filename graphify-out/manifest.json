@@ -270,9 +270,9 @@
     "semantic_hash": ""
   },
   "public/dashboard-panels.js": {
-    "mtime": 1793894591.5095494,
-    "seen": 1793894869.790655,
-    "ast_hash": "d97a7438a7bd70f2cadae797c14d975e",
+    "mtime": 1793896797.8235755,
+    "seen": 1793896998.6919253,
+    "ast_hash": "2d5ee1b9a437e0bb836e72a87f889bc0",
     "semantic_hash": ""
   },
   "public/dashboard.js": {
@@ -474,9 +474,9 @@
     "semantic_hash": ""
   },
   "src/accounts.js": {
-    "mtime": 1793828569.6452575,
-    "seen": 1793894869.7907026,
-    "ast_hash": "6a835dd5256bcddfdf64c0257a74c3ad",
+    "mtime": 1793896829.2923398,
+    "seen": 1793896998.6934795,
+    "ast_hash": "6c0ba67750daf24b1e62a3a18f752e95",
     "semantic_hash": ""
   },
   "src/addons.js": {
@@ -504,9 +504,9 @@
     "semantic_hash": ""
   },
   "src/billing.js": {
-    "mtime": 1793894468.4951222,
-    "seen": 1793894869.7907085,
-    "ast_hash": "2c4de1d40280606b95b3620c6cffb93c",
+    "mtime": 1793896843.82687,
+    "seen": 1793896998.6937733,
+    "ast_hash": "7f19e92671a6dd054cf995b2b50be5b5",
     "semantic_hash": ""
   },
   "src/context.js": {
@@ -1956,9 +1956,9 @@
     "semantic_hash": ""
   },
   "test/e2e/launch.mjs": {
-    "mtime": 1793894818.7321413,
-    "seen": 1793894869.7911096,
-    "ast_hash": "8d5a6bda4e3dd824bd37903bc9324327",
+    "mtime": 1793896815.6542923,
+    "seen": 1793896998.6963394,
+    "ast_hash": "baa89d330beaab280c179013d10a4a61",
     "semantic_hash": ""
   },
   "test/e2e/magic-color-regression.mjs": {
@@ -2187,6 +2187,12 @@
     "mtime": 1793896287.5412633,
     "seen": 1793896375.1014223,
     "ast_hash": "294de48ba433d28773f13c5e3b806a60",
+    "semantic_hash": ""
+  },
+  "test/demo-billing-safety.test.js": {
+    "mtime": 1793896884.6430175,
+    "seen": 1793896998.695696,
+    "ast_hash": "3cc1fbc752be17105fafe3501e4799d0",
     "semantic_hash": ""
   },
   "package-lock.json": {
