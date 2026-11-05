@@ -53,6 +53,11 @@ export function requireRole(...roles) {
       (c.req.method === 'GET' && ['/api/owner/data/export', '/api/owner/data/deletion-request'].includes(c.req.path)) ||
       (c.req.method === 'POST' && (c.req.path === '/api/owner/data/deletion-request' || /^\/api\/owner\/data\/deletion-request\/[0-9a-f-]{36}\/cancel$/.test(c.req.path)))
     );
+    // Recovery only bypasses subscription write-locks; org/branch and role checks still apply.
+    const billingRecovery = user.role === 'owner' && (
+      (c.req.method === 'POST' && ['/api/owner/billing/checkout', '/api/owner/billing/sync'].includes(c.req.path)) ||
+      (c.req.method === 'PUT' && c.req.path === '/api/owner/billing-profile')
+    );
     if (user.org_id && !dataRight) {
       const org = await c.env.DB.prepare('SELECT active FROM orgs WHERE id = ?').bind(user.org_id).first();
       if (!org?.active) throw forbidden('organization_suspended');
@@ -60,7 +65,7 @@ export function requireRole(...roles) {
         const branch = await c.env.DB.prepare('SELECT active FROM branches WHERE id = ? AND org_id = ?').bind(user.branch_id, user.org_id).first();
         if (!branch?.active) throw forbidden('branch_suspended');
       }
-      if (!['GET', 'HEAD'].includes(c.req.method) && !c.req.path.endsWith('/subscription/cancel') && !c.req.path.startsWith('/api/me/')) await assertOrgWritable(c.env, user);
+      if (!billingRecovery && !['GET', 'HEAD'].includes(c.req.method) && !c.req.path.endsWith('/subscription/cancel') && !c.req.path.startsWith('/api/me/')) await assertOrgWritable(c.env, user);
     }
     if (user.role === 'admin' && adminMfaRequired(c.env) && !c.req.path.startsWith('/api/me')) {
       // A passkey sign-in is phishing-resistant and verified on the device, so it counts as MFA.

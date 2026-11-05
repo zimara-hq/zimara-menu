@@ -2,7 +2,9 @@
 // preview, draft and publish, saved versions and scheduled seasonal designs.
 import { api, esc, lang, pick } from './common.js';
 import {watchForm,markFormDirty,markFormSaved,setFormBusy,confirmAction} from './forms.js';
-import {websiteEditor,menuPageEditor,COMPOSITION_LABELS} from './website-editor.js';
+import {websiteEditor,menuPageEditor,COMPOSITION_LABELS,BLOCK_TYPES} from './website-editor.js';
+import {createDesignHistory} from './studio-history.js';
+import {mountWorkbench} from './studio-workbench.js';
 const a = (ar, en) => (lang === 'ar' ? ar : en);
 
 const SECTOR = { all: ['الكل', 'All'], cafe: ['مقاهي', 'Cafés'], roastery: ['محامص', 'Roasteries'], restaurant: ['مطاعم', 'Restaurants'], burger: ['برجر وسريع', 'Burgers'], oriental: ['شعبي وشرقي', 'Arabic'], bakery: ['مخابز وحلويات', 'Bakeries'], juice: ['عصائر', 'Juice'], clinic: ['عيادات', 'Clinics'], salon: ['صالونات', 'Salons'], laundry: ['مغاسل وخدمات', 'Services'], seasonal: ['مواسم', 'Seasons'] };
@@ -34,30 +36,33 @@ const hijri = (ms) => { try { return new Intl.DateTimeFormat('ar-SA-u-ca-islamic
 const day = (ms) => new Date(ms).toISOString().slice(0, 10);
 
 export async function designStudio(el, me) {
-  const [d, br] = await Promise.all([api('/api/owner/design'), api('/api/owner/branches').catch(() => ({ branches: [] }))]);
+  const [d, br] = await Promise.all([api('/api/owner/design'), api('/api/owner/branches')]);
   const slug = br.branches?.[0]?.slug;
   const initialHome=Boolean(d.published?.home?.enabled);
   const previewUrl=initialHome?`/p/${encodeURIComponent(me?.org?.slug||'')}?design_preview=1`:(slug?`/m/${encodeURIComponent(slug)}?design_preview=1`:`/p/${encodeURIComponent(me?.org?.slug||'')}?design_preview=1`);
-  let recipe = strip(d.draft), tab = 'presets', sector = 'all', query = '', saveTimer = null, dirty = d.has_unpublished, revision=d.revision, pendingSave=null,editVersion=0,lastSaved=JSON.stringify(strip(d.draft)),failedSave=false;
-  let previewPage=initialHome?'home':'menu',previewWidth=matchMedia('(max-width:1000px)').matches?390:1160;
+  const requested=new URLSearchParams(location.search).get('studio'),initialTab=({identity:'custom',home:'home',menu:'menu',templates:'presets'})[requested]||(initialHome?'home':'presets');
+  let recipe = strip(d.draft), tab = initialTab, sector = 'all', query = '', saveTimer = null, dirty = d.has_unpublished, revision=d.revision, pendingSave=null,editVersion=0,lastSaved=d.owns_appearance?JSON.stringify(strip(d.draft)):null,failedSave=false;
+  const history=createDesignHistory();let historySnapshot=structuredClone(recipe),selectedBlock=recipe.home.blocks[0]?.id||'footer',websiteApi=null,workbench=null,previewPresetId=null,adoptingPreview=false,publishing=false;
+  let previewPage=initialHome?'home':'menu',previewWidth=matchMedia('(max-width:600px)').matches?390:matchMedia('(max-width:1000px)').matches?768:1160;
 
-  el.innerHTML = `<div class="section-intro"><span class="eyebrow">${a('استوديو التصميم', 'DESIGN STUDIO')}</span><h2>${a('صمّم تجربة تشبهك.','Design an experience that feels like you.')}</h2><p>${a('ابنِ الرئيسية والمنيو بنفسك. 100 تركيبة تخطيط من عشرة هياكل وواجهات مختلفة، مع محتواك وخطوطك. التعديل مسودة حتى تنشره.','Build your homepage and menu. 100 structural combinations across ten site frames and hero compositions. Your content and typography remain yours; edits stay private until published.')}</p></div>
+  el.innerHTML = `<div class="section-intro"><span class="eyebrow">${a('استوديو التصميم', 'DESIGN STUDIO')}</span><h1>${a('استوديو الموقع','Website studio')}</h1><p>${a('ابنِ الرئيسية والمنيو بنفسك. 100 تركيبة تخطيط من عشرة هياكل وواجهات مختلفة، مع محتواك وخطوطك. التعديل مسودة حتى تنشره.','Build your homepage and menu. 100 structural combinations across ten site frames and hero compositions. Your content and typography remain yours; edits stay private until published.')}</p></div>
   <form id="studio-guard" novalidate hidden></form><div class="studio tenant-builder">
     <div class="studio-panel">
-      <div class="studio-bar card"><span id="st-status" class="pill" role="status"></span><button type="button" class="btn ghost sm" id="st-save">${a('حفظ المسودة','Save draft')}</button><div class="row"><button type="button" class="btn ghost sm" id="st-toggle-preview" aria-expanded="false">${a('معاينة الموقع','Preview site')}</button><button type="button" class="btn ghost sm" id="st-discard">${a('تجاهل المسودة', 'Discard draft')}</button><button type="button" class="btn sm" id="st-publish">${a('انشر', 'Publish')}</button></div></div>
-      <div class="seg" role="tablist">${[['presets', a('التصاميم الجاهزة', 'Ready designs')], ['home',a('الرئيسية','Homepage')],['menu',a('صفحة المنيو','Menu page')],['custom', a('الهوية والتخطيط', 'Identity & layout')], ['versions', a('النسخ والجدولة', 'Versions & schedule')]].map(([k, t]) => `<button type="button" role="tab" data-tab="${k}">${t}</button>`).join('')}</div>
+      <div class="studio-bar card"><a class="studio-exit" href="#overview">${a('لوحة المنشأة','Workspace')} ↗</a><a class="studio-live" id="st-open-site" href="/p/${esc(me.org.slug)}" target="_blank" rel="noopener">${a('افتح المنشور','Open published')} ↗</a><div class="studio-history"><button type="button" class="btn ghost sm" id="st-undo" aria-label="${a('تراجع','Undo')}" title="${a('تراجع','Undo')}" disabled>↶</button><button type="button" class="btn ghost sm" id="st-redo" aria-label="${a('إعادة','Redo')}" title="${a('إعادة','Redo')}" disabled>↷</button></div><span id="st-status" class="pill" role="status"></span><button type="button" class="btn ghost sm" id="st-save">${a('حفظ المسودة','Save draft')}</button><div class="row"><button type="button" class="btn ghost sm" id="st-sections">${a('الأقسام','Sections')}</button><button type="button" class="btn ghost sm" id="st-toggle-preview" aria-expanded="false">${a('معاينة الموقع','Preview site')}</button><button type="button" class="btn ghost sm" id="st-discard">${a('تجاهل المسودة', 'Discard draft')}</button><button type="button" class="btn sm" id="st-publish">${a('انشر', 'Publish')}</button></div></div>
+      <div class="seg" role="tablist">${[['presets', a('التصاميم الجاهزة', 'Ready designs')], ['home',a('الرئيسية','Homepage')],['menu',a('صفحة المنيو','Menu page')],['custom', a('الهوية', 'Identity')], ['versions', a('النسخ والجدولة', 'Versions & schedule')]].map(([k, t]) => `<button type="button" role="tab" data-tab="${k}">${t}</button>`).join('')}</div>
       <div id="st-body"></div><div id="st-msg" role="status"></div>
     </div>
     <div class="studio-preview" aria-label="${a('معاينة مباشرة', 'Live preview')}"><div class="preview-toolbar"><div class="seg"><button type="button" id="st-page-home" aria-pressed="false">${a('الرئيسية','Homepage')}</button><button type="button" id="st-page-menu" aria-pressed="true">${a('المنيو','Menu')}</button></div><div class="preview-devices">${[[390,a('جوال','Phone')],[768,a('تابلت','Tablet')],[1160,a('كمبيوتر','Desktop')]].map(([width,label])=>`<button type="button" class="btn ghost sm" data-preview-width="${width}" aria-pressed="${width===previewWidth}">${label}</button>`).join('')}</div></div><div class="preview-viewport"><div class="phone-frame"><iframe id="st-frame" title="${a('معاينة الصفحة', 'Page preview')}" src="${esc(previewUrl)}" loading="eager"></iframe></div></div><p class="small muted">${a('معاينة من صفحتك الفعلية. اضغط قسمًا في الرئيسية لتعديله.','Your actual page, live. Click a homepage section to edit it.')}</p></div>
   </div>`;
   const frame = el.querySelector('#st-frame'), bodyEl = el.querySelector('#st-body'), msg = el.querySelector('#st-msg');
-  const builder=el.querySelector('.tenant-builder');builder.before(el.querySelector('.studio-bar'));
+  const builder=el.querySelector('.tenant-builder');builder.before(el.querySelector('.studio-bar'));const workTabs=el.querySelector('.studio-panel>.seg');workTabs.classList.add('studio-worktabs');workTabs.setAttribute('aria-label',a('تحرير الموقع','Website editing'));bodyEl.setAttribute('role','tabpanel');builder.before(workTabs);builder.dataset.mobilePreview='on';el.querySelector('#st-toggle-preview').textContent=a('الخصائص','Properties');
+  workbench=mountWorkbench(builder,{getRecipe:()=>recipe,getSelected:()=>selectedBlock,onSelect:selectBlock,onChange:(path,value)=>{change(path,value);if(path==='home.blocks')render();},onAdd:type=>websiteApi?.addBlock(type),onTab:page=>{tab=page;render();}});
   const guard=el.querySelector('#studio-guard');watchForm(guard);
   const send = (r) => frame.contentWindow?.postMessage({ type: 'zm-design', recipe: r }, location.origin);
-  const onReady = e=>{if(e.origin!==location.origin||e.source!==frame.contentWindow)return;if(e.data?.type==='zm-design-ready')send(recipe);if(e.data?.type==='zm-block-select'){tab='home';render();const block=[...bodyEl.querySelectorAll('[data-editor-block]')].find(node=>node.dataset.editorBlock===e.data.id);if(block){block.open=true;block.scrollIntoView({block:'center'});block.querySelector('summary').focus();}}};
+  const onReady = e=>{if(e.origin!==location.origin||e.source!==frame.contentWindow)return;if(e.data?.type==='zm-design-ready')send(recipe);if(e.data?.type==='zm-block-select'){selectBlock(e.data.id);if(matchMedia('(max-width:1000px)').matches){builder.dataset.mobilePreview='off';builder.dataset.mobilePane='';el.querySelector('#st-toggle-preview').textContent=a('معاينة الموقع','Preview site');}}};
   window.addEventListener('message', onReady);
   const note = (text, err) => { msg.innerHTML = `<p class="msg ${err ? 'error' : ''}">${esc(text)}</p>`; };
-  const status = () => { const s = el.querySelector('#st-status'); s.textContent = dirty ? a('مسودة غير منشورة', 'Unpublished draft') : a('منشور ✓', 'Published ✓'); s.className = 'pill ' + (dirty ? 'preparing' : 'ready'); };
+  const status = () => { const s = el.querySelector('#st-status'); s.textContent = previewPresetId?a('معاينة لم تُعتمد','Preview not applied'):(dirty ? a('مسودة غير منشورة', 'Unpublished draft') : a('منشور', 'Published')); s.className = 'pill ' + (previewPresetId?'':dirty ? 'preparing' : 'ready');el.querySelector('#st-publish').disabled=publishing||Boolean(previewPresetId);el.querySelector('#st-save').disabled=Boolean(previewPresetId);el.querySelector('#st-undo').disabled=!history.canUndo;el.querySelector('#st-redo').disabled=!history.canRedo; };
 
   async function save() {
     clearTimeout(saveTimer);
@@ -69,7 +74,7 @@ export async function designStudio(el, me) {
       try{
         const result=await api('/api/owner/design/draft',{method:'PUT',body:{recipe:snapshot,revision}});
         revision=result.revision;lastSaved=JSON.stringify(snapshot);dirty=true;failedSave=false;
-        if(editVersion===version){if(result.adjusted.length)recipe.colors=result.draft.colors;markFormSaved(guard);send(result.draft);}
+        if(editVersion===version){if(result.adjusted.length)recipe.colors=result.draft.colors;historySnapshot=structuredClone(recipe);markFormSaved(guard);send(result.draft);}
         status();
         if(result.adjusted.length)note(a('عُدّل لون النص لحماية وضوح القراءة.','Text colour was adjusted to preserve readability.'));
       }catch(error){failedSave=true;statusText(error.status===409?a('تعارض: احتفظنا بتعديلاتك محليًا','Conflict: your local edits are retained'):a('لم تُحفظ التعديلات','Edits not saved'));note(error.status===409?a('تغيّرت المسودة في جلسة أخرى. افتح الاستوديو في نافذة أخرى للمقارنة؛ لم ننشر أو نستبدل تعديلاتك.','The draft changed in another session. Open the studio in another window to compare; nothing was published or overwritten.'):a('تعذر حفظ المسودة. بياناتك باقية هنا. راجع الحقول والاتصال ثم اضغط حفظ المسودة.','Could not save the draft. Your entries remain here. Check the fields and connection, then Save draft.'),true);throw error;}
@@ -79,17 +84,25 @@ export async function designStudio(el, me) {
     if(editVersion!==version)await save();
   }
   function statusText(text){el.querySelector('#st-status').textContent=text;}
-  function change(path,value){put(recipe,path,value);if(path==='layout')recipe.composition.frame=({list:'atelier',cards:'split',grid:'market',compact:'service',text:'ledger',magazine:'editorial',elegant:'boutique',tiles:'gallery'})[value]||recipe.composition.frame;editVersion++;markFormDirty(guard);dirty=true;status();send(recipe);clearTimeout(saveTimer);saveTimer=setTimeout(()=>{if(el.isConnected)save().catch(()=>{});},700);}
-  function preview(page){previewPage=page;frame.src=(page==='home'?`/p/${encodeURIComponent(me.org.slug)}`:`/m/${encodeURIComponent(slug)}`)+'?design_preview=1&lang='+lang;el.querySelector('#st-page-home').setAttribute('aria-pressed',String(page==='home'));el.querySelector('#st-page-menu').setAttribute('aria-pressed',String(page==='menu'));}
+  function change(path,value){if(JSON.stringify(get(historySnapshot,path))===JSON.stringify(value))return;history.record(historySnapshot,{key:path,merge:typeof value==='string'||typeof value==='number'});put(recipe,path,value);historySnapshot=structuredClone(recipe);if(path==='layout')recipe.composition.frame=({list:'atelier',cards:'split',grid:'market',compact:'service',text:'ledger',magazine:'editorial',elegant:'boutique',tiles:'gallery'})[value]||recipe.composition.frame;editVersion++;markFormDirty(guard);dirty=true;status();workbench?.update(tab);send(recipe);clearTimeout(saveTimer);saveTimer=setTimeout(()=>{if(el.isConnected)save().catch(()=>{});},700);}
+  function selectBlock(id){selectedBlock=id;if(matchMedia('(max-width:1000px)').matches){builder.dataset.mobilePane='';builder.dataset.mobilePreview='off';el.querySelector('#st-toggle-preview').textContent=a('معاينة الموقع','Preview site');}if(tab!=='home'){tab='home';render();}else{websiteApi?.select(id);workbench.update(tab);el.querySelector('.studio-panel').dataset.inspectorTitle=id==='footer'?a('تذييل الموقع','Site footer'):a(...(BLOCK_TYPES[recipe.home.blocks.find(b=>b.id===id)?.type]||BLOCK_TYPES.hero));}frame.contentWindow?.postMessage({type:'zm-highlight-block',id},location.origin);}
+  function travel(kind){if(previewPresetId)clearPreview();const snapshot=history[kind](recipe);if(!snapshot)return;recipe=snapshot;historySnapshot=structuredClone(recipe);editVersion++;markFormDirty(guard);dirty=true;status();send(recipe);render();clearTimeout(saveTimer);saveTimer=setTimeout(()=>save().catch(()=>{}),700);}
+  el.querySelector('#st-undo').onclick=()=>travel('undo');el.querySelector('#st-redo').onclick=()=>travel('redo');
+  const onShortcut=event=>{if(!el.isConnected||!(event.ctrlKey||event.metaKey)||event.altKey||event.target.closest('input,textarea,select,[contenteditable=true]'))return;if(event.key.toLowerCase()==='z'){event.preventDefault();travel(event.shiftKey?'redo':'undo');}else if(event.ctrlKey&&event.key.toLowerCase()==='y'){event.preventDefault();travel('redo');}};document.addEventListener('keydown',onShortcut);
+  function preview(page){previewPage=page;const publicPath=page==='menu'&&slug?`/m/${encodeURIComponent(slug)}`:`/p/${encodeURIComponent(me.org.slug)}`;el.querySelector('#st-open-site').href=publicPath+(lang==='en'?'?lang=en':'');const unavailable=page==='menu'&&!slug;el.querySelector('.studio-preview').dataset.unavailable=String(unavailable);const destination=publicPath+'?design_preview=1&lang='+lang;if(frame.getAttribute('src')!==destination)frame.src=destination;el.querySelector('#st-page-home').setAttribute('aria-pressed',String(page==='home'));el.querySelector('#st-page-menu').setAttribute('aria-pressed',String(page==='menu'));}
   el.querySelector('#st-page-home').setAttribute('aria-pressed',String(initialHome));el.querySelector('#st-page-menu').setAttribute('aria-pressed',String(!initialHome));
-  el.querySelector('#st-toggle-preview').onclick=event=>{const on=builder.dataset.mobilePreview!=='on';builder.dataset.mobilePreview=on?'on':'off';event.currentTarget.setAttribute('aria-expanded',String(on));event.currentTarget.textContent=on?a('العودة للتعديل','Back to editing'):a('معاينة الموقع','Preview site');requestAnimationFrame(fit);};
+  el.querySelector('#st-toggle-preview').onclick=event=>{const on=builder.dataset.mobilePreview!=='on';builder.dataset.mobilePane='';builder.dataset.mobilePreview=on?'on':'off';event.currentTarget.setAttribute('aria-expanded',String(on));event.currentTarget.textContent=on?a('الخصائص','Properties'):a('معاينة الموقع','Preview site');requestAnimationFrame(fit);};
   el.querySelector('#st-page-home').onclick=()=>preview('home');el.querySelector('#st-page-menu').onclick=()=>preview('menu');
+  el.querySelector('#st-sections').onclick=()=>{builder.dataset.mobilePane=builder.dataset.mobilePane==='outline'?'':'outline';};
+  const previewBar=document.createElement('div');previewBar.id='st-template-preview-bar';previewBar.className='studio-template-preview';previewBar.hidden=true;previewBar.innerHTML=`<strong id="st-preview-title"></strong><span>${a('معاينة خاصة؛ لم يُعتمد بعد.','Private preview; not applied yet.')}</span><div><button type="button" class="btn ghost sm" id="st-preview-back">${a('العودة للتصاميم','Back to designs')}</button><button type="button" class="btn sm" id="st-preview-use">${a('اعتماد وتخصيص','Use and customise')}</button></div>`;el.querySelector('.studio-preview').prepend(previewBar);const emptyPreview=document.createElement('section');emptyPreview.className='wb-empty-preview';emptyPreview.innerHTML=`<h3>${a('ابدأ بفرعك الأول','Start with your first branch')}</h3><p>${a('معاينة المنيو تحتاج فرعًا. إعداداتك محفوظة كمسودة.','Menu preview needs a branch. Your settings remain in the draft.')}</p><a href="#branches" class="btn">${a('إدارة الفروع','Manage branches')} ↗</a>`;el.querySelector('.studio-preview').append(emptyPreview);
+  function clearPreview(){previewPresetId=null;builder.dataset.trying='';previewBar.hidden=true;send(recipe);status();}
+  el.querySelector('#st-preview-back').onclick=clearPreview;el.querySelector('#st-preview-use').onclick=()=>{if(previewPresetId){adoptingPreview=true;bodyEl.querySelector('[data-use="'+CSS.escape(previewPresetId)+'"]')?.click();}};
   const viewport=el.querySelector('.preview-viewport'),phone=el.querySelector('.phone-frame');
   const fit=()=>{const scale=Math.min(1,Math.max(180,viewport.clientWidth-12)/previewWidth);phone.style.width=previewWidth+'px';phone.style.height='740px';phone.style.transform=`scale(${scale})`;viewport.style.height=740*scale+'px';phone.style.insetInlineStart=Math.max(0,(viewport.clientWidth-previewWidth*scale)/2)+'px';};
   const observer=new ResizeObserver(fit);observer.observe(viewport);
   el.querySelectorAll('[data-preview-width]').forEach(button=>button.onclick=()=>{previewWidth=Number(button.dataset.previewWidth);el.querySelectorAll('[data-preview-width]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));fit();});
   el.querySelector('#st-save').onclick=()=>save().then(()=>note(a('حُفظت المسودة.','Draft saved.'))).catch(()=>{});
-  const dispose=new MutationObserver(()=>{if(!el.isConnected){clearTimeout(saveTimer);observer.disconnect();window.removeEventListener('message',onReady);dispose.disconnect();}});dispose.observe(document.getElementById('main'),{childList:true,subtree:true});
+  const dispose=new MutationObserver(()=>{if(!el.isConnected){clearTimeout(saveTimer);observer.disconnect();document.removeEventListener('keydown',onShortcut);workbench.close();window.removeEventListener('message',onReady);dispose.disconnect();}});dispose.observe(document.getElementById('main'),{childList:true,subtree:true});
 
   function presetsView() {
     // Show a different frame and hero in each opening tile, rather than ten
@@ -102,10 +115,10 @@ export async function designStudio(el, me) {
     bodyEl.querySelector('#st-clear').onclick=()=>{query='';presetsView();bodyEl.querySelector('#st-q').focus();};
     bodyEl.querySelector('#st-q').oninput = (e) => { query = e.target.value; const pos = e.target.selectionStart; presetsView(); const q = bodyEl.querySelector('#st-q'); q.focus(); q.setSelectionRange(pos, pos); };
     bodyEl.querySelectorAll('[data-sector]').forEach((b) => (b.onclick = () => { sector = b.dataset.sector; presetsView(); }));
-    bodyEl.querySelectorAll('[data-try]').forEach((b) => (b.onclick = () => { const p = d.presets.find((x) => x.id === b.dataset.try); send({...p.recipe,home:recipe.home.enabled?recipe.home:p.recipe.home,menu:recipe.menu}); note(a(`تشوف «${p.name_ar}» بالمعاينة. اضغط «اعتمد» لو عجبك.`, `Previewing “${p.name_en}”. Tap “Use” if you like it.`)); }));
+    bodyEl.querySelectorAll('[data-try]').forEach((b) => (b.onclick = async () => { b.disabled=true;try{if(pendingSave||failedSave||editVersion>0)await save();const p = d.presets.find((x) => x.id === b.dataset.try);previewPresetId=p.id;status();builder.dataset.trying='on';el.querySelector('#st-template-preview-bar').hidden=false;el.querySelector('#st-preview-title').textContent=a('معاينة: ','Preview: ')+pick(p,'name'); send({...p.recipe,home:recipe.home.enabled?recipe.home:p.recipe.home,menu:recipe.menu}); note(a(`تشوف «${p.name_ar}» بالمعاينة. اضغط «اعتمد» لو عجبك.`, `Previewing “${p.name_en}”. Tap “Use” if you like it.`));}catch{note(a('تعذر تجهيز المعاينة. احتفظنا بتعديلاتك؛ أعد المحاولة.','Could not prepare preview. Your edits are retained; retry.'),true);}finally{if(b.isConnected)b.disabled=false;} }));
     bodyEl.querySelectorAll('[data-use]').forEach((b) => (b.onclick = async () => {
       b.disabled = true;
-      try { await save();const r = await api('/api/owner/design/presets/' + b.dataset.use + '/apply', { method: 'POST', body: {revision} }); revision=r.revision;recipe = strip(r.draft);lastSaved=JSON.stringify(recipe);markFormSaved(guard); d.preset_id = b.dataset.use; dirty = true; status(); send(r.draft); presetsView(); note(a('اعتمدنا التصميم كمسودة. خصّصه أو اضغط «انشر».', 'Design set as your draft. Customise it or publish.')); }
+      try { await save();const r = await api('/api/owner/design/presets/' + b.dataset.use + '/apply', { method: 'POST', body: {revision} }); revision=r.revision;history.record(historySnapshot);recipe = strip(r.draft);historySnapshot=structuredClone(recipe);lastSaved=JSON.stringify(recipe);markFormSaved(guard); d.preset_id = b.dataset.use; dirty = true; status(); send(r.draft); presetsView();if(adoptingPreview){adoptingPreview=false;clearPreview();tab=recipe.home.enabled?'home':'custom';render();} note(a('اعتمدنا التصميم كمسودة. خصّصه أو اضغط «انشر».', 'Design set as your draft. Customise it or publish.')); }
       catch { b.disabled = false; note(a('تعذر تطبيق التصميم.', 'Could not apply the design.'), true); }
     }));
   }
@@ -156,7 +169,7 @@ export async function designStudio(el, me) {
       ${d.schedules.length ? `<ul class="plain-list">${d.schedules.map((s) => `<li class="row-between"><span><strong>${esc(s.name)}</strong><br><small class="muted">${esc(day(s.starts_at))} ← ${esc(day(s.ends_at))} · ${esc(hijri(s.starts_at))}</small></span><button type="button" class="btn ghost sm" data-unsched="${esc(s.id)}">${a('إلغاء', 'Cancel')}</button></li>`).join('')}</ul>` : ''}</section>
     <section class="card stack"><h3>${a('نسخ تلقائية', 'Automatic snapshots')}</h3><p class="small muted">${a(`نحفظ نسخة تلقائيًا قبل كل نشر أو تطبيق تصميم، وتبقى ${d.limits.auto_days} يوم.`, `We save a snapshot before every publish or design change, kept for ${d.limits.auto_days} days.`)}</p>
       ${auto.length ? `<ul class="plain-list">${auto.slice(0, 15).map((v) => `<li class="row-between"><span>${esc(v.name)} <small class="muted">${esc(new Date(v.created_at).toLocaleString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-GB'))}</small></span><button type="button" class="btn ghost sm" data-restore="${esc(v.id)}">${a('استرجع', 'Restore')}</button></li>`).join('')}</ul>` : `<p class="muted">${a('ما في نسخ تلقائية بعد.', 'No snapshots yet.')}</p>`}</section>`;
-    const reload = async () => { Object.assign(d, await api('/api/owner/design')); recipe = strip(d.draft);revision=d.revision;lastSaved=JSON.stringify(recipe);markFormSaved(guard); dirty = d.has_unpublished; status(); send(d.draft); versionsView(); };
+    const reload = async () => { Object.assign(d, await api('/api/owner/design')); recipe = strip(d.draft);history.clear();historySnapshot=structuredClone(recipe);revision=d.revision;lastSaved=JSON.stringify(recipe);markFormSaved(guard); dirty = d.has_unpublished; status(); send(d.draft); versionsView(); };
     const ERR = { versions_limit: a('وصلت الحد الأعلى للنسخ. احذف نسخة قديمة.', 'Version limit reached. Delete an old one.'), schedule_overlap: a('فيه جدولة ثانية بنفس الفترة.', 'Another schedule overlaps these dates.'), schedules_limit: a('وصلت الحد الأعلى للجداول.', 'Schedule limit reached.'), schedule_too_long: a('أقصى مدة للجدولة 120 يوم.', 'A schedule can last at most 120 days.'), version_in_use_or_missing: a('النسخة مستخدمة في جدولة.', 'This version is used by a schedule.') };
     const fail = (err) => note(ERR[err?.message] || a('تعذر تنفيذ الإجراء.', 'Could not complete the action.'), true);
     bodyEl.querySelector('#st-vform').onsubmit = async (e) => { e.preventDefault(); try { clearTimeout(saveTimer); await save(); await api('/api/owner/design/versions', { method: 'POST', body: { name: bodyEl.querySelector('#st-vname').value } }); await reload(); note(a('حفظنا النسخة.', 'Version saved.')); } catch (err) { fail(err); } };
@@ -175,38 +188,42 @@ export async function designStudio(el, me) {
   }
 
   function render() {
-    builder.dataset.view=tab;if(tab==='home')preview('home');if(tab==='menu')preview('menu');
-    el.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
-    msg.innerHTML = '';
+    builder.dataset.view=tab;builder.dataset.mobilePane='';if(['custom','versions','presets'].includes(tab))builder.dataset.mobilePreview='off';if(tab==='home')preview('home');if(tab==='menu')preview('menu');
+    el.querySelector('.studio-panel').dataset.inspectorTitle=tab==='home'?(selectedBlock==='footer'?a('تذييل الموقع','Site footer'):a(...(BLOCK_TYPES[recipe.home.blocks.find(b=>b.id===selectedBlock)?.type]||BLOCK_TYPES.hero))):({menu:a('خصائص المنيو','Menu properties'),custom:a('هوية الموقع','Site identity'),versions:a('النسخ والجدولة','Versions & schedule')})[tab]||'';
+    el.querySelector('.preview-toolbar').dataset.previewLabel=previewPage==='home'?a('الصفحة الرئيسية','Homepage'):a('صفحة المنيو','Menu page');
+    el.querySelectorAll('[data-tab]').forEach((b) => {b.setAttribute('aria-selected',String(b.dataset.tab===tab));b.tabIndex=b.dataset.tab===tab?0:-1;b.id='st-tab-'+b.dataset.tab;b.setAttribute('aria-controls','st-body');});bodyEl.setAttribute('aria-labelledby','st-tab-'+tab);
+    msg.innerHTML = '';websiteApi=null;
     bodyEl.onclick=null;bodyEl.oninput=null;bodyEl.onchange=null;bodyEl.oncompositionend=null;
-    ({presets:presetsView,custom:customView,versions:versionsView,home:()=>websiteEditor(bodyEl,{recipe,change,preview}),menu:()=>menuPageEditor(bodyEl,{recipe,change,preview})})[tab]();
+    ({presets:presetsView,custom:customView,versions:versionsView,home:()=>{websiteApi=websiteEditor(bodyEl,{recipe,change,preview,compact:true,selectedId:()=>selectedBlock,onSelectionChange:id=>{selectedBlock=id||'footer';},onStructureChange:()=>{selectBlock(selectedBlock);if(matchMedia('(max-width:1000px)').matches){builder.dataset.mobilePane='';builder.dataset.mobilePreview='off';}}});},menu:()=>menuPageEditor(bodyEl,{recipe,change,preview})})[tab]();workbench.update(tab);status();
   }
-  el.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { tab = b.dataset.tab; render(); }));
+  const tabButtons=[...el.querySelectorAll('[data-tab]')];tabButtons.forEach((button,index)=>{button.onclick=()=>{clearPreview();tab=button.dataset.tab;render();};button.onkeydown=event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const next=event.key==='Home'?0:event.key==='End'?tabButtons.length-1:(index+(event.key==='ArrowRight'?(lang==='ar'?-1:1):(lang==='ar'?1:-1))+tabButtons.length)%tabButtons.length;tabButtons[next].click();tabButtons[next].focus();};});
   el.querySelector('#st-publish').onclick = async (e) => {
     if(el.querySelector('[data-uploading=true]'))return note(a('انتظر اكتمال رفع الصورة قبل النشر.','Wait for the image upload before publishing.'),true);
-    e.target.disabled = true;
+    publishing=true;e.target.disabled = true;
     try { clearTimeout(saveTimer); await save(); const result=await api('/api/owner/design/publish', { method: 'POST', body: {revision} });revision=result.revision;d.published=structuredClone(recipe); dirty = false; status(); note(a('نشرنا تصميمك. عملاؤك يشوفونه الحين.', 'Published. Guests see your new design now.')); }
     catch { note(a('تعذر النشر. حاول مجددًا.', 'Could not publish. Try again.'), true); }
-    e.target.disabled = false;
+    publishing=false;e.target.disabled=Boolean(previewPresetId);
   };
   el.querySelector('#st-discard').onclick = async () => {
     if (!d.published) return note(a('ما في تصميم منشور ترجع له.', 'There is no published design to return to.'), true);
     if(!await confirmAction({title:a('التخلي عن المسودة؟','Discard the draft?'),description:a('ستعود إلى آخر تصميم منشور للرئيسية والمنيو.','Restore the last published homepage and menu.'),confirmLabel:a('التخلي عن المسودة','Discard draft')}))return;
-    try { clearTimeout(saveTimer);if(pendingSave)await pendingSave; await api('/api/owner/design/discard', { method: 'POST', body: {revision} }); Object.assign(d, await api('/api/owner/design')); recipe = strip(d.draft);revision=d.revision;lastSaved=JSON.stringify(recipe);failedSave=false;markFormSaved(guard); dirty = false; status(); send(d.draft); render(); } catch { note(a('تعذر التنفيذ.', 'Could not do that.'), true); }
+    try { clearTimeout(saveTimer);if(pendingSave)await pendingSave; await api('/api/owner/design/discard', { method: 'POST', body: {revision} }); Object.assign(d, await api('/api/owner/design')); recipe = strip(d.draft);history.clear();historySnapshot=structuredClone(recipe);revision=d.revision;lastSaved=JSON.stringify(recipe);failedSave=false;markFormSaved(guard); dirty = false; status(); send(d.draft); render(); } catch { note(a('تعذر التنفيذ.', 'Could not do that.'), true); }
   };
   status(); render();
 }
 
 export function miniCard(p, current) {
   const c = p.recipe.colors;
+  const sample=({cafe:['رواق','قهوة تستاهل وقتك'],roastery:['مدار','رحلة البن تبدأ هنا'],restaurant:['مائدة','مكان للذوق والحكاية'],burger:['ستاك','برجر. على أصوله.'],oriental:['سفرة','من مطبخنا، بمحبة'],bakery:['قمحة','صباح يبدأ من الفرن'],juice:['قطرة','يومك، بطعم أجمل'],clinic:['نَبض','رعاية أقرب إليك'],salon:['لُمى','وقتك للعناية'],laundry:['صفاء','عناية بكل التفاصيل'],seasonal:['الموسم','للأوقات التي تجمعنا']})[p.sector]||['منشأتك','تجربة تشبهك'];
+  const services=['clinic','salon','laundry'].includes(p.sector),serviceItems=({clinic:['استشارة عامة','صحة الأسرة','موعد متابعة','الفحوصات'],salon:['العناية بالشعر','العناية بالبشرة','جلسة استرخاء','الباقات'],laundry:['غسيل وعناية','تنظيف جاف','كيّ وتجهيز','عناية خاصة']})[p.sector]||[];
   const r = { none: '0', sm: '4px', md: '8px', lg: '12px', xl: '16px' }[p.recipe.card.radius];
   const btn = { square: '2px', rounded: '8px', pill: '99px' }[p.recipe.button.shape];
   return `<article class="design-card ${current ? 'current' : ''}">
-    <div class="mini" data-frame="${esc(p.recipe.composition?.frame||'atelier')}" data-hero="${esc(p.recipe.composition?.hero||'stacked')}" aria-hidden="true" style="--m-bg:${c.bg};--m-sf:${c.surface};--m-p:${c.primary};--m-a:${c.accent};--m-t:${c.text};--m-r:${r};--m-b:${btn}">
-      <div class="mini-cover"><img src="/editorial/counter.webp" alt="" loading="lazy"></div><div class="mini-name">${a('رواق','Riwaq')}</div>
-      <div class="mini-items mini-${esc(p.recipe.layout)}"><i><img src="/editorial/coffee.webp" alt="" loading="lazy"></i><i><img src="/editorial/pastry.webp" alt="" loading="lazy"></i><i><img src="/editorial/counter.webp" alt="" loading="lazy"></i><i><img src="/editorial/coffee.webp" alt="" loading="lazy"></i></div><div class="mini-btn"></div>
+    <div class="mini ${services?'mini-service-site':''}" data-frame="${esc(p.recipe.composition?.frame||'atelier')}" data-hero="${esc(p.recipe.composition?.hero||'stacked')}" aria-hidden="true" style="--m-bg:${c.bg};--m-sf:${c.surface};--m-p:${c.primary};--m-a:${c.accent};--m-t:${c.text};--m-r:${r};--m-b:${btn}">
+      <div class="mini-cover">${services?`<strong>${esc(sample[1])}</strong>`:'<img src="/editorial/counter.webp" alt="" loading="lazy">'}</div><div class="mini-name">${lang==='ar'?esc(sample[0]):esc(p.name_en.split(' ')[0])}</div>
+      <div class="mini-items mini-${esc(p.recipe.layout)}">${services?serviceItems.map(item=>'<i><span>'+esc(item)+'</span></i>').join(''):`<i><img src="/editorial/coffee.webp" alt="" loading="lazy"></i><i><img src="/editorial/pastry.webp" alt="" loading="lazy"></i><i><img src="/editorial/counter.webp" alt="" loading="lazy"></i><i><img src="/editorial/coffee.webp" alt="" loading="lazy"></i>`}</div><div class="mini-btn"></div>
     </div>
     <h4>${esc(pick(p, 'name'))}</h4>
-    <div class="row"><button type="button" class="btn ghost sm" data-try="${esc(p.id)}">${a('جرّب', 'Try')}</button><button type="button" class="btn sm" data-use="${esc(p.id)}">${current ? a('مختار ✓', 'Chosen ✓') : a('اعتمد', 'Use')}</button></div>
+    <div class="row"><button type="button" class="btn ghost sm" data-try="${esc(p.id)}">${a('جرّب', 'Try')}</button><button type="button" class="btn sm" data-use="${esc(p.id)}">${current ? a('مختار', 'Chosen') : a('اعتمد', 'Use')}</button></div>
   </article>`;
 }

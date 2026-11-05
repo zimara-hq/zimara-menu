@@ -1,0 +1,75 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const base=process.argv[2]||'http://127.0.0.1:8793';
+const browser=await chromium.launch({headless:true});
+const page=await browser.newPage();
+const failures=[];page.on('pageerror',error=>failures.push(error.message));
+async function api(path,method='GET',data){const r=await page.request.fetch(base+path,{method,...(data===undefined?{}:{data})});const json=await r.json();return {status:r.status(),json};}
+try{
+ await page.goto(base+'/demo');
+ const room=(await api('/api/demo','POST',{})).json;
+ assert.ok(room.token);
+ assert.equal((await api('/api/demo/'+room.token+'/session','POST',{role:'owner'})).status,200);
+ assert.equal((await api('/api/owner/org','PATCH',{name_ar:'هوية الاختبار',name_en:'Identity test',brand_color:'#185345',logo_url:null})).status,200);
+ let state=(await api('/api/owner/design')).json;
+ assert.equal((await api('/api/owner/design/presets/latte-classic/apply','POST',{revision:state.revision})).status,200);
+ state=(await api('/api/owner/design')).json;
+ assert.equal((await api('/api/owner/design/publish','POST',{revision:state.revision})).status,200);
+ const published=(await api('/api/owner/design')).json;
+ // A private edit survives Brand essentials and never leaks to the public site.
+ const {derived,...privateRecipe}=published.draft;
+ privateRecipe.home.footer_en='PRIVATE IDENTITY DRAFT';
+ assert.equal((await api('/api/owner/design/draft','PUT',{recipe:privateRecipe,revision:published.revision})).status,200);
+ const before=(await api('/api/owner/design')).json;
+ await page.goto(base+'/app?lang=en#brand');
+ await page.locator('#identity-design-owner').waitFor();
+ assert.equal(await page.locator('#identity-form [name=brand_color],#identity-form [name=layout],#identity-form [name=font]').count(),0);
+ assert.match(await page.locator('#identity-design-owner').innerText(),/Design studio manages appearance/);
+ assert.equal(await page.locator('#identity-design-owner a').getAttribute('href'),'/app?studio=identity&lang=en#design');
+ await page.locator('#identity-form [name=name_en]').fill('Updated identity');
+ const nameSave=page.waitForResponse(r=>r.url().endsWith('/api/owner/org')&&r.request().method()==='PATCH');
+ await page.locator('#identity-form [type=submit]').click();
+ const nameResponse=await nameSave;assert.equal(nameResponse.status(),200,await nameResponse.text());
+ await page.getByText('Name and logo saved to your public pages.').waitFor();
+ assert.equal((await api('/api/me')).json.org.name_en,'Updated identity');
+ assert.deepEqual((await api('/api/owner/design')).json,before);
+ assert.equal((await api('/api/owner/profile','PATCH',{theme:{layout:'cards'}})).status,409);
+ assert.equal((await api('/api/owner/org','PATCH',{name_ar:'هوية الاختبار',name_en:'Updated identity',brand_color:'#ff0000',logo_url:null})).status,409);
+ // Uploaded font remains a tenant asset; selecting it is an explicit design step.
+ await page.locator('#brand-file').setInputFiles({name:'brand.ttf',mimeType:'font/ttf',buffer:readFileSync(new URL('../../public/fonts/tajawal-arabic-0.woff2',import.meta.url))});
+ const fontUpload=page.waitForResponse(r=>r.url().endsWith('/api/owner/assets')&&r.request().method()==='POST');
+ await page.locator('#asset-upload [type=submit]').click();
+ const fontResponse=await fontUpload;assert.equal(fontResponse.status(),201,await fontResponse.text());
+ await page.waitForFunction(()=>document.querySelector('#asset-upload [role=status]').textContent.length>0);
+ assert.equal(await page.locator('#asset-upload [role=status]').innerText(),'File uploaded. Select the uploaded font in Design studio, then publish.');
+ await page.getByText('File uploaded. Select the uploaded font in Design studio, then publish.').waitFor();
+ assert.ok((await api('/api/owner/profile')).json.profile.font_url);
+ const afterFont=(await api('/api/owner/design')).json;
+ assert.ok(afterFont.fonts.ar.some(f=>f.id==='custom'),'upload exposes custom font in the canonical studio');
+ const {fonts:beforeFonts,...beforeRecipeState}=before,{fonts:afterFonts,...afterRecipeState}=afterFont;
+ assert.deepEqual(afterRecipeState,beforeRecipeState,'font resource upload preserves every recipe, revision, snapshot and publication field');
+ const guest=await browser.newPage();
+ await guest.goto(base+'/p/'+room.org_slug+'?lang=en');await guest.locator('#org-name').waitFor();
+ assert.equal(await guest.locator('#org-name').innerText(),'Updated identity');
+ assert.equal(await guest.evaluate(()=>document.documentElement.style.getPropertyValue('--brand')),'#5b3a29');
+ assert.ok(!(await guest.locator('body').innerText()).includes('PRIVATE IDENTITY DRAFT'));
+ assert.ok(!(await guest.locator('body').evaluate(e=>getComputedStyle(e).fontFamily)).includes('TenantFont'),'uploaded font stays inactive until selected by published recipe');
+ await page.locator('#identity-design-owner a').click();
+ await page.locator('#st-font_ar').waitFor({state:'attached'});
+ await page.locator('details').filter({has:page.locator('#st-font_ar')}).locator('summary').click();
+ await page.locator('#st-font_ar').waitFor();
+ assert.equal(await page.locator('#st-font_ar').inputValue(),'ibm');
+ // Canonical recipe changes stay private until audited publication, then render.
+ const {derived:ignored,...next}=before.draft;next.colors.primary='#ff0000';next.layout='cards';next.font_ar='custom';
+ let result=await api('/api/owner/design/draft','PUT',{recipe:next,revision:before.revision});assert.equal(result.status,200);
+ assert.equal((await api('/api/public/profile/'+room.org_slug)).json.design.colors.primary,'#5b3a29');
+ assert.equal((await api('/api/owner/design/publish','POST',{revision:result.json.revision})).status,200);
+ await guest.reload();await guest.locator('#org-name').waitFor();
+ assert.equal(await guest.evaluate(()=>document.documentElement.style.getPropertyValue('--brand')),'#ff0000');
+ assert.equal(await guest.evaluate(()=>document.documentElement.dataset.dLayout),'cards');
+ assert.match(await guest.evaluate(()=>document.documentElement.style.getPropertyValue('--font')),/TenantFont/);
+ assert.match(await guest.locator('body').evaluate(e=>getComputedStyle(e).fontFamily),/TenantFont/);
+ assert.deepEqual(failures,[]);
+ console.log('PASS published recipe owns appearance; Brand name/logo and font asset saves preserve private draft, canonical publish renders colour/layout/custom font');
+}finally{await browser.close();}

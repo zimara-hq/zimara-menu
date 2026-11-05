@@ -67,3 +67,6 @@ div.site-social{display:flex;flex-wrap:wrap;gap:12px}div.site-social>a{display:i
 
 /* Inspector choices override a frame’s decorative defaults. */
 :root[data-design] #menu-title{font-size:calc(2rem * var(--tenant-heading-scale,1.25))}:root[data-design] .menu-section h2{font-size:calc(1.3rem * var(--tenant-heading-scale,1.25))}:root[data-design] .dish{border-radius:var(--d-r)}:root[data-design] .dish-photo img{height:auto;aspect-ratio:var(--site-image-ratio)}:root[data-site-hero=wordmark] #menu-title{font-size:calc(clamp(2rem,5vw,4rem) * var(--tenant-heading-scale,1.25))}
+
+/* Selection chrome exists only in the authenticated studio preview. */
+.site-block[data-editor-selected=true]{outline:2px solid var(--brand);outline-offset:-3px} .site-block[data-editor-selected]:hover{cursor:pointer;outline:2px solid var(--brand);outline-offset:-3px}

@@ -17,7 +17,7 @@ try{
  const frame=page.frameLocator('#st-frame');await frame.locator('.menu-sheet').waitFor();
  await page.locator('[data-try=season-ramadan]').click();
  await page.waitForFunction(()=>document.querySelector('#st-frame').contentDocument?.documentElement.dataset.dLayout==='cards');
- pass('trying a design updates the live preview without saving');
+ assert.equal((await page.evaluate(async()=>(await(await fetch('/api/owner/design')).json()))).revision,0);pass('trying a design updates the live preview without saving');await page.locator('#st-preview-back').click();await page.locator('#st-save').click();await page.getByText('حُفظت المسودة.',{exact:true}).waitFor();assert.equal((await page.evaluate(async()=>(await(await fetch('/api/owner/design')).json()))).owns_appearance,true);pass('saving a first untouched recipe persists it instead of falsely reporting success');
  await page.locator('[data-sector=all]').click();await page.fill('#st-q','smash');assert.equal(await page.locator('.design-card').count(),4);
  await page.locator('[data-use=smash-grid]').click();await page.locator('.design-card.current').waitFor();
  await page.locator('[data-tab=custom]').click();await page.locator('.studio-step').first().waitFor();
@@ -38,7 +38,7 @@ try{
  pass('named version saved');
  const narrow=await browser.newPage({viewport:{width:390,height:844}});
  await narrow.context().addCookies(await page.context().cookies());
- await narrow.goto(base+'/app');await narrow.locator('[data-k=design]').click();await narrow.locator('.design-grid').waitFor();
+ await narrow.goto(base+'/app');await narrow.locator('[data-k=design]').click();await narrow.locator('[data-tab=presets]').click();await narrow.locator('.design-grid').waitFor();
  assert.ok(await narrow.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no horizontal scroll on phones');
  await narrow.screenshot({path:out+'/studio-mobile.png'});pass('studio fits a phone screen');
  assert.deepEqual(errors,[]);

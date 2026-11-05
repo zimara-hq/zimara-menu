@@ -314,12 +314,6 @@ async function ownerMenu(el) {
     options: readGroups(form),
     sort: Number(v.sort || 0), active: !v.hidden,
   });
-  el.addEventListener('click', (e) => {
-    const add = e.target.closest('[data-add-group]');
-    if (add) { add.previousElementSibling.insertAdjacentHTML('beforeend', groupEditor()); return; }
-    const del = e.target.closest('[data-del-group]');
-    if (del) del.closest('.option-group-editor').remove();
-  });
   const intro = `<div class="section-intro row-between"><div><h2>${esc(t('menu'))}</h2><p>${A('أقسامك وأصنافك كما يراها العميل. أي تعديل يظهر فورًا في كل الفروع.', 'Your sections and items as customers see them. Changes appear instantly in every branch.')}</p></div>${branch ? `<a class="btn ghost sm" href="/m/${esc(branch.slug)}" target="_blank" rel="noopener">${A('معاينة المنيو', 'Preview menu')} ↗</a>` : ''}</div>`;
 
   if (!items.length && !categories.length) {
@@ -365,6 +359,13 @@ async function ownerMenu(el) {
         </section>`;
       }).join('')}`;
   }
+  // Forms are replaced on reload, so their delegated listeners leave with them.
+  el.querySelectorAll('#item, form[data-item]').forEach(form => form.addEventListener('click', (e) => {
+    const add = e.target.closest('[data-add-group]');
+    if (add) { add.previousElementSibling.insertAdjacentHTML('beforeend', groupEditor()); return; }
+    const del = e.target.closest('[data-del-group]');
+    if (del) del.closest('.option-group-editor').remove();
+  }));
   wireImageFields(el);
   const reload = () => ownerMenu(el);
   el.querySelector('#sample')?.addEventListener('click', async (e) => {

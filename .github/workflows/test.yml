@@ -42,6 +42,10 @@ jobs:
           done
           npm run test:e2e -- http://127.0.0.1:8787
           npm run test:onboarding -- http://127.0.0.1:8787
+          npm run test:subscriber-menu
+          npm run test:magic-color
+          npm run test:identity-ownership -- http://127.0.0.1:8787
+          npm run test:workbench -- http://127.0.0.1:8787 output/playwright/workbench
           npm run test:agency -- http://127.0.0.1:8787 output/playwright/agency
           npm run test:workspace -- http://127.0.0.1:8787 output/playwright/workspace
           npm run test:resilience -- http://127.0.0.1:8787 output/playwright/resilience

@@ -291,8 +291,11 @@ owner.use('*', requireRole('owner'));
 owner.patch('/org', async (c) => {
   const u = c.get('user');
   const b = await body(c);
+  const appearance = await c.env.DB.prepare('SELECT o.brand_color, d.revision, d.org_id AS design_org_id FROM orgs o LEFT JOIN org_designs d ON d.org_id = o.id WHERE o.id = ?').bind(u.org_id).first();
+  const brandColor = b.brand_color === undefined ? appearance?.brand_color : color(b.brand_color, 'brand_color');
+  if (appearance?.design_org_id && (brandColor || '').toLowerCase() !== (appearance.brand_color || '').toLowerCase()) throw conflict('design_owned_appearance');
   await c.env.DB.prepare('UPDATE orgs SET name_ar = ?, name_en = ?, brand_color = ?, logo_url = ? WHERE id = ?')
-    .bind(str(b.name_ar, 'name_ar', { max: 80 }), str(b.name_en, 'name_en', { max: 80 }), color(b.brand_color, 'brand_color'), url(b.logo_url, 'logo_url'), u.org_id)
+    .bind(str(b.name_ar, 'name_ar', { max: 80 }), str(b.name_en, 'name_en', { max: 80 }), brandColor, url(b.logo_url, 'logo_url'), u.org_id)
     .run();
   return c.json({ ok: true });
 });
@@ -407,9 +410,9 @@ owner.post('/items', async (c) => {
   if (!cat) throw bad('invalid_category_id');
   const iid = id();
   await c.env.DB.prepare(
-    'INSERT INTO items (id, org_id, category_id, name_ar, name_en, desc_ar, desc_en, price, calories, image_url, sort, compare_price, allergens, caffeine_mg, sodium_mg, options_json, badges) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO items (id, org_id, category_id, name_ar, name_en, desc_ar, desc_en, price, calories, image_url, sort, compare_price, allergens, caffeine_mg, sodium_mg, options_json, badges, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
   )
-    .bind(iid, u.org_id, cat.id, ...itemFields(b))
+    .bind(iid, u.org_id, cat.id, ...itemFields(b), b.active === false ? 0 : 1)
     .run();
   return c.json({ id: iid }, 201);
 });
