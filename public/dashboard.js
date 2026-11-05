@@ -1,3 +1,4 @@
+import {merchandisingFields,readMerchandising,wireMerchandising,mountMenuSchedules} from './menu-merchandising.js';
 import {branchesView} from './branches.js';
 import { startLive, onLive } from './realtime.js';
 import {canLeaveWorkspace} from './forms.js';
@@ -297,6 +298,7 @@ async function ownerMenu(el) {
     <div class="row">${field('name_ar', t('nameAr'), `required value="${esc(i.name_ar || '')}"`, p)}${field('name_en', t('nameEn'), `required value="${esc(i.name_en || '')}"`, p)}</div>
     <div class="row">${field('desc_ar', t('descAr'), `value="${esc(i.desc_ar || '')}"`, p)}${field('desc_en', t('descEn'), `value="${esc(i.desc_en || '')}"`, p)}</div>
     ${imageField('image_url', A('صورة الصنف', 'Item photo'), i.image_url || '', p)}
+    ${merchandisingFields(i,items,p)}
     <fieldset class="opt-group"><legend>${A('شارات تظهر على الصنف (حتى 3)', 'Badges on the dish (up to 3)')}</legend><div class="allergen-grid">${BADGES.map(([k, ar, en]) => `<label class="check"><input type="checkbox" data-badge value="${k}" ${i.badges?.includes(k) ? 'checked' : ''}> ${esc(A(ar, en))}</label>`).join('')}</div></fieldset>
     <details class="item-more"${i.compare_price || i.allergens?.length || i.options?.length || i.caffeine_mg != null || i.sodium_mg != null ? ' open' : ''}><summary>${A('عرض وأحجام ومعلومات غذائية', 'Offer, sizes and nutrition')}</summary><div class="stack">
       <div class="row">${field('compare_price', A('السعر قبل الخصم (اختياري)', 'Price before discount (optional)'), `type="number" min="0" step="0.01" inputmode="decimal" value="${i.compare_price != null ? i.compare_price / 100 : ''}"`, p)}${field('caffeine_mg', A('الكافيين (ملغ)', 'Caffeine (mg)'), `type="number" min="0" inputmode="numeric" value="${i.caffeine_mg ?? ''}"`, p)}${field('sodium_mg', A('الصوديوم (ملغ)', 'Sodium (mg)'), `type="number" min="0" inputmode="numeric" value="${i.sodium_mg ?? ''}"`, p)}</div>
@@ -307,6 +309,7 @@ async function ownerMenu(el) {
     </div></details>
     <div class="row form-foot">${field('sort', t('sort'), `type="number" min="0" value="${i.sort ?? 0}"`, p)}<label class="check"><input type="checkbox" name="hidden" ${i.active === 0 ? 'checked' : ''}> ${esc(A('إخفاء من المنيو', 'Hide from menu'))}</label></div>`;
   const toItem = (v, form) => ({
+    ...readMerchandising(form),
     category_id: v.category_id, name_ar: v.name_ar, name_en: v.name_en, desc_ar: v.desc_ar, desc_en: v.desc_en,
     price: Math.round(Number(v.price) * 100), calories: v.calories === '' ? null : Number(v.calories), image_url: v.image_url.trim() || null,
     compare_price: v.compare_price ? Math.round(Number(v.compare_price) * 100) : null,
@@ -370,6 +373,8 @@ async function ownerMenu(el) {
     if (del) del.closest('.option-group-editor').remove();
   }));
   wireImageFields(el);
+  wireMerchandising(el);
+  mountMenuSchedules(el,branches,categories);
   const reload = () => ownerMenu(el);
   el.querySelector('#sample')?.addEventListener('click', async (e) => {
     e.currentTarget.disabled = true;

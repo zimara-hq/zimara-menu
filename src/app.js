@@ -1,3 +1,4 @@
+import { discoveryFields, discoverMenu, recommendations, registerMenuSchedules } from './menu-discovery.js';
 import { itemExtras, itemView } from './menu-extras.js';
 import { registerDemo, expireDemo } from './demo.js';
 import { sampleMenuStatements, sampleItemCount } from './sample-menu.js';
@@ -115,6 +116,7 @@ app.use('/api/*', async (c, next) => {
   await next();
 });
 
+registerMenuSchedules(app);
 registerAccounts(app);
 registerBilling(app);
 registerMail(app);
@@ -400,7 +402,7 @@ function itemFields(b) {
     str(b.desc_en, 'desc_en', { optional: true, max: 400 }) ?? '',
     int(b.price, 'price', { max: 10_000_000 }),
     int(b.calories, 'calories', { optional: true, max: 10000 }),
-    url(b.image_url, 'image_url'),
+    typeof b.image_url === 'string' && /^\/menu-art\/[a-z0-9-]+\.webp$/i.test(b.image_url) ? b.image_url : url(b.image_url, 'image_url'),
     int(b.sort ?? 0, 'sort', { max: 10000 }),
     ...itemExtras(b, int(b.price, 'price', { max: 10_000_000 })),
   ];
@@ -414,22 +416,24 @@ owner.post('/items', async (c) => {
   if (!cat) throw bad('invalid_category_id');
   const iid = id();
   await c.env.DB.prepare(
-    'INSERT INTO items (id, org_id, category_id, name_ar, name_en, desc_ar, desc_en, price, calories, image_url, sort, compare_price, allergens, caffeine_mg, sodium_mg, options_json, badges, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO items (id, org_id, category_id, name_ar, name_en, desc_ar, desc_en, price, calories, image_url, sort, compare_price, allergens, caffeine_mg, sodium_mg, options_json, badges, gallery_json, dietary_json, complementary_ids_json, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
   )
-    .bind(iid, u.org_id, cat.id, ...itemFields(b), b.active === false ? 0 : 1)
+    .bind(iid, u.org_id, cat.id, ...itemFields(b), ...await discoveryFields(c.env, u.org_id, b, iid), b.active === false ? 0 : 1)
     .run();
   return c.json({ id: iid }, 201);
 });
 
 owner.patch('/items/:id', async (c) => {
   const u = c.get('user');
-  const b = await body(c);
+  const current = await c.env.DB.prepare('SELECT * FROM items WHERE id=? AND org_id=?').bind(c.req.param('id'), u.org_id).first();
+  if (!current) throw notFound();
+  const b = { ...itemView(current), active: !!current.active, ...await body(c) };
   const cat = await c.env.DB.prepare('SELECT id FROM categories WHERE id = ? AND org_id = ?').bind(b.category_id, u.org_id).first();
   if (!cat) throw bad('invalid_category_id');
   const res = await c.env.DB.prepare(
-    'UPDATE items SET category_id = ?, name_ar = ?, name_en = ?, desc_ar = ?, desc_en = ?, price = ?, calories = ?, image_url = ?, sort = ?, compare_price = ?, allergens = ?, caffeine_mg = ?, sodium_mg = ?, options_json = ?, badges = ?, active = ?, is_sample = 0 WHERE id = ? AND org_id = ?',
+    'UPDATE items SET category_id = ?, name_ar = ?, name_en = ?, desc_ar = ?, desc_en = ?, price = ?, calories = ?, image_url = ?, sort = ?, compare_price = ?, allergens = ?, caffeine_mg = ?, sodium_mg = ?, options_json = ?, badges = ?, gallery_json = ?, dietary_json = ?, complementary_ids_json = ?, active = ?, is_sample = 0 WHERE id = ? AND org_id = ?',
   )
-    .bind(cat.id, ...itemFields(b), b.active === false ? 0 : 1, c.req.param('id'), u.org_id)
+    .bind(cat.id, ...itemFields(b), ...await discoveryFields(c.env, u.org_id, b, current.id), b.active === false ? 0 : 1, c.req.param('id'), u.org_id)
     .run();
   if (!res.meta.changes) throw notFound();
   return c.json({ ok: true });
@@ -443,6 +447,12 @@ owner.delete('/items/:id', async (c) => {
     await c.env.DB.batch([
       c.env.DB.prepare('DELETE FROM branch_unavailable WHERE item_id = ?').bind(item.id),
       c.env.DB.prepare('DELETE FROM items WHERE id = ? AND org_id = ?').bind(item.id, u.org_id),
+      // Keep merchant complements valid in the same transaction as hard deletion.
+      c.env.DB.prepare(`UPDATE items SET complementary_ids_json = (
+        SELECT json_group_array(value) FROM json_each(items.complementary_ids_json) WHERE value != ?
+      ) WHERE org_id = ? AND EXISTS (
+        SELECT 1 FROM json_each(items.complementary_ids_json) WHERE value = ?
+      )`).bind(item.id, u.org_id, item.id),
     ]);
     return c.json({ ok: true, deleted: true });
   } catch (e) {
@@ -706,15 +716,22 @@ async function orgMenu(env, orgId, { branchId = null, includeHidden = false } = 
   const active = includeHidden ? '' : 'AND active = 1';
   const { results: categories } = await env.DB.prepare(`SELECT id, name_ar, name_en, sort, active FROM categories WHERE org_id = ? ${active} ORDER BY sort, rowid`).bind(orgId).all();
   const { results: items } = await env.DB.prepare(
-    `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.compare_price, i.calories, i.caffeine_mg, i.sodium_mg, i.allergens, i.options_json, i.badges, i.image_url, i.sort, i.active, i.is_sample,
+    `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.compare_price, i.calories, i.caffeine_mg, i.sodium_mg, i.allergens, i.options_json, i.badges, i.gallery_json, i.dietary_json, i.complementary_ids_json, i.image_url, i.sort, i.active, i.is_sample,
             CASE WHEN bu.item_id IS NULL THEN 1 ELSE 0 END AS available
        FROM items i JOIN categories category ON category.id = i.category_id AND category.org_id = i.org_id LEFT JOIN branch_unavailable bu ON bu.item_id = i.id AND bu.branch_id = ?
       WHERE i.org_id = ? ${includeHidden ? '' : 'AND i.active = 1 AND i.is_sample = 0 AND category.active = 1'} ORDER BY i.sort, i.rowid`,
   )
     .bind(branchId, orgId)
     .all();
-  return { categories, items: items.map(itemView) };
+  const menu = { categories, items: items.map(itemView) };
+  return branchId ? discoverMenu(env, orgId, branchId, menu) : menu;
 }
+
+app.get('/api/public/menu/:branchSlug/recommendations/:itemId', async (c) => {
+  const b = await c.env.DB.prepare('SELECT b.id,b.org_id FROM branches b JOIN orgs o ON o.id=b.org_id WHERE b.slug=? AND b.active=1 AND o.active=1').bind(c.req.param('branchSlug')).first();
+  if (!b) throw notFound();
+  return c.json(await recommendations(c.env,b.org_id,b.id,await orgMenu(c.env,b.org_id,{branchId:b.id}),c.req.param('itemId')));
+});
 
 app.get('/api/public/menu/:branchSlug', async (c) => {
   const b = await c.env.DB.prepare(

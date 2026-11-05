@@ -57,19 +57,36 @@ export function sampleItemCount(sector) {
   return sampleMenu(sector).reduce((n, [, , items]) => n + items.length, 0);
 }
 
+// Stable mapping for newly inserted synthetic samples; existing tenant rows are never updated.
+const ART = {
+  cafe: ['espresso','americano','latte','cappuccino','flat-white','saudi-coffee','iced-latte','cold-brew','spanish-latte','lemon-mint','butter-croissant','zaatar-cheese-croissant','chocolate-cookie','san-sebastian-cheesecake','tiramisu','date-cake'],
+  restaurant: ['hummus','moutabal','cheese-sambousa','chicken-kabsa','lamb-mandi','mixed-grill','classic-burger','crispy-chicken-burger','fresh-orange-juice','laban','water'],
+};
+
+export function sampleItemMedia(sector, indexOrName) {
+  const key = sector === 'restaurant' ? 'restaurant' : 'cafe';
+  const items = sampleMenu(key).flatMap(([, , entries]) => entries);
+  const index = typeof indexOrName === 'number' ? indexOrName : items.findIndex(item => item[1] === indexOrName || item[0] === indexOrName);
+  const slug = ART[key][index];
+  if (!slug) return null;
+  return {url: '/menu-art/' + slug + '-640.webp', variants: [320,640,960].map(width => ({url: '/menu-art/' + slug + '-' + width + '.webp', width}))};
+}
+
 // Statements that insert the sample menu for one organization.
 export function sampleMenuStatements(db, orgId, sector, newId) {
   const statements = [];
+  let sampleIndex = 0;
   sampleMenu(sector).forEach(([catAr, catEn, items], ci) => {
     const cid = newId();
     statements.push(
       db.prepare('INSERT INTO categories (id, org_id, name_ar, name_en, sort) VALUES (?, ?, ?, ?, ?)').bind(cid, orgId, catAr, catEn, ci),
     );
     items.forEach(([ar, en, dar, den, price, kcal], ii) => {
+      const media = sampleItemMedia(sector, sampleIndex++);
       statements.push(
         db.prepare(
-          'INSERT INTO items (id, org_id, category_id, name_ar, name_en, desc_ar, desc_en, price, calories, sort) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        ).bind(newId(), orgId, cid, ar, en, dar, den, price, kcal, ii),
+          'INSERT INTO items (id, org_id, category_id, name_ar, name_en, desc_ar, desc_en, price, calories, sort, image_url, gallery_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        ).bind(newId(), orgId, cid, ar, en, dar, den, price, kcal, ii, media.url, JSON.stringify([media])),
       );
     });
   });

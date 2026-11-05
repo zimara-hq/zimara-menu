@@ -1,0 +1,564 @@
+{
+  "timestamp": "2026-11-05T23:36:13.341Z",
+  "target": "http://127.0.0.1:8793/m/demo-qeladkefvao-hail",
+  "transport": "direct Worker response",
+  "node": "v24.19.0",
+  "platform": "linux 6.18.57 x64",
+  "browser": {
+    "networkUserAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36",
+    "hostUserAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "benchmarkIndex": 2603,
+    "credits": {
+      "axe-core": "4.14.0"
+    }
+  },
+  "lighthouseVersion": "13.0.3",
+  "config": {
+    "output": [
+      "json",
+      "html"
+    ],
+    "maxWaitForFcp": 30000,
+    "maxWaitForLoad": 45000,
+    "pauseAfterFcpMs": 1000,
+    "pauseAfterLoadMs": 1000,
+    "networkQuietThresholdMs": 1000,
+    "cpuQuietThresholdMs": 1000,
+    "formFactor": "mobile",
+    "throttling": {
+      "rttMs": 150,
+      "throughputKbps": 1638.4,
+      "requestLatencyMs": 562.5,
+      "downloadThroughputKbps": 1474.5600000000002,
+      "uploadThroughputKbps": 675,
+      "cpuSlowdownMultiplier": 4
+    },
+    "throttlingMethod": "simulate",
+    "screenEmulation": {
+      "mobile": true,
+      "width": 412,
+      "height": 823,
+      "deviceScaleFactor": 1.75,
+      "disabled": false
+    },
+    "emulatedUserAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36",
+    "auditMode": false,
+    "gatherMode": false,
+    "clearStorageTypes": [
+      "file_systems",
+      "shader_cache",
+      "service_workers",
+      "cache_storage"
+    ],
+    "disableStorageReset": false,
+    "debugNavigation": false,
+    "channel": "node",
+    "usePassiveGathering": false,
+    "disableFullPageScreenshot": false,
+    "skipAboutBlank": false,
+    "blankPage": "about:blank",
+    "ignoreStatusCode": false,
+    "locale": "en-US",
+    "blockedUrlPatterns": null,
+    "additionalTraceCategories": null,
+    "extraHeaders": null,
+    "precomputedLanternData": null,
+    "onlyAudits": null,
+    "onlyCategories": [
+      "performance",
+      "accessibility",
+      "seo"
+    ],
+    "skipAudits": null
+  },
+  "recipe": {
+    "title": "رواق · تجربة زيمارا · زيمارا منيو",
+    "lang": "ar",
+    "bodyClass": "menu-page",
+    "firstDish": "flex",
+    "visibleImages": 16,
+    "fontFamily": "MenuJakarta, MenuTajawal, system-ui, sans-serif",
+    "background": "rgb(247, 245, 250)",
+    "theme": "light",
+    "menuClass": null
+  },
+  "scores": {
+    "performance": 94,
+    "accessibility": 100,
+    "seo": 91
+  },
+  "encodedNonImageTransferBytes": 132221,
+  "nonImageLimitBytes": 150000,
+  "runtimeError": null,
+  "warnings": [],
+  "failedAudits": [
+    {
+      "id": "first-contentful-paint",
+      "title": "First Contentful Paint",
+      "score": 0.98,
+      "displayValue": "1.3 s"
+    },
+    {
+      "id": "largest-contentful-paint",
+      "title": "Largest Contentful Paint",
+      "score": 0.91,
+      "displayValue": "2.4 s"
+    },
+    {
+      "id": "total-blocking-time",
+      "title": "Total Blocking Time",
+      "score": 0.88,
+      "displayValue": "220 ms"
+    },
+    {
+      "id": "max-potential-fid",
+      "title": "Max Potential First Input Delay",
+      "score": 0.64,
+      "displayValue": "210 ms"
+    },
+    {
+      "id": "interactive",
+      "title": "Time to Interactive",
+      "score": 0.98,
+      "displayValue": "2.4 s"
+    },
+    {
+      "id": "label-content-name-mismatch",
+      "title": "Elements with visible text labels do not have matching accessible names.",
+      "score": 0,
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "node",
+            "valueType": "node",
+            "subItemsHeading": {
+              "key": "relatedNode",
+              "valueType": "node"
+            },
+            "label": "Failing Elements"
+          }
+        ],
+        "items": [
+          {
+            "node": {
+              "type": "node",
+              "lhId": "1-0-SUMMARY",
+              "path": "1,HTML,1,BODY,2,MAIN,1,SECTION,1,DETAILS,0,SUMMARY",
+              "selector": "main#main > section.menu-sheet > details#menu-business-details > summary",
+              "boundingRect": {
+                "top": 112,
+                "bottom": 156,
+                "left": 16,
+                "right": 60,
+                "width": 44,
+                "height": 44
+              },
+              "snippet": "<summary aria-label=\"معلومات المنشأة والاسم الكامل\">",
+              "nodeLabel": "عن المنشأة",
+              "explanation": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            }
+          }
+        ],
+        "debugData": {
+          "type": "debugdata",
+          "impact": "serious",
+          "tags": [
+            "cat.semantics",
+            "wcag21a",
+            "wcag253",
+            "EN-301-549",
+            "EN-9.2.5.3",
+            "RGAAv4",
+            "RGAA-6.1.5"
+          ]
+        }
+      }
+    },
+    {
+      "id": "unminified-javascript",
+      "title": "Minify JavaScript",
+      "score": 0,
+      "displayValue": "Est savings of 5 KiB",
+      "details": {
+        "type": "opportunity",
+        "headings": [
+          {
+            "key": "url",
+            "valueType": "url",
+            "label": "URL"
+          },
+          {
+            "key": "totalBytes",
+            "valueType": "bytes",
+            "label": "Transfer Size"
+          },
+          {
+            "key": "wastedBytes",
+            "valueType": "bytes",
+            "label": "Est Savings"
+          }
+        ],
+        "items": [
+          {
+            "url": "http://127.0.0.1:8793/vendor/qrcode.js",
+            "totalBytes": 11844,
+            "wastedBytes": 5221,
+            "wastedPercent": 44.08027110028593
+          }
+        ],
+        "overallSavingsMs": 30,
+        "overallSavingsBytes": 5221,
+        "sortedBy": [
+          "wastedBytes"
+        ],
+        "debugData": {
+          "type": "debugdata",
+          "metricSavings": {
+            "FCP": 0,
+            "LCP": 30
+          }
+        }
+      }
+    },
+    {
+      "id": "meta-description",
+      "title": "Document does not have a meta description",
+      "score": 0
+    },
+    {
+      "id": "bf-cache",
+      "title": "Page prevented back/forward cache restoration",
+      "score": 0,
+      "displayValue": "2 failure reasons",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "reason",
+            "valueType": "text",
+            "subItemsHeading": {
+              "key": "frameUrl",
+              "valueType": "url"
+            },
+            "label": "Failure reason"
+          },
+          {
+            "key": "failureType",
+            "valueType": "text",
+            "label": "Failure type"
+          }
+        ],
+        "items": [
+          {
+            "reason": "Back/forward cache is disabled by flags. Visit chrome://flags/#back-forward-cache to enable it locally on this device.",
+            "failureType": "Not actionable",
+            "subItems": {
+              "type": "subitems",
+              "items": [
+                {
+                  "frameUrl": "http://127.0.0.1:8793/m/demo-qeladkefvao-hail"
+                }
+              ]
+            },
+            "protocolReason": "BackForwardCacheDisabled"
+          },
+          {
+            "reason": "Back/forward cache is disabled by the command line.",
+            "failureType": "Not actionable",
+            "subItems": {
+              "type": "subitems",
+              "items": [
+                {
+                  "frameUrl": "http://127.0.0.1:8793/m/demo-qeladkefvao-hail"
+                }
+              ]
+            },
+            "protocolReason": "BackForwardCacheDisabledByCommandLine"
+          }
+        ]
+      }
+    },
+    {
+      "id": "lcp-discovery-insight",
+      "title": "LCP request discovery",
+      "score": 0,
+      "details": {
+        "type": "list",
+        "items": [
+          {
+            "type": "checklist",
+            "items": {
+              "priorityHinted": {
+                "label": "fetchpriority=high should be applied",
+                "value": false
+              },
+              "requestDiscoverable": {
+                "label": "Request is discoverable in initial document",
+                "value": false
+              },
+              "eagerlyLoaded": {
+                "label": "lazy load not applied",
+                "value": false
+              }
+            }
+          },
+          {
+            "type": "node",
+            "lhId": "page-0-IMG",
+            "path": "1,HTML,1,BODY,2,MAIN,4,DIV,0,DIV,0,SECTION,1,DIV,2,ARTICLE,1,DIV,0,IMG",
+            "selector": "div.dish-list > article.dish > div.dish-photo > img",
+            "boundingRect": {
+              "top": 575,
+              "bottom": 712,
+              "left": 213,
+              "right": 395,
+              "width": 182,
+              "height": 137
+            },
+            "snippet": "<img src=\"/menu-art/latte-640.webp\" alt=\"\" loading=\"lazy\" srcset=\"/menu-art/latte-320.webp 320w, /menu-art/latte-640.webp 640w, /menu-art/la…\" sizes=\"(max-width: 600px) 45vw, 320px\" width=\"320\" height=\"240\">",
+            "nodeLabel": "div.dish-list > article.dish > div.dish-photo > img"
+          }
+        ]
+      }
+    },
+    {
+      "id": "network-dependency-tree-insight",
+      "title": "Network dependency tree",
+      "score": 0,
+      "details": {
+        "type": "list",
+        "items": [
+          {
+            "type": "list-section",
+            "value": {
+              "type": "network-tree",
+              "chains": {
+                "C7B0A5DF452DC4BF054C7CBB41B5FA2A": {
+                  "url": "http://127.0.0.1:8793/m/demo-qeladkefvao-hail",
+                  "navStartToEndTime": 32,
+                  "transferSize": 1929,
+                  "isLongest": true,
+                  "children": {
+                    "33189.5": {
+                      "url": "http://127.0.0.1:8793/menu-next.css",
+                      "navStartToEndTime": 82,
+                      "transferSize": 3118,
+                      "isLongest": true,
+                      "children": {
+                        "33189.43": {
+                          "url": "http://127.0.0.1:8793/fonts/menu-tajawal.woff2",
+                          "navStartToEndTime": 469,
+                          "transferSize": 20562,
+                          "isLongest": true,
+                          "children": {}
+                        },
+                        "33189.44": {
+                          "url": "http://127.0.0.1:8793/fonts/menu-jakarta.woff2",
+                          "navStartToEndTime": 404,
+                          "transferSize": 22854,
+                          "children": {}
+                        }
+                      }
+                    },
+                    "33189.2": {
+                      "url": "http://127.0.0.1:8793/styles.css",
+                      "navStartToEndTime": 66,
+                      "transferSize": 12834,
+                      "children": {
+                        "33189.60": {
+                          "url": "http://127.0.0.1:8793/fonts/curated.css",
+                          "navStartToEndTime": 296,
+                          "transferSize": 702,
+                          "children": {}
+                        },
+                        "33189.15": {
+                          "url": "http://127.0.0.1:8793/fonts/curated.css",
+                          "navStartToEndTime": 93,
+                          "transferSize": 1659,
+                          "children": {}
+                        }
+                      }
+                    },
+                    "33189.7": {
+                      "url": "http://127.0.0.1:8793/menu.js",
+                      "navStartToEndTime": 89,
+                      "transferSize": 16234,
+                      "children": {
+                        "33189.51": {
+                          "url": "http://127.0.0.1:8793/common.js",
+                          "navStartToEndTime": 167,
+                          "transferSize": 4491,
+                          "children": {
+                            "33189.56": {
+                              "url": "http://127.0.0.1:8793/api/public/profile/demo-qeladkefvao",
+                              "navStartToEndTime": 268,
+                              "transferSize": 1798,
+                              "children": {}
+                            },
+                            "33189.54": {
+                              "url": "http://127.0.0.1:8793/api/public/menu/demo-qeladkefvao-hail",
+                              "navStartToEndTime": 224,
+                              "transferSize": 4250,
+                              "children": {}
+                            }
+                          }
+                        },
+                        "33189.52": {
+                          "url": "http://127.0.0.1:8793/addons-public.js",
+                          "navStartToEndTime": 167,
+                          "transferSize": 3884,
+                          "children": {}
+                        },
+                        "33189.50": {
+                          "url": "http://127.0.0.1:8793/design-engine.js",
+                          "navStartToEndTime": 167,
+                          "transferSize": 4276,
+                          "children": {}
+                        },
+                        "33189.48": {
+                          "url": "http://127.0.0.1:8793/tenant-pages.js",
+                          "navStartToEndTime": 163,
+                          "transferSize": 4478,
+                          "children": {}
+                        },
+                        "33189.49": {
+                          "url": "http://127.0.0.1:8793/tenant-theme.js",
+                          "navStartToEndTime": 159,
+                          "transferSize": 1810,
+                          "children": {}
+                        },
+                        "33189.47": {
+                          "url": "http://127.0.0.1:8793/menu-discovery.js",
+                          "navStartToEndTime": 146,
+                          "transferSize": 1199,
+                          "children": {}
+                        }
+                      }
+                    },
+                    "33189.8": {
+                      "url": "http://127.0.0.1:8793/mobile.js",
+                      "navStartToEndTime": 90,
+                      "transferSize": 3160,
+                      "children": {
+                        "33189.53": {
+                          "url": "http://127.0.0.1:8793/mobile-client.js",
+                          "navStartToEndTime": 176,
+                          "transferSize": 1338,
+                          "children": {}
+                        }
+                      }
+                    },
+                    "33189.14": {
+                      "url": "http://127.0.0.1:8793/ticket.webmanifest",
+                      "navStartToEndTime": 123,
+                      "transferSize": 1081,
+                      "children": {}
+                    },
+                    "33189.6": {
+                      "url": "http://127.0.0.1:8793/vendor/qrcode.js",
+                      "navStartToEndTime": 87,
+                      "transferSize": 12571,
+                      "children": {}
+                    },
+                    "33189.4": {
+                      "url": "http://127.0.0.1:8793/tenant-studio.css",
+                      "navStartToEndTime": 87,
+                      "transferSize": 5594,
+                      "children": {}
+                    },
+                    "33189.3": {
+                      "url": "http://127.0.0.1:8793/design.css",
+                      "navStartToEndTime": 78,
+                      "transferSize": 3472,
+                      "children": {}
+                    }
+                  }
+                }
+              },
+              "longestChain": {
+                "duration": 469
+              }
+            }
+          },
+          {
+            "type": "list-section",
+            "title": "Preconnected origins",
+            "description": "[preconnect](https://developer.chrome.com/docs/lighthouse/performance/uses-rel-preconnect/) hints help the browser establish a connection earlier in the page load, saving time when the first request for that origin is made. The following are the origins that the page preconnected to.",
+            "value": {
+              "type": "text",
+              "value": "no origins were preconnected"
+            }
+          },
+          {
+            "type": "list-section",
+            "title": "Preconnect candidates",
+            "description": "Add [preconnect](https://developer.chrome.com/docs/lighthouse/performance/uses-rel-preconnect/) hints to your most important origins, but try to use no more than 4.",
+            "value": {
+              "type": "text",
+              "value": "No additional origins are good candidates for preconnecting"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "render-blocking-insight",
+      "title": "Render blocking requests",
+      "score": 0,
+      "displayValue": "Est savings of 300 ms",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "url",
+            "valueType": "url",
+            "label": "URL"
+          },
+          {
+            "key": "totalBytes",
+            "valueType": "bytes",
+            "label": "Transfer Size"
+          },
+          {
+            "key": "wastedMs",
+            "valueType": "timespanMs",
+            "label": "Duration"
+          }
+        ],
+        "items": [
+          {
+            "url": "http://127.0.0.1:8793/vendor/qrcode.js",
+            "totalBytes": 12571,
+            "wastedMs": 630
+          },
+          {
+            "url": "http://127.0.0.1:8793/tenant-studio.css",
+            "totalBytes": 5594,
+            "wastedMs": 330
+          },
+          {
+            "url": "http://127.0.0.1:8793/menu-next.css",
+            "totalBytes": 3118,
+            "wastedMs": 330
+          },
+          {
+            "url": "http://127.0.0.1:8793/design.css",
+            "totalBytes": 3472,
+            "wastedMs": 330
+          },
+          {
+            "url": "http://127.0.0.1:8793/styles.css",
+            "totalBytes": 12834,
+            "wastedMs": 480
+          },
+          {
+            "url": "http://127.0.0.1:8793/fonts/curated.css",
+            "totalBytes": 1659,
+            "wastedMs": 180
+          }
+        ]
+      }
+    }
+  ]
+}

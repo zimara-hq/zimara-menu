@@ -106,8 +106,8 @@ const parse = (s, fallback) => {
 
 // Shapes a stored item row for API output.
 export function itemView(row) {
-  const { options_json, allergens, badges, ...rest } = row;
-  return { ...rest, allergens: parse(allergens, []), options: parse(options_json, []), badges: parse(badges, []) };
+  const { options_json, allergens, badges, gallery_json, dietary_json, complementary_ids_json, ...rest } = row;
+  return { ...rest, gallery: parse(gallery_json, []), dietary: parse(dietary_json, []), complementary_ids: parse(complementary_ids_json, []), allergens: parse(allergens, []), options: parse(options_json, []), badges: parse(badges, []) };
 }
 
 // Resolves a customer's chosen option ids against the stored groups.
