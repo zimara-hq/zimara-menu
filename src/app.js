@@ -14,6 +14,10 @@ import { registerDesign, activeDesign } from './design.js';
 import {registerStaffPermissions,staffPermissions} from './staff-permissions.js';
 import { registerAiImport, aiConfigured } from './ai-import.js';
 import { registerSetup } from './setup.js';
+import { registerLaunch } from './launch.js';
+import { registerOrders } from './orders.js';
+import { processReceiptOutbox } from './receipt-outbox.js';
+import { registerAutomation, automationCron, ticketAutomationStatement } from './automation.js';
 import { registerWaitlist, waitlistCron, waitSettings } from './waitlist.js';
 import { registerLoyalty, winbackCron } from './loyalty.js';
 import { registerSecurity } from './security.js';
@@ -69,7 +73,7 @@ const app = new Hono();
 app.onError((err, c) => {
   if (/plan_(branches|items)_limit/.test(String(err?.message))) return c.json({ error: String(err.message).includes('plan_branches_limit') ? 'plan_branches_limit' : 'plan_items_limit' }, 409);
   if (err instanceof HttpError) return c.json({ error: err.code }, err.status);
-  console.error(err);
+  console.error(JSON.stringify({ event: 'request_failed', method: c.req.method }));
   return c.json({ error: 'server_error' }, 500);
 });
 
@@ -621,11 +625,16 @@ branch.post('/tickets/:id/:action', async (c) => {
     cancel: ["status = 'cancelled'", "status IN ('preparing', 'ready')"],
   }[action];
   if (!q) throw notFound();
-  const res = await c.env.DB.prepare(
+  const update = c.env.DB.prepare(
     `UPDATE tickets SET ${q[0]}, version = version + 1 WHERE id = ?1 AND branch_id = ?3 AND version = ?4 AND ${q[1]}`,
-  )
-    .bind(c.req.param('id'), t, u.branch_id, version)
-    .run();
+  ).bind(c.req.param('id'), t, u.branch_id, version);
+  const status = {ready:'ready',collect:'collected',cancel:'cancelled'}[action];
+  const event = status ? ticketAutomationStatement(c.env, {
+    org_id: u.org_id, branch_id: u.branch_id, ticket_id: c.req.param('id'),
+    status, version: version + 1, timestamp: t,
+  }) : null;
+  // The event is conditional on the resulting ticket version, in the same transaction.
+  const [res] = await c.env.DB.batch(event ? [update, event] : [update]);
   const ticket = await c.env.DB.prepare(`SELECT ${TICKET_COLS} FROM tickets WHERE id = ? AND branch_id = ?`).bind(c.req.param('id'), u.branch_id).first();
   if (!ticket) throw notFound();
   if (!res.meta.changes) return c.json({ error: 'stale', ticket }, 409);
@@ -843,38 +852,42 @@ export async function alertTicket(env, ticketId, fetcher) {
 
 // Cron: repeat unseen ready alerts every 2 minutes (max 3 repeats), expire stale tickets and sessions.
 export async function scheduled(env, fetcher) {
-  await expireDemo(env);
-  const t = now();
-  await expireSubscriptions(env);
-  try { await processSimpleFatooraInvoices(env); } catch { /* durable invoice jobs remain for the next run */ }
-  // Lost-webhook fallback, every 5 minutes so abandoned checkouts do not hammer the provider.
-  if (new Date(t).getUTCMinutes() % 5 === 0) await reconcileCheckouts(env);
-  // POS sales from Rewaa open pager tickets; a failing connection records its error and never blocks alerts.
-  try { await pollRewaa(env); } catch { /* next minute */ }
-  if (new Date(t).getUTCMinutes() === 7) { try { await sendBillingNotices(env); } catch { /* next hour */ } }
-  const { results } = await env.DB.prepare(
-    "SELECT id FROM tickets WHERE status = 'ready' AND seen_at IS NULL AND alerts_sent < ? AND last_alert_at <= ?",
-  )
-    .bind(MAX_ALERTS, t - REALERT_EVERY_MS)
-    .all();
-  for (const r of results) {
-    const res = await env.DB.prepare(
-      "UPDATE tickets SET alerts_sent = alerts_sent + 1, last_alert_at = ? WHERE id = ? AND status = 'ready' AND seen_at IS NULL AND alerts_sent < ?",
-    )
-      .bind(t, r.id, MAX_ALERTS)
-      .run();
-    if (res.meta.changes) await alertTicket(env, r.id, fetcher);
-  }
-  await env.DB.batch([
+  const t = now(), failed = [];
+  const run = async (task, work) => {
+    try { return await work(); }
+    catch { failed.push(task); console.warn(JSON.stringify({ event: 'scheduled_task_failed', task })); return null; }
+  };
+  await run('demo_expiry', () => expireDemo(env));
+  await run('subscription_expiry', () => expireSubscriptions(env));
+  await run('invoice_outbox', () => processSimpleFatooraInvoices(env));
+  await run('receipt_outbox', () => processReceiptOutbox(env));
+  if (new Date(t).getUTCMinutes() % 5 === 0) await run('payment_reconciliation', () => reconcileCheckouts(env));
+  await run('rewaa', () => pollRewaa(env));
+  await run('automation', () => automationCron(env, fetcher));
+  if (new Date(t).getUTCMinutes() === 7) await run('billing_notices', () => sendBillingNotices(env));
+  const realerted = await run('pager_alerts', async () => {
+    const { results } = await env.DB.prepare(
+      "SELECT id FROM tickets WHERE status = 'ready' AND seen_at IS NULL AND alerts_sent < ? AND last_alert_at <= ?",
+    ).bind(MAX_ALERTS, t - REALERT_EVERY_MS).all();
+    let count = 0;
+    for (const r of results) {
+      const res = await env.DB.prepare(
+        "UPDATE tickets SET alerts_sent = alerts_sent + 1, last_alert_at = ? WHERE id = ? AND status = 'ready' AND seen_at IS NULL AND alerts_sent < ? AND last_alert_at <= ?",
+      ).bind(t, r.id, MAX_ALERTS, t - REALERT_EVERY_MS).run();
+      if (res.meta.changes) { count++; await alertTicket(env, r.id, fetcher); }
+    }
+    return count;
+  });
+  await run('session_cleanup', () => env.DB.batch([
     env.DB.prepare("UPDATE tickets SET status = 'cancelled', version = version + 1 WHERE status IN ('preparing', 'ready') AND created_at < ?").bind(t - TICKET_TTL_MS),
     env.DB.prepare("DELETE FROM push_subscriptions WHERE ticket_id IN (SELECT id FROM tickets WHERE status IN ('collected', 'cancelled'))"),
     env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(t),
-  ]);
-  let waitlist = null;
-  try { waitlist = await waitlistCron(env, fetcher); } catch { /* next minute */ }
-  // Win-back messages once an hour during Riyadh daytime (06:23 to 20:23), never at night.
-  if (new Date(t).getUTCMinutes() === 23 && new Date(t).getUTCHours() >= 3 && new Date(t).getUTCHours() <= 17) { try { await winbackCron(env, fetcher); } catch { /* next hour */ } }
-  return { realerted: results.length, waitlist };
+  ]));
+  const waitlist = await run('waitlist', () => waitlistCron(env, fetcher));
+  if (new Date(t).getUTCMinutes() === 23 && new Date(t).getUTCHours() >= 3 && new Date(t).getUTCHours() <= 17) await run('winback', () => winbackCron(env, fetcher));
+  await run('heartbeat', () => env.DB.prepare("INSERT INTO platform_settings(key,value,updated_at) VALUES('cron_health',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at")
+    .bind(JSON.stringify({failed, status:failed.length?'degraded':'ok'}),t).run());
+  return { realerted: realerted || 0, waitlist, failed };
 }
 
 // ---------- Pages ----------
@@ -888,6 +901,9 @@ registerDesign(app);
 registerStaffPermissions(app,{requireRole,body,audit});
 registerAiImport(app);
 registerSetup(app);
+registerLaunch(app);
+registerOrders(app, { requireRole });
+registerAutomation(app);
 registerOrdering(app);
 registerWaitlist(app);
 registerLoyalty(app);

@@ -6,6 +6,19 @@ import { bad, now, str } from './util.js';
 export const LEGAL_KEYS = ['legal_name_ar', 'legal_name_en', 'cr_number', 'vat_number', 'address_ar', 'address_en', 'support_email', 'support_phone'];
 const LIMITS = { cr_number: /^\d{10}$/, vat_number: /^3\d{13}3$/ };
 
+// An operational completeness check, not approval of the legal documents. A seller
+// without VAT registration must leave vat_number blank; it is not a missing field.
+export function legalReadiness(legal = {}) {
+  const has = (key) => typeof legal[key] === 'string' && Boolean(legal[key].trim());
+  const missing = [];
+  if (!has('legal_name_ar') && !has('legal_name_en')) missing.push('legal_name');
+  if (!LIMITS.cr_number.test(legal.cr_number || '')) missing.push('cr_number');
+  if (!has('address_ar') && !has('address_en')) missing.push('address');
+  if (!has('support_email') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(legal.support_email)) missing.push('support_email');
+  if (has('vat_number') && !LIMITS.vat_number.test(legal.vat_number)) missing.push('valid_vat_number');
+  return { ready: missing.length === 0, missing, vat_registered: has('vat_number') };
+}
+
 export async function legalInfo(env) {
   const { results } = await env.DB.prepare(`SELECT key, value FROM platform_settings WHERE key IN (${LEGAL_KEYS.map(() => '?').join(',')})`).bind(...LEGAL_KEYS).all();
   return Object.fromEntries(LEGAL_KEYS.map((k) => [k, results.find((r) => r.key === k)?.value || '']));
@@ -27,6 +40,7 @@ export function registerLegal(app) {
       if (!(k in b)) continue;
       const v = String(b[k] ?? '').trim();
       if (v && LIMITS[k] && !LIMITS[k].test(v)) throw bad('invalid_' + k);
+      if (v && k === 'support_email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) throw bad('invalid_support_email');
       if (v) str(v, k, { max: 300 });
       stmts.push(v
         ? c.env.DB.prepare('INSERT INTO platform_settings (key, value, updated_by, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at').bind(k, v, u.id, t)

@@ -26,7 +26,8 @@
     "test:ordering": "node test/e2e/ordering.mjs",
     "test:waitlist": "node test/e2e/waitlist.mjs",
     "test:loyalty": "node test/e2e/loyalty.mjs",
-    "test:security": "node test/e2e/security.mjs"
+    "test:security": "node test/e2e/security.mjs",
+    "test:launch": "node test/e2e/launch.mjs"
   },
   "repository": {
     "type": "git",

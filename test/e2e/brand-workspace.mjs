@@ -39,7 +39,7 @@ try{
   await page.locator('#workspace-query').press('Enter');await page.locator('#panel-subscription').waitFor();
   assert.equal(await page.locator('#workspace-section').innerText(),'باقتي وفواتيري');
   await page.locator('#workspace-find').click();await page.locator('#workspace-query').fill('لايوجدقسمبهذاالاسم');await page.locator('.finder-empty').waitFor();
-  await page.locator('#finder-clear').click();assert.equal(await page.locator('.finder-result').count(),18);
+  await page.locator('#finder-clear').click();assert.equal(await page.locator('.finder-result').count(),19);assert.equal(await page.locator('.finder-result',{hasText:'مركز التشغيل'}).count(),1);
   await page.keyboard.press('Escape');assert.equal(await page.locator('#workspace-find').evaluate(el=>el===document.activeElement),true);
   await page.keyboard.press('Control+k');await page.locator('#workspace-query').fill('الوان');await page.locator('#workspace-query').press('ArrowDown');await page.keyboard.press('Enter');await page.locator('#identity-form').waitFor();
   pass('role-scoped finder supports Arabic normalization, task keywords, clear, empty state, keyboard activation and focus restoration');
@@ -62,7 +62,9 @@ try{
   pass('360–1440px, both locales, themes and reduced-motion layout checks pass');
   const cashier=await browser.newPage();cashier.on('pageerror',error=>errors.push(error.message));
   await cashier.goto(base+'/demo#room='+room.token+'&role=cashier');await cashier.waitForURL('**/app');await cashier.locator('#workspace-find').click();
-  assert.equal(await cashier.locator('.finder-result').count(),8);
+  assert.equal(await cashier.locator('.finder-result').count(),10);
+  assert.equal(await cashier.locator('.finder-result',{hasText:'شاشة المطبخ'}).count(),1);
+  assert.equal(await cashier.locator('.finder-result',{hasText:'طلبات الطاولات'}).count(),1);
   await cashier.locator('#workspace-query').fill('فاتورة');assert.equal(await cashier.locator('.finder-result').count(),0);
   await cashier.close();pass('cashier navigation search excludes owner billing and branding tools');
   assert.deepEqual(errors,[]);

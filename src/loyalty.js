@@ -96,13 +96,15 @@ export function registerLoyalty(app) {
   const owner = requireRole('owner');
 
   app.get('/api/owner/loyalty/customers', owner, async (c) => {
-    const list = await customers(c.env, c.get('user').org_id);
+    const orgId = c.get('user').org_id;
+    const list = await customers(c.env, orgId);
+    const total = await c.env.DB.prepare('SELECT COUNT(*) AS n FROM loyalty_cards WHERE org_id=? AND revoked_at IS NULL').bind(orgId).first();
     const counts = Object.fromEntries(SEGMENTS.map((s) => [s, 0]));
     for (const x of list) counts[x.segment]++;
     const seg = c.req.query('segment');
     const rows = (SEGMENTS.includes(seg) ? list.filter((x) => x.segment === seg) : list).slice(0, 200)
       .map(({ id: _id, winback_at: _w, ...x }) => x);
-    return c.json({ counts, total: list.length, reachable: list.filter((x) => x.reachable).length, customers: rows });
+    return c.json({ counts, total: total.n, analyzed: list.length, truncated: total.n > list.length, reachable: list.filter((x) => x.reachable).length, customers: rows });
   });
 
   app.get('/api/owner/loyalty/messages', owner, async (c) => {
@@ -120,15 +122,17 @@ export function registerLoyalty(app) {
     const ids = (await customers(c.env, u.org_id)).filter((x) => segment === 'all' || x.segment === segment).map((x) => x.id);
     if (!ids.length) throw conflict('no_recipients');
     const message = { id: id() };
-    await c.env.DB.prepare('INSERT INTO loyalty_messages(id,org_id,segment,title_ar,title_en,body_ar,body_en,created_at) VALUES(?,?,?,?,?,?,?,?)')
-      .bind(message.id, u.org_id, segment, f.title_ar, f.title_en, f.body_ar, f.body_en, now()).run();
+    const createdAt = now();
+    const reserved = await c.env.DB.prepare("INSERT INTO loyalty_messages(id,org_id,segment,title_ar,title_en,body_ar,body_en,created_at) SELECT ?,?,?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM loyalty_messages WHERE org_id=? AND segment!='winback' AND created_at>?)<?")
+      .bind(message.id, u.org_id, segment, f.title_ar, f.title_en, f.body_ar, f.body_en, createdAt, u.org_id, createdAt - DAY, MESSAGES_PER_DAY).run();
+    if (!reserved.meta.changes) throw conflict('messages_daily_limit');
     const r = await deliver(c.env, message, ids);
     await audit(c.env, u, 'loyalty.message', { segment, recipients: r.recipients });
     return c.json({ id: message.id, ...r }, 201);
   });
 
   app.post('/api/cards/:token/subscribe', async (c) => {
-    const card = await c.env.DB.prepare('SELECT id FROM loyalty_cards WHERE token=? AND revoked_at IS NULL').bind(c.req.param('token')).first();
+    const card = await c.env.DB.prepare('SELECT c.id FROM loyalty_cards c JOIN orgs o ON o.id=c.org_id JOIN loyalty_programs p ON p.org_id=c.org_id WHERE c.token=? AND c.revoked_at IS NULL AND o.active=1 AND p.active=1').bind(c.req.param('token')).first();
     if (!card) throw notFound();
     const b = await body(c);
     if (!validEndpoint(b.endpoint)) throw bad('invalid_endpoint');

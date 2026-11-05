@@ -24,3 +24,13 @@ MAIL_FROM=ZIMARA <no-reply@zimara.co>
 # Direct Rewaa link (polling). Needs POS_ENCRYPTION_KEY too. REWAA_SALES_PATH only if Rewaa support gives a different sale-invoice list path.
 REWAA_ENABLED=false
 # REWAA_SALES_PATH=/pos/invoices
+
+# Optional POS bridge encryption: generate a separate key; never reuse AUTH_SECRET.
+POS_ENCRYPTION_KEY=
+POS_BRIDGE_ENABLED=false
+
+# Optional signed operations receiver (n8n or another operator-owned HTTPS ingress).
+# Configure signature verification and durable event-ID deduplication before enabling.
+AUTOMATION_ENABLED=false
+AUTOMATION_WEBHOOK_URL=
+AUTOMATION_SIGNING_SECRET=

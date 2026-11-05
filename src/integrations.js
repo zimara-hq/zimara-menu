@@ -22,7 +22,7 @@ export function integrationReadiness(env) {
     entry('simple_fatoora', 'الفوترة الإلكترونية', 'Electronic invoicing', simpleFatooraConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, simpleFatooraConfigured(env),
       'إصدار فواتير الاشتراكات بعد تأكيد الدفع مبني. يحتاج مفتاح API، وبيانات فوترة مكتملة، واعتماد ملف البائع؛ لم يُثبت إصدار فاتورة حتى الآن.', 'Subscription invoicing after confirmed payment is implemented. It needs an API key, complete billing details, and an approved seller profile; no invoice issuance has been verified.'),
     entry('rewaa', 'رواء', 'Rewaa', rewaaConfigured(env) ? 'configured_unverified' : 'needs_configuration', true, rewaaConfigured(env),
-      'الربط المباشر مع رواء مبني: كل فاتورة بيع في فرع مربوط تفتح رقم انتظار تلقائيًا. يحتاج بيانات API من رواء واختبار فاتورة حقيقية.', 'The direct Rewaa link is built: each sale invoice in a linked branch opens a pager ticket. Needs Rewaa API access and a real invoice test.'),
+      'محول الاستطلاع مبني ومختبر محليًا. يحتاج تأكيد مسار فواتير البيع والصفحات والحقول ببيانات API من رواء واختبار فاتورة حقيقية.', 'The polling adapter is built and locally tested. The sale-invoice path, pagination and field mapping need confirmation with Rewaa API access and a real invoice test.'),
     entry('foodics', 'فودكس', 'Foodics', 'needs_partner_approval', false, false,
       'يحتاج محول OAuth واعتماد الشريك واختبار حساب تجريبي.', 'Requires an OAuth adapter, partner approval and sandbox verification.'),
     entry('pos_bridge', 'جسر نقاط البيع العام', 'Generic POS bridge', env.POS_BRIDGE_ENABLED === 'true' && encryptionConfigured(env) ? 'configured_unverified' : 'needs_configuration', true,
@@ -94,7 +94,7 @@ export function registerIntegrations(app, { onTicketReady } = {}) {
   });
 
   app.post('/api/owner/pos-connections/:id/revoke', requireRole('owner'), async (c) => {
-    const result = await c.env.DB.prepare('UPDATE pos_connections SET active = 0, revoked_at = ? WHERE id = ? AND org_id = ?').bind(now(), c.req.param('id'), c.get('user').org_id).run();
+    const result = await c.env.DB.prepare("UPDATE pos_connections SET active = 0, revoked_at = ?, secret_ciphertext = '' WHERE id = ? AND org_id = ? AND active = 1").bind(now(), c.req.param('id'), c.get('user').org_id).run();
     if (!result.meta.changes) throw notFound();
     await audit(c.env, c.get('user'), 'pos.connection.revoke', { id: c.req.param('id') });
     return c.json({ ok: true });

@@ -1,4 +1,4 @@
-// ZIMARA Menu service worker: receives payload-less pager pushes and shows the alert.
+// ZIMARA Menu: generic offline recovery and payload-less pager pushes.
 const STATE = 'zm-state-v1'; // tracked tokens: { token, lang, kind: 't' pager | 'w' waitlist | 'c' loyalty card }
 
 async function readTokens() {
@@ -14,8 +14,38 @@ async function writeTokens(tokens) {
   await cache.put('/__tickets', new Response(JSON.stringify([...cards, ...rest])));
 }
 
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+const OFFLINE_CACHE = 'zm-offline-v1';
+// Only generic recovery assets. Never cache API responses, tenant pages or credentials.
+const OFFLINE_ASSETS = ['/offline', '/offline.js'];
+self.addEventListener('install', (event) => event.waitUntil((async () => {
+  const cache = await caches.open(OFFLINE_CACHE);
+  await cache.addAll(OFFLINE_ASSETS);
+  await self.skipWaiting();
+})()));
+self.addEventListener('activate', (event) => event.waitUntil((async () => {
+  for (const key of await caches.keys()) {
+    if (key.startsWith('zm-offline-') && key !== OFFLINE_CACHE) await caches.delete(key);
+  }
+  await self.clients.claim();
+})()));
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+  if (request.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
+  if (request.mode === 'navigate') {
+    event.respondWith(fetch(request).catch(async () => {
+      const cache = await caches.open(OFFLINE_CACHE);
+      return await cache.match('/offline') || new Response('Connection unavailable. Reconnect and retry.', {
+        status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      });
+    }));
+  } else if (OFFLINE_ASSETS.includes(url.pathname) && !url.search) {
+    event.respondWith((async () => {
+      const cache = await caches.open(OFFLINE_CACHE);
+      return await cache.match(url.pathname) || fetch(request);
+    })());
+  }
+});
 
 self.addEventListener('message', (e) => {
   if (e.data?.type === 'track' && typeof e.data.token === 'string') {

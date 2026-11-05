@@ -16,5 +16,8 @@
       "type": "image/png"
     }
   ],
-  "scope": "/"
+  "scope": "/",
+  "description": "Your menu, order, queue or loyalty card · المنيو والطلب والدور وبطاقة الولاء",
+  "lang": "ar",
+  "dir": "rtl"
 }
