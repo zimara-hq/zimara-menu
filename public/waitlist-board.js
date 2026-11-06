@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 // Waitlist screens: the branch's live list (call, seat, no-show, walk-ins) and the
 // owner's per-branch settings with a printable "join the waitlist" QR code.
 import { api, esc, lang, pick, qrSvg, announce, chime, relTime } from './common.js';
@@ -88,7 +89,7 @@ export async function waitlistPanel(el, branch) {
       <label>${a('أكبر عدد أشخاص للتسجيل الذاتي', 'Largest party for self sign-up')}<input name="max_party" type="number" min="1" max="50" inputmode="numeric" value="${s.max_party}"></label></div>
       <p class="small muted">${a('العميل يشوف ترتيبه والوقت المتوقع، ويجيه تنبيه على جواله لما يناديه الموظف من شاشة الفرع.', 'Guests see their place and expected wait, and get a phone alert when staff call them from the branch screen.')}</p>
       <div role="status"></div>
-      <div class="row"><button class="btn" type="submit">${a('حفظ', 'Save')}</button><button class="btn ghost" type="button" data-print>${a('اطبع كود الانتظار', 'Print waitlist QR')}</button><a class="btn ghost" href="/q/${esc(branch.slug)}" target="_blank" rel="noopener">${a('افتح صفحة التسجيل', 'Open sign-up page')} ↗</a></div>
+      <div class="row"><button class="btn" type="submit">${a('حفظ', 'Save')}</button><button class="btn ghost" type="button" data-print>${a('اطبع كود الانتظار', 'Print waitlist QR')}</button><a class="btn ghost" href="/q/${esc(branch.slug)}" target="_blank" rel="noopener">${a('افتح صفحة التسجيل', 'Open sign-up page')} ${icon("arrowUpRight")}</a></div>
     </form>`;
   const f = el.querySelector('form'), msg = f.querySelector('[role=status]');
   f.onsubmit = async (e) => {

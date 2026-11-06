@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 import { api, chime, esc, lang, makeT, pick, setBrandColor, topbar, unlockAudio, announce, applyTenantFont } from './common.js';
 
 const t = makeT({
@@ -146,9 +147,9 @@ function render() {
         ${s === 'ready' && state.seen_at ? `<p class="msg">${esc(t('seenDone'))}</p>` : ''}
       </div>
       <div class="card stack">
-        ${soundOn ? `<p class="msg">🔊 ${esc(t('soundEnabled'))}</p>` : ''}
-        ${pushOn ? `<p class="msg">📳 ${esc(t('pushEnabled'))}</p>` : ''}
-        ${(!soundOn || (pushAvailable() && !pushOn)) ? `<button class="btn big" id="enable" type="button" style="width:100%">🔔 ${esc(t(pushAvailable() ? 'enable' : 'enableSoundOnly'))}</button>` : ''}
+        ${soundOn ? `<p class="msg">${icon("volume")} ${esc(t('soundEnabled'))}</p>` : ''}
+        ${pushOn ? `<p class="msg">${icon("phone")} ${esc(t('pushEnabled'))}</p>` : ''}
+        ${(!soundOn || (pushAvailable() && !pushOn)) ? `<button class="btn big" id="enable" type="button" style="width:100%">${icon("bell")} ${esc(t(pushAvailable() ? 'enable' : 'enableSoundOnly'))}</button>` : ''}
         <p class="small muted">${esc(t(pushAvailable() ? 'pushLockHint' : 'pageOnlyHint'))}</p>
         ${isIOS && !standalone ? `<p class="small">${esc(t('iosHint'))}</p>` : ''}
         ${notice ? `<p class="msg error small">${esc(notice)}</p>` : ''}
@@ -221,12 +222,12 @@ poll();
 function renderWaitingGame(el) {
   const a = (ar,en) => lang === 'ar' ? ar : en;
   if (!gameState) {
-    const cards = gameType === 'beans' ? ['☕','☕','◉','◉','◌','◌','✦','✦'] : ['☀','☀','☾','☾','✦','✦','◇','◇'];
+    const cards = gameType === 'beans' ? ['coffee','coffee','bean','bean','circle','circle','star','star'] : ['sun','sun','moon','moon','star','star','diamond','diamond'];
     for (let i = cards.length - 1; i > 0; i--) { const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1); [cards[i],cards[j]] = [cards[j],cards[i]]; }
     gameState = { cards, open: [], matched: [], moves: 0, busy: false };
   }
   const g = gameState;
-  el.innerHTML = `<h2>${a(gameType === 'beans' ? 'حبات القهوة' : 'لحظة ذاكرة', gameType === 'beans' ? 'Coffee pairs' : 'A moment of memory')}</h2><p class="small muted">${a('لعبة قصيرة للتسلية فقط، بدون جوائز أو مكافآت.', 'A short game just for fun. No prizes or rewards.')}</p><div class="wait-game-grid">${g.cards.map((symbol,i)=>`<button type="button" class="btn ghost" data-card="${i}" ${g.matched.includes(i)?'disabled':''} aria-label="${esc(a('بطاقة','Card')+' '+(i+1))}" aria-pressed="${g.open.includes(i)||g.matched.includes(i)}">${g.open.includes(i)||g.matched.includes(i)?symbol:'?'}</button>`).join('')}</div><p class="small" role="status">${g.matched.length === g.cards.length ? a('أحسنت! أكملت كل الأزواج.', 'Well done! You found every pair.') : a('عدد المحاولات: ', 'Turns: ')+g.moves}</p><button class="btn ghost sm" id="restart-game" type="button">${a('جولة جديدة','New round')}</button>`;
+  el.innerHTML = `<h2>${a(gameType === 'beans' ? 'حبات القهوة' : 'لحظة ذاكرة', gameType === 'beans' ? 'Coffee pairs' : 'A moment of memory')}</h2><p class="small muted">${a('لعبة قصيرة للتسلية فقط، بدون جوائز أو مكافآت.', 'A short game just for fun. No prizes or rewards.')}</p><div class="wait-game-grid">${g.cards.map((symbol,i)=>`<button type="button" class="btn ghost" data-card="${i}" ${g.matched.includes(i)?'disabled':''} aria-label="${esc(a('بطاقة','Card')+' '+(i+1)+(g.open.includes(i)||g.matched.includes(i)?' · '+a(({coffee:'قهوة',bean:'حبة قهوة',circle:'دائرة',star:'نجمة',sun:'شمس',moon:'قمر',diamond:'معين'})[symbol],symbol):''))}" aria-pressed="${g.open.includes(i)||g.matched.includes(i)}">${g.open.includes(i)||g.matched.includes(i)?icon(symbol, 24):icon('help',24)}</button>`).join('')}</div><p class="small" role="status">${g.matched.length === g.cards.length ? a('أحسنت! أكملت كل الأزواج.', 'Well done! You found every pair.') : a('عدد المحاولات: ', 'Turns: ')+g.moves}</p><button class="btn ghost sm" id="restart-game" type="button">${a('جولة جديدة','New round')}</button>`;
   el.querySelector('#restart-game').onclick = () => { gameState = null; renderWaitingGame(el); };
   el.querySelectorAll('[data-card]').forEach(button => button.onclick = () => {
     const i = Number(button.dataset.card);

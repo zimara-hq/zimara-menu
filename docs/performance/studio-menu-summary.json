@@ -1,0 +1,620 @@
+{
+  "timestamp": "2026-11-06T15:44:32.956Z",
+  "target": "http://127.0.0.1:8793/m/demo-agulny5kzwk-hail",
+  "transport": "direct Worker response",
+  "node": "v24.19.0",
+  "platform": "linux 6.18.57 x64",
+  "browser": {
+    "networkUserAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36",
+    "hostUserAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "benchmarkIndex": 2082,
+    "credits": {
+      "axe-core": "4.14.0"
+    }
+  },
+  "lighthouseVersion": "13.0.3",
+  "config": {
+    "output": [
+      "json",
+      "html"
+    ],
+    "maxWaitForFcp": 30000,
+    "maxWaitForLoad": 45000,
+    "pauseAfterFcpMs": 1000,
+    "pauseAfterLoadMs": 1000,
+    "networkQuietThresholdMs": 1000,
+    "cpuQuietThresholdMs": 1000,
+    "formFactor": "mobile",
+    "throttling": {
+      "rttMs": 150,
+      "throughputKbps": 1638.4,
+      "requestLatencyMs": 562.5,
+      "downloadThroughputKbps": 1474.5600000000002,
+      "uploadThroughputKbps": 675,
+      "cpuSlowdownMultiplier": 4
+    },
+    "throttlingMethod": "simulate",
+    "screenEmulation": {
+      "mobile": true,
+      "width": 412,
+      "height": 823,
+      "deviceScaleFactor": 1.75,
+      "disabled": false
+    },
+    "emulatedUserAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36",
+    "auditMode": false,
+    "gatherMode": false,
+    "clearStorageTypes": [
+      "file_systems",
+      "shader_cache",
+      "service_workers",
+      "cache_storage"
+    ],
+    "disableStorageReset": false,
+    "debugNavigation": false,
+    "channel": "node",
+    "usePassiveGathering": false,
+    "disableFullPageScreenshot": false,
+    "skipAboutBlank": false,
+    "blankPage": "about:blank",
+    "ignoreStatusCode": false,
+    "locale": "en-US",
+    "blockedUrlPatterns": null,
+    "additionalTraceCategories": null,
+    "extraHeaders": null,
+    "precomputedLanternData": null,
+    "onlyAudits": null,
+    "onlyCategories": [
+      "performance",
+      "accessibility",
+      "seo"
+    ],
+    "skipAudits": null
+  },
+  "recipe": {
+    "title": "رواق · تجربة زيمارا · زيمارا منيو",
+    "lang": "ar",
+    "bodyClass": "menu-page",
+    "firstDish": "flex",
+    "visibleImages": 16,
+    "fontFamily": "MenuJakarta, MenuTajawal, system-ui, sans-serif",
+    "background": "rgb(248, 243, 238)",
+    "theme": "light",
+    "menuClass": null
+  },
+  "scores": {
+    "performance": 92,
+    "accessibility": 100,
+    "seo": 91
+  },
+  "encodedNonImageTransferBytes": 142089,
+  "nonImageLimitBytes": 150000,
+  "runtimeError": null,
+  "warnings": [],
+  "failedAudits": [
+    {
+      "id": "first-contentful-paint",
+      "title": "First Contentful Paint",
+      "score": 0.95,
+      "displayValue": "1.6 s"
+    },
+    {
+      "id": "largest-contentful-paint",
+      "title": "Largest Contentful Paint",
+      "score": 0.77,
+      "displayValue": "3.0 s"
+    },
+    {
+      "id": "total-blocking-time",
+      "title": "Total Blocking Time",
+      "score": 0.93,
+      "displayValue": "170 ms"
+    },
+    {
+      "id": "max-potential-fid",
+      "title": "Max Potential First Input Delay",
+      "score": 0.85,
+      "displayValue": "150 ms"
+    },
+    {
+      "id": "interactive",
+      "title": "Time to Interactive",
+      "score": 0.95,
+      "displayValue": "3.0 s"
+    },
+    {
+      "id": "label-content-name-mismatch",
+      "title": "Elements with visible text labels do not have matching accessible names.",
+      "score": 0,
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "node",
+            "valueType": "node",
+            "subItemsHeading": {
+              "key": "relatedNode",
+              "valueType": "node"
+            },
+            "label": "Failing Elements"
+          }
+        ],
+        "items": [
+          {
+            "node": {
+              "type": "node",
+              "lhId": "1-0-SUMMARY",
+              "path": "1,HTML,1,BODY,2,MAIN,1,SECTION,1,DETAILS,0,SUMMARY",
+              "selector": "main#main > section.menu-sheet > details#menu-business-details > summary",
+              "boundingRect": {
+                "top": 112,
+                "bottom": 156,
+                "left": 16,
+                "right": 60,
+                "width": 44,
+                "height": 44
+              },
+              "snippet": "<summary aria-label=\"معلومات المنشأة والاسم الكامل\">",
+              "nodeLabel": "عن المنشأة",
+              "explanation": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            }
+          }
+        ],
+        "debugData": {
+          "type": "debugdata",
+          "impact": "serious",
+          "tags": [
+            "cat.semantics",
+            "wcag21a",
+            "wcag253",
+            "EN-301-549",
+            "EN-9.2.5.3",
+            "RGAAv4",
+            "RGAA-6.1.5"
+          ]
+        }
+      }
+    },
+    {
+      "id": "unminified-javascript",
+      "title": "Minify JavaScript",
+      "score": 0,
+      "displayValue": "Est savings of 5 KiB",
+      "details": {
+        "type": "opportunity",
+        "headings": [
+          {
+            "key": "url",
+            "valueType": "url",
+            "label": "URL"
+          },
+          {
+            "key": "totalBytes",
+            "valueType": "bytes",
+            "label": "Transfer Size"
+          },
+          {
+            "key": "wastedBytes",
+            "valueType": "bytes",
+            "label": "Est Savings"
+          }
+        ],
+        "items": [
+          {
+            "url": "http://127.0.0.1:8793/vendor/qrcode.js",
+            "totalBytes": 11852,
+            "wastedBytes": 5224,
+            "wastedPercent": 44.08027110028593
+          }
+        ],
+        "overallSavingsMs": 80,
+        "overallSavingsBytes": 5224,
+        "sortedBy": [
+          "wastedBytes"
+        ],
+        "debugData": {
+          "type": "debugdata",
+          "metricSavings": {
+            "FCP": 0,
+            "LCP": 80
+          }
+        }
+      }
+    },
+    {
+      "id": "meta-description",
+      "title": "Document does not have a meta description",
+      "score": 0
+    },
+    {
+      "id": "bf-cache",
+      "title": "Page prevented back/forward cache restoration",
+      "score": 0,
+      "displayValue": "2 failure reasons",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "reason",
+            "valueType": "text",
+            "subItemsHeading": {
+              "key": "frameUrl",
+              "valueType": "url"
+            },
+            "label": "Failure reason"
+          },
+          {
+            "key": "failureType",
+            "valueType": "text",
+            "label": "Failure type"
+          }
+        ],
+        "items": [
+          {
+            "reason": "Back/forward cache is disabled by flags. Visit chrome://flags/#back-forward-cache to enable it locally on this device.",
+            "failureType": "Not actionable",
+            "subItems": {
+              "type": "subitems",
+              "items": [
+                {
+                  "frameUrl": "http://127.0.0.1:8793/m/demo-agulny5kzwk-hail"
+                }
+              ]
+            },
+            "protocolReason": "BackForwardCacheDisabled"
+          },
+          {
+            "reason": "Back/forward cache is disabled by the command line.",
+            "failureType": "Not actionable",
+            "subItems": {
+              "type": "subitems",
+              "items": [
+                {
+                  "frameUrl": "http://127.0.0.1:8793/m/demo-agulny5kzwk-hail"
+                }
+              ]
+            },
+            "protocolReason": "BackForwardCacheDisabledByCommandLine"
+          }
+        ]
+      }
+    },
+    {
+      "id": "image-delivery-insight",
+      "title": "Improve image delivery",
+      "score": 0,
+      "displayValue": "Est savings of 57 KiB",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "node",
+            "valueType": "node",
+            "label": ""
+          },
+          {
+            "key": "url",
+            "valueType": "url",
+            "label": "URL",
+            "subItemsHeading": {
+              "key": "reason",
+              "valueType": "text"
+            }
+          },
+          {
+            "key": "totalBytes",
+            "valueType": "bytes",
+            "label": "Resource Size"
+          },
+          {
+            "key": "wastedBytes",
+            "valueType": "bytes",
+            "label": "Est Savings",
+            "subItemsHeading": {
+              "key": "wastedBytes",
+              "valueType": "bytes"
+            }
+          }
+        ],
+        "items": [
+          {
+            "node": {
+              "type": "node",
+              "lhId": "page-0-IMG",
+              "path": "1,HTML,1,BODY,2,MAIN,0,HEADER,0,IMG",
+              "selector": "body.menu-page > main#main > header.menu-cover > img",
+              "boundingRect": {
+                "top": 76,
+                "bottom": 100,
+                "left": 0,
+                "right": 412,
+                "width": 412,
+                "height": 24
+              },
+              "snippet": "<img src=\"/editorial/counter.webp\" alt=\"صورة مقهى توضيحية من Unsplash\" width=\"1240\" height=\"440\">",
+              "nodeLabel": "صورة مقهى توضيحية من Unsplash"
+            },
+            "url": "http://127.0.0.1:8793/editorial/counter.webp",
+            "totalBytes": 77312,
+            "wastedBytes": 58268,
+            "subItems": {
+              "type": "subitems",
+              "items": [
+                {
+                  "reason": "Increasing the image compression factor could improve this image's download size.",
+                  "wastedBytes": 58268
+                }
+              ]
+            }
+          }
+        ],
+        "debugData": {
+          "type": "debugdata",
+          "wastedBytes": 58268
+        }
+      }
+    },
+    {
+      "id": "network-dependency-tree-insight",
+      "title": "Network dependency tree",
+      "score": 0,
+      "details": {
+        "type": "list",
+        "items": [
+          {
+            "type": "list-section",
+            "value": {
+              "type": "network-tree",
+              "chains": {
+                "F05B376102470BCE1528EECCF5FF3ECB": {
+                  "url": "http://127.0.0.1:8793/m/demo-agulny5kzwk-hail",
+                  "navStartToEndTime": 37,
+                  "transferSize": 1942,
+                  "isLongest": true,
+                  "children": {
+                    "9683.2": {
+                      "url": "http://127.0.0.1:8793/styles.css",
+                      "navStartToEndTime": 67,
+                      "transferSize": 12834,
+                      "isLongest": true,
+                      "children": {
+                        "9683.65": {
+                          "url": "http://127.0.0.1:8793/fonts/curated.css",
+                          "navStartToEndTime": 398,
+                          "transferSize": 702,
+                          "isLongest": true,
+                          "children": {}
+                        },
+                        "9683.17": {
+                          "url": "http://127.0.0.1:8793/fonts/curated.css",
+                          "navStartToEndTime": 115,
+                          "transferSize": 1659,
+                          "children": {}
+                        }
+                      }
+                    },
+                    "9683.5": {
+                      "url": "http://127.0.0.1:8793/menu-next.css",
+                      "navStartToEndTime": 100,
+                      "transferSize": 3105,
+                      "children": {
+                        "9683.45": {
+                          "url": "http://127.0.0.1:8793/fonts/menu-tajawal.woff2",
+                          "navStartToEndTime": 397,
+                          "transferSize": 20562,
+                          "children": {}
+                        },
+                        "9683.46": {
+                          "url": "http://127.0.0.1:8793/fonts/menu-jakarta.woff2",
+                          "navStartToEndTime": 397,
+                          "transferSize": 22854,
+                          "children": {}
+                        }
+                      }
+                    },
+                    "9683.8": {
+                      "url": "http://127.0.0.1:8793/menu.js",
+                      "navStartToEndTime": 108,
+                      "transferSize": 16620,
+                      "children": {
+                        "9683.54": {
+                          "url": "http://127.0.0.1:8793/common.js",
+                          "navStartToEndTime": 202,
+                          "transferSize": 4573,
+                          "children": {
+                            "9683.60": {
+                              "url": "http://127.0.0.1:8793/api/public/profile/demo-agulny5kzwk",
+                              "navStartToEndTime": 359,
+                              "transferSize": 2708,
+                              "children": {}
+                            },
+                            "9683.58": {
+                              "url": "http://127.0.0.1:8793/api/public/menu/demo-agulny5kzwk-hail",
+                              "navStartToEndTime": 288,
+                              "transferSize": 5080,
+                              "children": {}
+                            }
+                          }
+                        },
+                        "9683.49": {
+                          "url": "http://127.0.0.1:8793/icons.js",
+                          "navStartToEndTime": 178,
+                          "transferSize": 2948,
+                          "children": {
+                            "9683.57": {
+                              "url": "http://127.0.0.1:8793/icons.css",
+                              "navStartToEndTime": 241,
+                              "transferSize": 840,
+                              "children": {}
+                            }
+                          }
+                        },
+                        "9683.53": {
+                          "url": "http://127.0.0.1:8793/design-engine.js",
+                          "navStartToEndTime": 213,
+                          "transferSize": 4276,
+                          "children": {}
+                        },
+                        "9683.52": {
+                          "url": "http://127.0.0.1:8793/tenant-theme.js",
+                          "navStartToEndTime": 209,
+                          "transferSize": 1810,
+                          "children": {}
+                        },
+                        "9683.51": {
+                          "url": "http://127.0.0.1:8793/tenant-pages.js",
+                          "navStartToEndTime": 208,
+                          "transferSize": 4838,
+                          "children": {}
+                        },
+                        "9683.55": {
+                          "url": "http://127.0.0.1:8793/addons-public.js",
+                          "navStartToEndTime": 205,
+                          "transferSize": 3884,
+                          "children": {}
+                        },
+                        "9683.50": {
+                          "url": "http://127.0.0.1:8793/menu-discovery.js",
+                          "navStartToEndTime": 202,
+                          "transferSize": 1199,
+                          "children": {}
+                        }
+                      }
+                    },
+                    "9683.9": {
+                      "url": "http://127.0.0.1:8793/mobile.js",
+                      "navStartToEndTime": 155,
+                      "transferSize": 3160,
+                      "children": {
+                        "9683.56": {
+                          "url": "http://127.0.0.1:8793/mobile-client.js",
+                          "navStartToEndTime": 226,
+                          "transferSize": 1338,
+                          "children": {}
+                        }
+                      }
+                    },
+                    "9683.16": {
+                      "url": "http://127.0.0.1:8793/ticket.webmanifest",
+                      "navStartToEndTime": 154,
+                      "transferSize": 1081,
+                      "children": {}
+                    },
+                    "9683.7": {
+                      "url": "http://127.0.0.1:8793/vendor/qrcode.js",
+                      "navStartToEndTime": 105,
+                      "transferSize": 12579,
+                      "children": {}
+                    },
+                    "9683.4": {
+                      "url": "http://127.0.0.1:8793/tenant-studio.css",
+                      "navStartToEndTime": 104,
+                      "transferSize": 5594,
+                      "children": {}
+                    },
+                    "9683.6": {
+                      "url": "http://127.0.0.1:8793/customer-worlds.css",
+                      "navStartToEndTime": 100,
+                      "transferSize": 3512,
+                      "children": {}
+                    },
+                    "9683.3": {
+                      "url": "http://127.0.0.1:8793/design.css",
+                      "navStartToEndTime": 99,
+                      "transferSize": 3472,
+                      "children": {}
+                    }
+                  }
+                }
+              },
+              "longestChain": {
+                "duration": 398
+              }
+            }
+          },
+          {
+            "type": "list-section",
+            "title": "Preconnected origins",
+            "description": "[preconnect](https://developer.chrome.com/docs/lighthouse/performance/uses-rel-preconnect/) hints help the browser establish a connection earlier in the page load, saving time when the first request for that origin is made. The following are the origins that the page preconnected to.",
+            "value": {
+              "type": "text",
+              "value": "no origins were preconnected"
+            }
+          },
+          {
+            "type": "list-section",
+            "title": "Preconnect candidates",
+            "description": "Add [preconnect](https://developer.chrome.com/docs/lighthouse/performance/uses-rel-preconnect/) hints to your most important origins, but try to use no more than 4.",
+            "value": {
+              "type": "text",
+              "value": "No additional origins are good candidates for preconnecting"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "render-blocking-insight",
+      "title": "Render blocking requests",
+      "score": 0,
+      "displayValue": "Est savings of 430 ms",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "url",
+            "valueType": "url",
+            "label": "URL"
+          },
+          {
+            "key": "totalBytes",
+            "valueType": "bytes",
+            "label": "Transfer Size"
+          },
+          {
+            "key": "wastedMs",
+            "valueType": "timespanMs",
+            "label": "Duration"
+          }
+        ],
+        "items": [
+          {
+            "url": "http://127.0.0.1:8793/vendor/qrcode.js",
+            "totalBytes": 12579,
+            "wastedMs": 636
+          },
+          {
+            "url": "http://127.0.0.1:8793/tenant-studio.css",
+            "totalBytes": 5594,
+            "wastedMs": 336
+          },
+          {
+            "url": "http://127.0.0.1:8793/customer-worlds.css",
+            "totalBytes": 3512,
+            "wastedMs": 336
+          },
+          {
+            "url": "http://127.0.0.1:8793/menu-next.css",
+            "totalBytes": 3105,
+            "wastedMs": 336
+          },
+          {
+            "url": "http://127.0.0.1:8793/design.css",
+            "totalBytes": 3472,
+            "wastedMs": 336
+          },
+          {
+            "url": "http://127.0.0.1:8793/fonts/curated.css",
+            "totalBytes": 1659,
+            "wastedMs": 186
+          },
+          {
+            "url": "http://127.0.0.1:8793/styles.css",
+            "totalBytes": 12834,
+            "wastedMs": 486
+          }
+        ]
+      }
+    }
+  ]
+}

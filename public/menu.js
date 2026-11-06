@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 import { discoverItems } from './menu-discovery.js';
 import {applyMenuContent} from './tenant-pages.js';
 import {applyTenantTheme,bannerGallery,coverImage} from './tenant-theme.js';
@@ -10,7 +11,7 @@ const t = makeT({
   ar: { search: 'ابحث عن صنف', soldout: 'نفد', kcal: '{n} سعرة', notFound: 'هذا المنيو غير متاح حاليًا. تأكد من الرابط وحاول مجددًا.', empty: 'لا توجد أصناف تطابق بحثك.', loyalty: 'بطاقة الولاء', clear: 'مسح' },
   en: { search: 'Search items', soldout: 'Sold out', kcal: '{n} kcal', notFound: 'This menu is currently unavailable. Check the link and try again.', empty: 'No matching items.', loyalty: 'Loyalty card', clear: 'Clear' },
 });
-const svg = (d, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const svg = (d, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const ICON = {
   pin: svg('<path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>', 16),
   phone: svg('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>', 16),
@@ -38,7 +39,7 @@ try {
 const filters = { dietary: '', maxPrice: null, maxCalories: null, sort: '' };
 let availabilityTimer, sectionObserver;
 const canCart = () => settings.orders_enabled || Boolean(ordering.whatsapp);
-const TYPE = { dine_in: ['🍽 محلي', '🍽 Dine-in'], pickup: ['🛍 استلام', '🛍 Pickup'], delivery: ['🛵 توصيل', '🛵 Delivery'], car: ['🚗 سيارة', '🚗 Curbside'] };
+const TYPE = { dine_in: ['محلي', 'Dine-in'], pickup: ['استلام', 'Pickup'], delivery: ['توصيل', 'Delivery'], car: ['سيارة', 'Curbside'] };
 const saveCheckout = () => { try { const { name, phone, address, car } = checkout; sessionStorage.setItem('zm_checkout', JSON.stringify({ name, phone, address, car })); } catch {} };
 
 function openNow(hours) {
@@ -60,7 +61,7 @@ function itemCard(i, index = 0) {
   const photo=profile?.theme?.show_images!==false&&document.documentElement.dataset.dHideImages!=='1'&&document.documentElement.dataset.dLayout!=='text'&&i.image_url;
   return `<article class="dish ${i.available ? '' : 'soldout'} ${photo ? 'has-photo' : ''}">
     <div class="dish-text">
-      ${i.badges?.length ? `<p class="dish-badges">${i.badges.filter(k => k !== 'popular' || i.orders_today > 0).map((k) => BADGE[k] ? `<span class="badge-${k}">${esc(a(...BADGE[k]))}</span>` : '').join('')}</p>` : ''}
+      ${i.badges?.length ? `<p class="dish-badges">${i.badges.filter(k => k !== 'popular' || i.orders_today > 0).map((k) => BADGE[k] ? `<span class="badge-${k}">${k === "spicy" ? icon("pepper", 16) : ""}${esc(a(...BADGE[k]))}</span>` : '').join('')}</p>` : ''}
       <h3><button type="button" class="dish-detail" data-detail="${esc(i.id)}">${esc(pick(i, 'name'))}</button></h3>
       ${pick(i, 'desc') ? `<p class="dish-desc">${esc(pick(i, 'desc'))}</p>` : ''}
       <p class="dish-meta"><span class="dish-price">${i.options?.length && i.options[0].required ? a('من ', 'From ') : ''}${esc(money(i.price))}</span>${i.compare_price > i.price ? `<s class="dish-was">${esc(money(i.compare_price))}</s><span class="dish-off">${a('خصم', 'Save')} ${Math.round((1 - i.price / i.compare_price) * 100)}٪</span>` : ''}${profile?.theme?.show_calories!==false && i.calories != null ? `<span class="dish-kcal">${esc(t('kcal', { n: i.calories }))}</span>` : ''}${i.caffeine_mg != null ? `<span class="dish-kcal">${a('كافيين', 'Caffeine')} ${i.caffeine_mg} ${a('ملغ', 'mg')}</span>` : ''}${i.sodium_mg != null ? `<span class="dish-kcal">${a('صوديوم', 'Sodium')} ${i.sodium_mg} ${a('ملغ', 'mg')}</span>` : ''}${i.available ? '' : `<span class="dish-out">${esc(t('soldout'))}</span>`}</p>
@@ -70,7 +71,7 @@ function itemCard(i, index = 0) {
   </article>`;
 }
 const BADGE = {
-  new: ['جديد', 'New'], popular: ['الأكثر طلبًا', 'Popular'], chef: ['اختيار الشيف', "Chef's pick"], spicy: ['حار 🌶', 'Spicy 🌶'],
+  new: ['جديد', 'New'], popular: ['الأكثر طلبًا', 'Popular'], chef: ['اختيار الشيف', "Chef's pick"], spicy: ['حار', 'Spicy'],
   vegan: ['نباتي صرف', 'Vegan'], vegetarian: ['نباتي', 'Vegetarian'], healthy: ['صحي', 'Healthy'], limited: ['لفترة محدودة', 'Limited time'],
 };
 const ALLERGEN = {
@@ -237,7 +238,7 @@ function renderCart(preserveInputs = false) {
         : checkout.type === 'pickup' ? field('name', a('اسمك (اختياري)', 'Your name (optional)'), 'maxlength="60" autocomplete="given-name"') : '';
   box.innerHTML = `${unavailable.length ? `<p class="msg" role="status">${a('بعض الأصناف لم تعد متاحة واستُبعدت من الإجمالي. احتفظنا باختياراتك المتاحة.','Some items are unavailable and excluded from the total. Your available choices are retained.')}</p>` : ''}<h2>${a('طلبك', 'Your order')}</h2>${selected.map(({ key, line: { item: i, picked, unit }, quantity: n }) => `<div class="cart-row"><div><strong>${esc(pick(i, 'name'))}</strong>${picked.length ? `<p class="small muted">${picked.map((p) => esc(pick(p.ch, 'name'))).join('، ')}</p>` : ''}<p class="small muted">${esc(money(unit * n))}</p></div><div class="quantity-controls"><button class="btn ghost sm" type="button" data-minus="${esc(key)}" aria-label="${esc(a('تقليل', 'Decrease') + ' ' + pick(i, 'name'))}">−</button><span>${n}</span><button class="btn ghost sm" type="button" data-plus="${esc(key)}" aria-label="${esc(a('زيادة', 'Increase') + ' ' + pick(i, 'name'))}">+</button></div></div>`).join('')}
     ${ups.length ? `<div class="upsell"><p class="small"><strong>${a('يكمّل طلبك', 'Goes well with it')}</strong></p><div class="upsell-row">${ups.map((i) => `<button type="button" class="upsell-item" data-upsell="${esc(i.id)}">${i.image_url ? `<img src="${esc(i.image_url)}" alt="" width="44" height="44" loading="lazy">` : ''}<span>${esc(pick(i, 'name'))}<small>+ ${esc(money(i.price))}</small></span></button>`).join('')}</div></div>` : ''}
-    ${types.length > 1 ? `<div class="seg order-types" role="radiogroup" aria-label="${a('طريقة الطلب', 'How to order')}">${types.map((k) => `<button type="button" role="radio" aria-checked="${k === checkout.type}" data-type="${k}">${a(...TYPE[k])}</button>`).join('')}</div>` : ''}
+    ${types.length > 1 ? `<div class="seg order-types" role="radiogroup" aria-label="${a('طريقة الطلب', 'How to order')}">${types.map((k) => `<button type="button" role="radio" aria-checked="${k === checkout.type}" data-type="${k}">${icon(({dine_in:"dish",pickup:"bag",delivery:"delivery",car:"car"})[k])} ${a(...TYPE[k])}</button>`).join('')}</div>` : ''}
     ${details ? `<div class="stack checkout-fields">${details}</div>` : ''}
     ${settings.orders_enabled ? `<div class="coupon-row"><label class="visually-hidden" for="co-coupon">${a('كود الخصم', 'Discount code')}</label><input id="co-coupon" placeholder="${a('عندك كود خصم؟', 'Have a code?')}" dir="ltr" maxlength="20" value="${esc(checkout.coupon)}"><button type="button" class="btn ghost sm" id="apply-coupon">${a('طبّق', 'Apply')}</button></div><p class="small" id="coupon-msg" role="status">${checkout.discount ? a(`تم تطبيق الخصم ✓`, 'Discount applied ✓') : ''}</p>` : ''}
     <div class="cart-sum">${checkout.discount || fee ? `<div class="cart-row"><span>${a('المجموع', 'Subtotal')}</span><span>${esc(money(subtotal))}</span></div>` : ''}${checkout.discount ? `<div class="cart-row"><span>${a('الخصم', 'Discount')}</span><span>−${esc(money(checkout.discount))}</span></div>` : ''}${fee ? `<div class="cart-row"><span>${a('التوصيل', 'Delivery')}</span><span>${esc(money(fee))}</span></div>` : ''}
@@ -376,7 +377,17 @@ try {
   setBrandColor(data.branch.brand_color);
   const name = lang === 'ar' ? data.branch.org_name_ar : data.branch.org_name_en;
   try {
-    const p = await api('/api/public/profile/' + data.branch.org_slug);
+    const profileRequest=api('/api/public/profile/' + data.branch.org_slug);
+    // Prepare known visible media and default fonts while the profile is in flight,
+    // instead of discovering them only after constructing all product cards.
+    if(data.design?.layout!=='text'&&data.design?.show?.images!==false){
+      const first=data.items.find(item=>item.image_url&&item.available);
+      if(first){const preload=document.createElement('link');preload.rel='preload';preload.as='image';preload.href=first.image_url;preload.fetchPriority='high';const variants=first.gallery?.[0]?.variants;if(variants?.length){preload.imageSrcset=variants.map(v=>v.url+' '+v.width+'w').join(', ');preload.imageSizes='(max-width: 600px) 45vw, 320px';}document.head.append(preload);}
+    }
+    if(!data.design||data.design.font_ar==='tajawal')document.fonts.load('16px MenuTajawal').catch(()=>{});
+    if(!data.design||data.design.font_en==='jakarta')document.fonts.load('16px MenuJakarta').catch(()=>{});
+    money(0);
+    const p = await profileRequest;
     profile = p.profile;
     merchantOrg=p.org;
     applyTenantTheme(profile);
@@ -407,16 +418,16 @@ try {
         ${data.branch.logo_url ? `<img class="menu-logo" src="${esc(data.branch.logo_url)}" alt="" width="84" height="84">` : `<span class="menu-logo menu-monogram" aria-hidden="true">${esc([...name][0] || 'Z')}</span>`}
         <div><h1 id="menu-title">${esc(name)}</h1>${data.branches?.length > 1 ? `<label class="visually-hidden" for="branch-pick">${a('الفرع', 'Branch')}</label><select id="branch-pick" class="branch-pick">${data.branches.map((b) => `<option value="${esc(b.slug)}" ${b.slug === slug ? 'selected' : ''}>${esc(pick(b, 'name'))}</option>`).join('')}</select>` : `<p class="menu-branch">${esc(pick(data.branch, 'name'))}</p>`}</div>
       </div>
-      <details class="menu-description" id="menu-business-details"><summary aria-label="${a('معلومات المنشأة والاسم الكامل','Business information and full name')}">${a('عن المنشأة','About us')}</summary><p class="menu-about menu-full-name" id="menu-full-name">${esc(name)}</p>${profile && pick(profile, 'description') ? `<p class="menu-about">${esc(pick(profile,'description'))}</p>` : ''}</details>
+      <details class="menu-description" id="menu-business-details"><summary aria-label="${a('معلومات المنشأة والاسم الكامل','Business information and full name')}">${icon('info')} ${a('عن المنشأة','About us')}</summary><p class="menu-about menu-full-name" id="menu-full-name">${esc(name)}</p>${profile && pick(profile, 'description') ? `<p class="menu-about">${esc(pick(profile,'description'))}</p>` : ''}</details>
       ${info ? `<div class="menu-info">${info}</div>` : ''}
-      ${data.waitlist ? `<a class="btn ghost sm wl-join-link" id="wl-join-link" href="/q/${esc(slug)}">⏳ ${a('سجّل في قائمة الانتظار', 'Join the waitlist')}</a>` : ''}
+      ${data.waitlist ? `<a class="btn ghost sm wl-join-link" id="wl-join-link" href="/q/${esc(slug)}">${icon("clock")} ${a('سجّل في قائمة الانتظار', 'Join the waitlist')}</a>` : ''}
     </section>
     ${profile?.banners?.length > 1 ? `<details class="menu-gallery-disclosure"><summary>${a('صور المنشأة','Business photos')}</summary>${bannerGallery(profile.banners)}</details>` : ''}
     ${hasItems ? `
     <div class="menu-sticky">
       <div class="search-field"><span class="search-ico">${ICON.search}</span><label class="visually-hidden" for="q">${esc(t('search'))}</label><input id="q" type="search" placeholder="${esc(t('search'))}" autocomplete="off"><button id="clear-q" type="button" class="btn ghost sm" hidden>${esc(t('clear'))}</button></div>
       ${data.categories.length > 1 ? `<nav class="menu-cats" aria-label="${a('أقسام المنيو', 'Menu sections')}">${data.categories.filter((c) => data.items.some((i) => i.category_id === c.id)).map((c) => `<a href="#c-${esc(c.id)}">${esc(pick(c, 'name'))}</a>`).join('')}</nav>` : ''}
-      <details class="discovery-filters"><summary>${a('تصفية وترتيب','Filter & sort')}</summary><div class="filter-fields">
+      <details class="discovery-filters"><summary>${icon('list')} ${a('تصفية وترتيب','Filter & sort')}</summary><div class="filter-fields">
       <label>${a('التفضيل الغذائي','Dietary')}<select id="filter-dietary"><option value="">${a('الكل','All')}</option><option value="vegan">${a('نباتي صرف','Vegan')}</option><option value="vegetarian">${a('نباتي','Vegetarian')}</option><option value="gluten_free">${a('خالٍ من الغلوتين','Gluten free')}</option></select></label>
       <label>${a('أعلى سعر (ر.س)','Max price (SAR)')}<input id="filter-price" type="number" min="0" step="1" inputmode="decimal"></label>
       <label>${a('أعلى سعرات','Max kcal')}<input id="filter-calories" type="number" min="0" step="1" inputmode="numeric"></label>

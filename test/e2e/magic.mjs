@@ -27,7 +27,7 @@ try{
  await dlg.locator('#mg-next').click();await dlg.locator('#mg-ai').waitFor();
  assert.ok(await dlg.locator('.ai-box').count());pass('menu step offers the photo/PDF/link reader');
  await page.screenshot({path:out+'/wizard-menu.png'});
- await dlg.locator('#mg-next').click();await dlg.locator('.magic-done svg').waitFor();pass('last step shows the menu QR');
+ await dlg.locator('#mg-next').click();await dlg.locator('.magic-done .share-qr svg').waitFor();pass('last step shows the menu QR');
  await dlg.locator('#mg-next').click();await dlg.waitFor({state:'detached'});
  const state=await page.evaluate(async()=>({d:(await (await fetch('/api/owner/design')).json()),p:(await (await fetch('/api/owner/profile')).json()).profile,me:(await (await fetch('/api/me')).json())}));
  assert.equal(state.d.preset_id,second);assert.equal(state.d.has_unpublished,false);assert.equal(state.p.sector,'restaurant');assert.equal(state.me.org.name_ar,'برجر التجربة');

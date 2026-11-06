@@ -8,7 +8,7 @@ const call=async(method,path,body)=>{const r=await page.request.fetch(base+path,
 try{
  await page.goto(base+'/demo');const room=await call('POST','/api/demo',{});await call('POST','/api/demo/'+room.token+'/session',{role:'owner'});
  await page.goto(base+'/app#design');await page.locator('.design-card').first().waitFor();
- await page.locator('[data-use=latte-classic]').click();await page.locator('.design-card.current').waitFor();
+ await page.locator('#st-replace-content').check();await page.locator('[data-use=latte-classic]').click();await page.locator('.design-card.current').waitFor();
  await page.locator('[data-tab=home]').click();await page.locator('#wb-add').click();await page.locator('#wb-add-dialog [data-add-block=faq]').click();const faq=page.locator('[data-editor-block]').last();await faq.locator('[data-add-item]').click();await faq.locator('[data-edit$="items.0.title_ar"]').fill('كيف أزوركم؟');await faq.locator('[data-edit$="items.0.body_ar"]').fill('أوقاتنا وموقعنا في هذه الصفحة.');
  const hero=page.locator('[data-editor-block]').first();await page.locator('[data-select-block]').first().click();await hero.scrollIntoViewIfNeeded();if(!await hero.evaluate(el=>el.open))await hero.locator('summary').click();await hero.locator('[data-edit$="title_ar"]').fill('رواق، تجربة تستحق وقتك');await hero.locator('[data-edit$="body_ar"]').fill('رئيسية خاصة وليست نسخة من المنيو.');
  await page.locator('#st-save').click();await page.getByText('حُفظت المسودة.',{exact:true}).waitFor();
@@ -18,7 +18,7 @@ try{
  await guest.reload();await guest.getByRole('heading',{name:'رواق، تجربة تستحق وقتك'}).waitFor();await guest.getByText('كيف أزوركم؟').click();await guest.getByText('أوقاتنا وموقعنا في هذه الصفحة.').waitFor();assert.equal(await guest.locator('.qr').count(),0);await guest.screenshot({path:out+'/home-mobile.png',fullPage:true});
  await guest.goto(base+'/m/'+room.branch_slug);await guest.getByRole('heading',{name:'قائمة رواق المختارة'}).waitFor();await guest.getByText('قهوة اليوم تُحضّر بعناية').waitFor();assert.equal(await guest.locator('#q').isVisible(),false);
  pass('merchant builds homepage content and FAQ, independently edits menu, and publishes both without leaking draft or pager QR');
- await page.locator('[data-tab=home]').click();await page.frameLocator('#st-frame').getByRole('heading',{name:'رواق، تجربة تستحق وقتك'}).waitFor();await page.locator('[data-preview-width="1160"]').click();await page.screenshot({path:out+'/builder-desktop.png',fullPage:false});
+ await page.locator('[data-tab=home]').click();await page.frameLocator('#st-frame').locator('h1').filter({hasText:'رواق، تجربة تستحق وقتك'}).waitFor();await page.locator('[data-preview-width="1160"]').click();await page.screenshot({path:out+'/builder-desktop.png',fullPage:false});
  const catalog=await call('GET','/api/owner/design');const geometry=[];
  for(const index of [0,12,24,36,48,50,64,72,88,99]){
   const preset=catalog.presets[index];await call('POST','/api/owner/design/presets/'+preset.id+'/apply',{});await call('POST','/api/owner/design/publish',{});

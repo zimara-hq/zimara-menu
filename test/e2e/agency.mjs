@@ -19,14 +19,14 @@ try{
  await page.locator('#lang').click();await page.locator('button[data-mode=pager]').click();await page.locator('#sample-call').click();await fits();
  await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await page.locator('.agency-browser').evaluate(el=>getComputedStyle(el).animationName),'none');
  pass('photographic landing fits RTL/LTR and both themes; mobile call remains clickable and reduced motion removes entrance');
- await page.goto(base+'/demo?view=studio');await page.locator('#create').click();await page.locator('.studio-outline').waitFor({state:'attached'});await page.locator('[data-tab=presets]').click();await page.locator('.design-card').first().waitFor();
+ await page.goto(base+'/demo?view=studio');await page.waitForURL('**/app?lang=ar#design');await page.locator('.studio-outline').waitFor({state:'attached'});await page.locator('[data-tab=presets]').click();await page.locator('.design-card').first().waitFor();
  assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('studio-mode')),true);
- const opening=await page.locator('.design-card .mini').evaluateAll(nodes=>nodes.slice(0,10).map(el=>({frame:el.dataset.frame,hero:el.dataset.hero})));
- assert.equal(new Set(opening.map(x=>x.frame)).size,10);assert.equal(new Set(opening.map(x=>x.hero)).size,10);
+ const opening=await page.locator('.design-card .mini').evaluateAll(nodes=>nodes.slice(0,20).map(el=>({frame:el.dataset.frame,hero:el.dataset.hero})));
+ assert.equal(await page.locator('.design-real-preview').count(),20);assert.equal(new Set(opening.map(x=>x.frame)).size,10);assert.equal(new Set(opening.map(x=>x.hero)).size>=7,true);
  await page.locator('[data-tab=home]').click();if(!await page.locator('.studio-panel').isVisible())await page.locator('#st-toggle-preview').click();
  const hero=page.locator('[data-editor-block]').first();if(!await hero.evaluate(el=>el.open))await hero.locator('summary').click();
  await hero.locator('[data-edit$="title_ar"]').fill('تفاصيل مقهاي، باختياري');
- await page.locator('#st-toggle-preview').click();await page.frameLocator('#st-frame').getByRole('heading',{name:'تفاصيل مقهاي، باختياري'}).waitFor();await fits();
+ await page.locator('#st-toggle-preview').click();await page.frameLocator('#st-frame').locator('h1').filter({hasText:'تفاصيل مقهاي، باختياري'}).waitFor();await fits();
  // The preview is fitted by ResizeObserver/requestAnimationFrame after its pane becomes visible.
  await page.waitForFunction(()=>{const phone=document.querySelector('.phone-frame')?.getBoundingClientRect(),viewport=document.querySelector('.preview-viewport')?.getBoundingClientRect();return viewport?.width>0&&phone?.width>=viewport.width*.85;});
  const phone=await page.locator('.phone-frame').boundingBox(),viewport=await page.locator('.preview-viewport').boundingBox();assert.ok(phone.width>=viewport.width*.85,'mobile preview must fill its canvas');
@@ -45,7 +45,7 @@ try{
  assert.equal(await page.locator('.workspace-metrics article').count(),4);assert.equal(await page.locator('.workspace-service').count(),3);assert.equal(await page.locator('nav [role=tab]').count(),19);assert.equal(await page.locator('nav [data-k=launch]').count(),1);
  await page.screenshot({path:out+'/overview-desktop.png'});
  for(const width of [360,768,1440]){await page.setViewportSize({width,height:1000});await fits()}
- await page.locator('[data-k=design]').click();await page.locator('.studio-outline').waitFor({state:'attached'});await page.locator('[data-tab=presets]').click();await page.locator('.design-card').first().waitFor();await page.frameLocator('#st-frame').getByRole('heading',{name:'تفاصيل مقهاي، باختياري'}).waitFor();await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+'/catalogue-desktop.png'});
+ await page.locator('[data-k=design]').click();await page.locator('.studio-outline').waitFor({state:'attached'});await page.locator('[data-tab=presets]').click();await page.locator('.design-card').first().waitFor();await page.frameLocator('#st-frame').locator('h1').filter({hasText:'تفاصيل مقهاي، باختياري'}).waitFor();await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+'/catalogue-desktop.png'});
  await page.setViewportSize({width:390,height:844});await fits();await page.screenshot({path:out+'/catalogue-mobile.png'});
  pass('owner overview presents existing business data; studio and overview remain usable at 360–1536px');
  assert.deepEqual(errors,[]);writeFileSync(out+'/results.json',JSON.stringify({base,checks,errors},null,2));

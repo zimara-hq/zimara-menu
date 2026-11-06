@@ -1,14 +1,15 @@
+import { icon } from './icons.js';
 // Owner loyalty: stamps or points, the join QR, guest segments, messages to card
 // holders, and the automatic win-back message.
 import { api, esc, lang, qrSvg, announce, money, relTime } from './common.js';
 const a = (ar, en) => (lang === 'ar' ? ar : en);
 
 const SEG = {
-  vip: ['⭐ المميزون', '⭐ VIP', '6 زيارات أو أكثر خلال 60 يوم', '6+ visits in 60 days'],
-  regular: ['🙂 الدائمون', '🙂 Regulars', 'يزورونك باستمرار', 'Visit you steadily'],
-  new: ['🌱 الجدد', '🌱 New', 'زيارة وحدة', 'One visit so far'],
-  at_risk: ['⚠️ على وشك الانقطاع', '⚠️ At risk', 'غابوا 21 يوم أو أكثر', 'Away 21+ days'],
-  dormant: ['💤 الخاملون', '💤 Dormant', 'غابوا 60 يوم أو أكثر', 'Away 60+ days'],
+  vip: ['المميزون', 'VIP', '6 زيارات أو أكثر خلال 60 يوم', '6+ visits in 60 days'],
+  regular: ['الدائمون', 'Regulars', 'يزورونك باستمرار', 'Visit you steadily'],
+  new: ['الجدد', 'New', 'زيارة وحدة', 'One visit so far'],
+  at_risk: ['على وشك الانقطاع', 'At risk', 'غابوا 21 يوم أو أكثر', 'Away 21+ days'],
+  dormant: ['الخاملون', 'Dormant', 'غابوا 60 يوم أو أكثر', 'Away 60+ days'],
 };
 const ERR = {
   messages_daily_limit: ['وصلت الحد: رسالتين باليوم عشان ما تزعج عملاءك.', 'Limit reached: two messages a day, so guests are not spammed.'],
@@ -26,8 +27,8 @@ export async function loyaltyAdmin(el, me) {
     <div class="overview-grid">
     <form novalidate class="card stack" id="lp-form"><h3>${a('البرنامج', 'Programme')}</h3>
       <div class="order-types" role="radiogroup" aria-label="${a('نوع البرنامج', 'Programme type')}">
-        <button type="button" role="radio" data-kind="stamps" aria-checked="${kind === 'stamps'}">☕ ${a('أختام', 'Stamps')}</button>
-        <button type="button" role="radio" data-kind="points" aria-checked="${kind === 'points'}">💎 ${a('نقاط', 'Points')}</button></div>
+        <button type="button" role="radio" data-kind="stamps" aria-checked="${kind === 'stamps'}">${icon("coffee")} ${a('أختام', 'Stamps')}</button>
+        <button type="button" role="radio" data-kind="points" aria-checked="${kind === 'points'}">${icon("diamond")} ${a('نقاط', 'Points')}</button></div>
       <div data-for="stamps"><label>${a('عدد الأختام للمكافأة', 'Stamps for a reward')}<input name="stamps_required" type="number" min="2" max="50" inputmode="numeric" value="${p.stamps_required}"></label></div>
       <div data-for="points" class="grid2"><label>${a('نقاط لكل ريال', 'Points per riyal')}<input name="points_per_sar" type="number" min="1" max="100" inputmode="numeric" value="${p.points_per_sar || 1}"></label>
         <label>${a('نقاط المكافأة', 'Points for a reward')}<input name="reward_points" type="number" min="10" max="100000" inputmode="numeric" value="${p.reward_points || 100}"></label></div>
@@ -42,7 +43,7 @@ export async function loyaltyAdmin(el, me) {
     <div class="card share-card"><h3>${a('كود الاشتراك', 'Join QR')}</h3><div class="qr">${qrSvg(joinUrl, 5)}</div><p class="device-link"><a href="/j/${esc(me.org.slug)}" target="_blank" rel="noopener" dir="ltr">${esc(location.host)}/j/${esc(me.org.slug)}</a></p><p class="small muted">${a('اطبعه عند الكاشير. يظهر أيضًا في صفحة البيجر وقائمة الانتظار.', 'Print it at the counter. It also shows on the pager and waitlist pages.')}</p></div>
     </div>
     <section class="card"><div class="row" style="justify-content:space-between"><h3>${a('شرائح العملاء', 'Guest segments')}</h3><span class="small muted">${a(`${cust.total} بطاقة · ${cust.reachable} مشتركة بالتنبيهات`, `${cust.total} cards · ${cust.reachable} have notification subscriptions`)}</span></div>
-      ${cust.truncated ? `<p class="msg warn">${a(`الإحصاءات والشرائح أدناه مبنية على ${cust.analyzed} بطاقة من ${cust.total}.`, `Statistics and segments below cover ${cust.analyzed} of ${cust.total} cards.`)}</p>` : ''}<div class="seg-grid">${Object.entries(SEG).map(([k, [ar, en, dar, den]]) => `<button type="button" class="seg" data-seg="${k}" aria-pressed="false"><strong>${cust.counts[k]}</strong><span>${a(ar, en)}</span><small>${a(dar, den)}</small></button>`).join('')}</div>
+      ${cust.truncated ? `<p class="msg warn">${a(`الإحصاءات والشرائح أدناه مبنية على ${cust.analyzed} بطاقة من ${cust.total}.`, `Statistics and segments below cover ${cust.analyzed} of ${cust.total} cards.`)}</p>` : ''}<div class="seg-grid">${Object.entries(SEG).map(([k, [ar, en, dar, den]]) => `<button type="button" class="seg" data-seg="${k}" aria-pressed="false"><strong>${cust.counts[k]}</strong><span>${icon(({vip:"star",regular:"user",new:"leaf",at_risk:"alert",dormant:"moon"})[k])} ${a(ar, en)}</span><small>${a(dar, den)}</small></button>`).join('')}</div>
       <div id="seg-list"></div></section>
     <form class="card stack" id="msg-form" novalidate><h3>${a('أرسل رسالة', 'Send a message')}</h3>
       <label>${a('إلى', 'To')}<select name="segment"><option value="all">${a('كل حاملي البطاقة', 'All card holders')} (${cust.total})</option>${Object.entries(SEG).map(([k, [ar, en]]) => `<option value="${k}">${a(ar, en)} (${cust.counts[k]})</option>`).join('')}</select></label>
@@ -50,7 +51,7 @@ export async function loyaltyAdmin(el, me) {
       <label>${a('النص', 'Text')}<textarea name="body_ar" maxlength="240" rows="3" placeholder="${a('خصم 20٪ على المشروبات الباردة لين الأحد', '20% off cold drinks until Sunday')}"></textarea></label>
       <p class="small muted">${a('توصل كإشعار لمن فعّل التنبيهات، وتظهر في بطاقة كل عميل. رسالتين باليوم كحد أقصى.', 'Arrives as a notification for guests who turned alerts on, and shows on every card. Two a day at most.')}</p>
       <div role="status"></div><button class="btn" type="submit">${a('أرسل', 'Send')}</button></form>
-    <section class="card"><h3>${a('الرسائل المرسلة', 'Sent messages')}</h3>${messages.length ? `<div class="table-scroll"><table><thead><tr><th>${a('الرسالة', 'Message')}</th><th>${a('إلى', 'To')}</th><th>${a('البطاقات · طلبات الإشعار المقبولة', 'Cards · accepted push requests')}</th><th>${a('متى', 'When')}</th></tr></thead><tbody>${messages.map((m) => `<tr><td><b>${esc(m.title_ar)}</b><br><span class="small">${esc(m.body_ar)}</span></td><td>${m.segment === 'winback' ? a('تلقائي: اشتياق', 'Auto: win-back') : m.segment === 'all' ? a('الكل', 'All') : esc(a(SEG[m.segment][0], SEG[m.segment][1]))}</td><td>${m.recipients} · 📳 ${m.sent}</td><td class="small">${esc(relTime(Date.now() - m.created_at))}</td></tr>`).join('')}</tbody></table></div>` : `<p class="empty">${a('ما أرسلت رسائل بعد.', 'No messages yet.')}</p>`}</section>`;
+    <section class="card"><h3>${a('الرسائل المرسلة', 'Sent messages')}</h3>${messages.length ? `<div class="table-scroll"><table><thead><tr><th>${a('الرسالة', 'Message')}</th><th>${a('إلى', 'To')}</th><th>${a('البطاقات · طلبات الإشعار المقبولة', 'Cards · accepted push requests')}</th><th>${a('متى', 'When')}</th></tr></thead><tbody>${messages.map((m) => `<tr><td><b>${esc(m.title_ar)}</b><br><span class="small">${esc(m.body_ar)}</span></td><td>${m.segment === 'winback' ? a('تلقائي: اشتياق', 'Auto: win-back') : m.segment === 'all' ? a('الكل', 'All') : esc(a(SEG[m.segment][0], SEG[m.segment][1]))}</td><td>${m.recipients} · ${icon("phone")} ${m.sent}</td><td class="small">${esc(relTime(Date.now() - m.created_at))}</td></tr>`).join('')}</tbody></table></div>` : `<p class="empty">${a('ما أرسلت رسائل بعد.', 'No messages yet.')}</p>`}</section>`;
 
   const f = el.querySelector('#lp-form');
   let k = kind;
@@ -75,7 +76,7 @@ export async function loyaltyAdmin(el, me) {
     el.querySelectorAll('[data-seg]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     const r = await api('/api/owner/loyalty/customers?segment=' + b.dataset.seg);
     const unit = k === 'points' ? a('نقطة', 'pts') : a('ختم', 'stamps');
-    list.innerHTML = r.customers.length ? `<div class="table-scroll"><table><thead><tr><th>${a('البطاقة', 'Card')}</th><th>${a('الزيارات', 'Visits')}</th><th>${a('آخر زيارة', 'Last visit')}</th><th>${a('الرصيد', 'Balance')}</th>${k === 'points' ? `<th>${a('الإنفاق', 'Spent')}</th>` : ''}<th>📳</th></tr></thead><tbody>${r.customers.map((c) => `<tr><td dir="ltr"><code>${esc(c.code)}</code></td><td>${c.visits}</td><td>${c.last_visit ? esc(relTime(Date.now() - c.last_visit)) : '—'}</td><td>${c.balance} ${unit}</td>${k === 'points' ? `<td>${esc(money(c.spent))}</td>` : ''}<td>${c.reachable ? '✓' : ''}</td></tr>`).join('')}</tbody></table></div>` : `<p class="empty">${a('ما فيه أحد هنا.', 'Nobody here.')}</p>`;
+    list.innerHTML = r.customers.length ? `<div class="table-scroll"><table><thead><tr><th>${a('البطاقة', 'Card')}</th><th>${a('الزيارات', 'Visits')}</th><th>${a('آخر زيارة', 'Last visit')}</th><th>${a('الرصيد', 'Balance')}</th>${k === 'points' ? `<th>${a('الإنفاق', 'Spent')}</th>` : ''}<th>${icon("phone")} ${a("التنبيهات", "Alerts")}</th></tr></thead><tbody>${r.customers.map((c) => `<tr><td dir="ltr"><code>${esc(c.code)}</code></td><td>${c.visits}</td><td>${c.last_visit ? esc(relTime(Date.now() - c.last_visit)) : '—'}</td><td>${c.balance} ${unit}</td>${k === 'points' ? `<td>${esc(money(c.spent))}</td>` : ''}<td>${c.reachable ? '✓' : ''}</td></tr>`).join('')}</tbody></table></div>` : `<p class="empty">${a('ما فيه أحد هنا.', 'Nobody here.')}</p>`;
     const sel = el.querySelector('#msg-form [name=segment]');
     sel.value = b.dataset.seg;
   }));

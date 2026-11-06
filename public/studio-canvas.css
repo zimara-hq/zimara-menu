@@ -1,0 +1,39 @@
+/* Editing tools recede; the merchant's actual site owns the canvas. */
+.studio-mode .tenant-builder{grid-template-columns:196px minmax(0,1fr) 280px;min-height:calc(100dvh - 188px)}
+.studio-mode .studio-preview{padding:20px 12px;background:var(--studio-ground)}
+.studio-mode .preview-viewport{min-width:0}
+.studio-mode .studio-panel{padding:16px;min-width:0}
+.studio-mode .studio-outline{padding:18px 10px}
+.studio-mode #panel-design>.section-intro{display:none}
+.studio-mode .tenant-builder[data-inspector-hidden=true]{grid-template-columns:196px minmax(0,1fr);grid-template-areas:'outline canvas'}
+.studio-mode .tenant-builder[data-inspector-hidden=true]>.studio-panel{display:none}
+.studio-mode .tenant-builder[data-focus=true]{grid-template-columns:minmax(0,1fr);grid-template-areas:'canvas'}
+.studio-mode .tenant-builder[data-focus=true]>.studio-panel,.studio-mode .tenant-builder[data-focus=true]>.studio-outline{display:none}
+.studio-mode .studio-panel:has(#st-inline-media):before{display:none}
+.studio-inline-media{border-block-end:1px solid var(--studio-rule);padding-block-end:20px;margin-block-end:24px}
+.studio-inline-media h3{margin:0;font-size:1rem}
+.studio-photo-library{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.studio-photo-library button{border:1px solid var(--studio-rule);padding:0;background:var(--surface);border-radius:6px;overflow:hidden;min-height:44px;cursor:pointer}
+.studio-photo-library img{width:100%;aspect-ratio:1;object-fit:cover}
+.design-real-preview{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;object-position:top;background:var(--surface);border-block-end:1px solid var(--line)}
+.mini.has-real-preview{display:none!important}
+.studio-mode .studio-panel:has(.design-grid){width:100%}
+.studio-mode .design-grid .design-card{padding:0;overflow:hidden;border:1px solid var(--line);border-radius:10px;box-shadow:none}
+.studio-mode .design-grid .design-card>h4,.studio-mode .design-grid .design-card>.row{margin:12px}
+.studio-mode .design-grid{gap:16px}
+.studio-mode .studio-worktabs button{font-size:.85rem}
+@media(min-width:1001px){
+ .studio-mode .tenant-builder[data-view=presets]:not([data-focus=true]):not([data-inspector-hidden=true]){grid-template-columns:minmax(0,1fr) minmax(360px,45%);grid-template-areas:'inspector canvas'}
+ .studio-mode .tenant-builder[data-view=presets]>.studio-outline{display:none}
+}
+@media(max-width:1000px){
+ .studio-mode .tenant-builder{display:block;min-height:calc(100dvh - 160px)}
+ .studio-mode .tenant-builder[data-focus=true]>.studio-preview{display:block}
+ .studio-mode .tenant-builder[data-mobile-preview=off]>.studio-panel{display:block}
+ .studio-mode .studio-panel{padding:20px;width:100%}
+ .studio-mode #st-inspector,.studio-mode #st-focus{display:none}
+ .studio-mode .preview-toolbar{gap:8px;flex-wrap:wrap}
+ .studio-mode .studio-bar{gap:8px;padding:10px 12px}
+}
+@media(prefers-reduced-motion:no-preference){.studio-inline-media{animation:media-arrive .2s ease-out}@keyframes media-arrive{from{clip-path:inset(0 0 12px 0)}to{clip-path:inset(0)}}}
+@media(max-width:1000px){.studio-mode .studio-bar #st-save{display:inline-flex;align-items:center;min-height:44px;margin-inline-start:0;padding-inline:12px}}

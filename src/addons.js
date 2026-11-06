@@ -124,8 +124,8 @@ export async function ensureWebhook(env, fetcher = fetch) {
 }
 
 // Accept / reject buttons under a new-order message.
-export const orderButtons = (orderId) => ({ inline_keyboard: [[{ text: '✅ قبول', callback_data: 'zo:a:' + orderId }, { text: '✖️ رفض', callback_data: 'zo:r:' + orderId }]] });
-const TYPE_AR = { dine_in: '🍽 محلي', pickup: '🛍 استلام', delivery: '🛵 توصيل', car: '🚗 سيارة' };
+export const orderButtons = (orderId) => ({ inline_keyboard: [[{ text: 'قبول', callback_data: 'zo:a:' + orderId }, { text: 'رفض', callback_data: 'zo:r:' + orderId }]] });
+const TYPE_AR = { dine_in: 'محلي', pickup: 'استلام', delivery: 'توصيل', car: 'سيارة' };
 
 const sar = (h) => (h / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ر.س';
 
@@ -145,7 +145,7 @@ const storedFormat = (s) => { try { const f = JSON.parse(s || '{}'); return f.fi
 
 export function orderMessage(order, branchName, base, format = {}) {
   const fields = new Set(format.fields || DEFAULT_FIELDS);
-  const title = format.title || '🛎️ طلب جديد';
+  const title = format.title || 'طلب جديد';
   const lines = fields.has('items') ? JSON.parse(order.items_json || '[]').map((l) => {
     const opts = fields.has('options') ? (l.options || []).map((o) => o.name_ar).join('، ') : '';
     return `• ${l.quantity}× ${l.name_ar || l.name_en}${opts ? ` (${opts})` : ''}${fields.has('prices') ? ` · ${sar(l.total)}` : ''}`;
@@ -190,7 +190,7 @@ export function later(c, promise) {
   return null;
 }
 
-// A tap on ✅/✖️ under an order. Only a chat linked to that order's business
+// A tap on /under an order. Only a chat linked to that order's business
 // (and branch, when the link is per branch) with order alerts on can act on it.
 async function handleOrderButton(env, cq, fetcher) {
   const m = /^zo:([ar]):([0-9a-f-]{36})$/.exec(String(cq.data || ''));
@@ -205,16 +205,16 @@ async function handleOrderButton(env, cq, fetcher) {
   try {
     if (m[1] === 'a') {
       const { ticket } = await acceptOrder(env, { orgId: order.org_id, branchId: order.branch_id, orderId: order.id });
-      status = `✅ قُبل${by ? ` بواسطة ${by}` : ''} · رقم النداء ${ticket.number}`;
+      status = `قُبل${by ? ` بواسطة ${by}` : ''} · رقم النداء ${ticket.number}`;
       await audit(env, { org_id: order.org_id }, 'order.accept', { order: order.id, ticket: ticket.id, via: 'telegram' });
     } else {
       await rejectOrder(env, { branchId: order.branch_id, orderId: order.id });
-      status = `✖️ رُفض${by ? ` بواسطة ${by}` : ''}`;
+      status = `رُفض${by ? ` بواسطة ${by}` : ''}`;
       await audit(env, { org_id: order.org_id }, 'order.reject', { order: order.id, via: 'telegram' });
     }
   } catch {
     const now = await env.DB.prepare('SELECT status FROM customer_orders WHERE id=?').bind(order.id).first();
-    status = now?.status === 'accepted' ? '✅ الطلب مقبول مسبقًا' : now?.status === 'rejected' ? '✖️ الطلب مرفوض مسبقًا' : '⌛ انتهت صلاحية الطلب';
+    status = now?.status === 'accepted' ? 'الطلب مقبول مسبقًا' : now?.status === 'rejected' ? 'الطلب مرفوض مسبقًا' : 'انتهت صلاحية الطلب';
   }
   await answer(status);
   const original = String(cq.message.text || '').slice(0, 3500);
@@ -250,7 +250,7 @@ async function handleUpdate(env, update, fetcher) {
     ).bind(id(), row.org_id, row.branch_id, String(chatId), title, row.events_json, row.format_json || '{}', now()),
   ]);
   const org = await env.DB.prepare('SELECT name_ar FROM orgs WHERE id=?').bind(row.org_id).first();
-  await tgSend(env, chatId, `✅ تم الربط مع ${org?.name_ar || 'منشأتك'}. ستصلك الإشعارات هنا. لإيقافها أرسل /stop`, fetcher);
+  await tgSend(env, chatId, `تم الربط مع ${org?.name_ar || 'منشأتك'}. ستصلك الإشعارات هنا. لإيقافها أرسل /stop`, fetcher);
 }
 
 export function registerAddons(app, { fetcher } = {}) {
@@ -361,7 +361,7 @@ export function registerAddons(app, { fetcher } = {}) {
     await rateLimit(c, 'tgtest:' + user.org_id, { limit: 5, window: 600000 });
     const { results } = await c.env.DB.prepare('SELECT chat_id FROM telegram_links WHERE org_id=?').bind(user.org_id).all();
     let sent = 0;
-    for (const r of results) if (await tgSend(c.env, r.chat_id, '🔔 رسالة تجربة من زيمارا منيو. الإشعارات تعمل.', fetcher).catch(() => false)) sent++;
+    for (const r of results) if (await tgSend(c.env, r.chat_id, 'رسالة تجربة من زيمارا منيو. الإشعارات تعمل.', fetcher).catch(() => false)) sent++;
     return c.json({ sent });
   });
 

@@ -51,7 +51,8 @@ try{
  assert.deepEqual(afterRecipeState,beforeRecipeState,'font resource upload preserves every recipe, revision, snapshot and publication field');
  const guest=await browser.newPage();
  await guest.goto(base+'/p/'+room.org_slug+'?lang=en');await guest.locator('#org-name').waitFor();
- assert.equal(await guest.locator('#org-name').innerText(),'Updated identity');
+ assert.ok((await guest.locator('#top .brandmark').innerText()).includes('Updated identity'),'public identity updates without replacing authored hero copy');
+ assert.equal(await guest.locator('#org-name').innerText(),afterFont.published.home.enabled?afterFont.published.home.blocks.find(b=>b.type==='hero').title_en:'Updated identity');
  assert.equal(await guest.evaluate(()=>document.documentElement.style.getPropertyValue('--brand')),'#5b3a29');
  assert.ok(!(await guest.locator('body').innerText()).includes('PRIVATE IDENTITY DRAFT'));
  assert.ok(!(await guest.locator('body').evaluate(e=>getComputedStyle(e).fontFamily)).includes('TenantFont'),'uploaded font stays inactive until selected by published recipe');
