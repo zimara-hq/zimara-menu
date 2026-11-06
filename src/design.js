@@ -1,6 +1,7 @@
 // Design engine. A design is a "recipe" of bounded choices (no free CSS or markup),
 // so any recipe is safe to render and every preset is just another recipe.
 import { requireRole, body, audit } from './context.js';
+import {CURATED_DESIGNS,curatedRecipe} from './design-curated.js';
 import { bad, notFound, conflict, now, id } from './util.js';
 import {BASE_COMPOSITION,BASE_HOME,BASE_MENU,COMPOSITION_OPTIONS,validateStructure,blueprint} from './design-structure.js';
 
@@ -206,7 +207,12 @@ function makePresets() {
   }
   return list;
 }
-export const PRESETS = makePresets();
+export const PRESETS = makePresets().map(p=>{
+  const direction=CURATED_DESIGNS.find(d=>d.id===p.id);
+  if(!direction)return p;
+  const recipe=validateRecipe(curatedRecipe(direction));fixContrast(recipe);
+  return {...p,sector:direction.sector,name_ar:direction.name_ar,name_en:direction.name_en,recipe,curated:true,preview_url:'/design-previews/'+p.id+'.webp'};
+});
 export const SECTORS = ['cafe', 'roastery', 'restaurant', 'burger', 'oriental', 'bakery', 'juice', 'clinic', 'salon', 'laundry', 'seasonal'];
 
 // ---------- Storage ----------
@@ -251,6 +257,7 @@ const versionView = (v) => ({ id: v.id, name: v.name, auto: v.auto === 1, create
 
 export function registerDesign(app) {
   const owner = requireRole('owner');
+  app.get('/api/public/designs',c=>c.json({designs:PRESETS.filter(p=>p.curated).map(p=>({id:p.id,name_ar:p.name_ar,name_en:p.name_en,sector:p.sector,preview_url:p.preview_url}))}));
 
   app.get('/api/owner/design', owner, async (c) => {
     const u = c.get('user');
@@ -276,7 +283,7 @@ export function registerDesign(app) {
       fonts: { ar: FONTS_AR.map(([k, f, , cat]) => ({ id: k, family: f, category: cat })).concat(fontProfile?.font_url?[{id:'custom',family:'خط منشأتك المرفوع / Uploaded brand font',category:'modern'}]:[]), en: FONTS_EN.map(([k, f, , cat]) => ({ id: k, family: f, category: cat })) },
       options: E,
       sectors: SECTORS,
-      presets: PRESETS.map((p) => ({ id: p.id, sector: p.sector, name_ar: p.name_ar, name_en: p.name_en, recipe: p.recipe })),
+      presets: PRESETS.map((p) => ({ id: p.id, sector: p.sector, name_ar: p.name_ar, name_en: p.name_en, recipe: p.recipe, curated: Boolean(p.curated), preview_url: p.preview_url || null })),
     });
   });
 
@@ -296,7 +303,7 @@ export function registerDesign(app) {
     if (d) await snapshot(c.env, u.org_id, 'قبل تطبيق ' + p.name_ar, JSON.parse(d.draft_json));
     const b=await body(c),next=clone(p.recipe),current=d?validateRecipe(JSON.parse(d.draft_json)):null;
     // Changing appearance must not erase the merchant's own copy and sections.
-    if(current&&b.replace_content!==true){if(current.home.enabled)next.home=current.home;next.menu=current.menu;}
+    if(current&&b.replace_content!==true){next.home=current.home;next.menu=current.menu;}
     const revision=await saveDraft(c.env, u.org_id, next, p.id,b.revision??null);
     await audit(c.env, u, 'design.preset', { preset: p.id });
     return c.json({ draft: { ...next, derived: derived(next) },revision });

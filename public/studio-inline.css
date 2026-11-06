@@ -1,0 +1,10 @@
+/* Loaded only by the embedded editor preview. */
+[data-inline-field] { outline-offset: 5px; scroll-margin-block: 3rem; }
+[data-inline-field]:hover { outline: 1px dashed var(--ink, #183b32); }
+[data-inline-field][contenteditable] { cursor: text; caret-color: var(--ink, #183b32); white-space: pre-wrap; min-inline-size: 1ch; }
+[data-inline-field][contenteditable]:empty::before { content: attr(data-inline-placeholder); color: var(--muted, #405c54); }
+[data-inline-field][contenteditable]:focus { outline: 2px solid var(--ink, #183b32); border-radius: 2px; }
+[data-inline-field]::selection { color: var(--surface, #fff); background: var(--ink, #183b32); }
+[data-inline-image] { cursor: pointer; }
+[data-inline-image]:focus-visible { outline: 3px solid var(--ink, #183b32); }
+[data-inline-field][aria-invalid=true] { outline: 2px solid #a02923; }

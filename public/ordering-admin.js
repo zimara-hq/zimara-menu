@@ -1,8 +1,9 @@
+import { icon } from './icons.js';
 // Owner screens for ordering: order types per branch (with table QR codes),
 // WhatsApp ordering, delivery terms, and coupons.
 import { api, esc, lang, money, pick, qrSvg, announce } from './common.js';
 const a = (ar, en) => (lang === 'ar' ? ar : en);
-const TYPES = [['dine_in', '🍽', 'محلي (على الطاولة)', 'Dine-in (at the table)'], ['pickup', '🛍', 'استلام من الكاشير', 'Pickup at the counter'], ['delivery', '🛵', 'توصيل', 'Delivery'], ['car', '🚗', 'استلام من السيارة', 'Curbside (to the car)']];
+const TYPES = [['dine_in', 'dish', 'محلي (على الطاولة)', 'Dine-in (at the table)'], ['pickup', 'bag', 'استلام من الكاشير', 'Pickup at the counter'], ['delivery', 'delivery', 'توصيل', 'Delivery'], ['car', 'car', 'استلام من السيارة', 'Curbside (to the car)']];
 const sar = (h) => (h ? (h / 100).toString() : '');
 const halalas = (v) => Math.round(Number(v || 0) * 100);
 
@@ -10,7 +11,7 @@ export async function orderingPanel(el, branch) {
   const { ordering: o } = await api(`/api/owner/branches/${branch.id}/ordering`);
   el.innerHTML = `<div class="editor-heading"><h3>${a('طرق الطلب', 'Ways to order')} · ${esc(pick(branch, 'name'))}</h3></div>
     <form class="stack" novalidate>
-      <fieldset class="opt-group"><legend>${a('وش تستقبل في هذا الفرع؟', 'What does this branch take?')}</legend><div class="allergen-grid">${TYPES.map(([k, ic, ar, en]) => `<label class="check"><input type="checkbox" name="type" value="${k}" ${o.types.includes(k) ? 'checked' : ''}> ${ic} ${a(ar, en)}</label>`).join('')}</div></fieldset>
+      <fieldset class="opt-group"><legend>${a('وش تستقبل في هذا الفرع؟', 'What does this branch take?')}</legend><div class="allergen-grid">${TYPES.map(([k, ic, ar, en]) => `<label class="check"><input type="checkbox" name="type" value="${k}" ${o.types.includes(k) ? 'checked' : ''}> ${icon(ic)} ${a(ar, en)}</label>`).join('')}</div></fieldset>
       <div class="grid2"><label>${a('عدد الطاولات (0 = بدون أرقام)', 'Number of tables (0 = no numbers)')}<input name="tables" type="number" min="0" max="500" inputmode="numeric" value="${o.tables}"></label>
       <label>${a('رقم واتساب لاستقبال الطلبات (اختياري)', 'WhatsApp number for orders (optional)')}<input name="whatsapp" dir="ltr" inputmode="tel" placeholder="05xxxxxxxx" value="${o.whatsapp ? '0' + o.whatsapp.slice(3) : ''}"></label></div>
       <div class="grid2"><label>${a('رسوم التوصيل (ر.س)', 'Delivery fee (SAR)')}<input name="delivery_fee" type="number" min="0" step="0.5" inputmode="decimal" value="${sar(o.delivery_fee)}"></label>

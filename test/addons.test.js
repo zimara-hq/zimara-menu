@@ -137,7 +137,7 @@ test('Telegram messages follow the parts and heading the owner picks per chat', 
     assert.deepEqual(link.format.fields, ['items', 'prices', 'total']);
     assert.equal((await s.owner.patch('/api/owner/telegram/' + link.id, { events: ['orders'], format: { fields: ['total', 'note'] } })).status, 200);
     await client(env).post('/api/public/orders/' + s.branchSlug, { idem_key: crypto.randomUUID(), items: [{ item_id: item.json.id, quantity: 1 }], note: 'سري' });
-    assert.equal(cap.sent.at(-1).text, '🛎️ طلب جديد\nملاحظة: سري\nالإجمالي: 16.00 ر.س');
+    assert.equal(cap.sent.at(-1).text, 'طلب جديد\nملاحظة: سري\nالإجمالي: 16.00 ر.س');
   } finally {
     cap.restore();
   }

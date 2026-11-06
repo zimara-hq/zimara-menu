@@ -1,3 +1,4 @@
+import {visitorActions} from './visitor-actions.js';
 import {renderHome,tenantChrome} from './tenant-pages.js';
 import {applyTenantTheme,bannerGallery,coverImage} from './tenant-theme.js';
 import { applyDesign, listenForPreview } from './design-engine.js';
@@ -110,7 +111,7 @@ try {
   };
   const info = sections.map(k=>bits[k]||'').join('');
   const legacy=hero + bannerGallery(p.banners) + (info ? `<div class="profile-info">${info}</div>` : '');
-  function renderWebsite(recipe){liveRecipe=recipe;if(!renderHome(main,payload,recipe,products)){main.className='wrap profile-page menu-wrap';main.innerHTML=legacy;tenantChrome(org,recipe||{});}}
+  function renderWebsite(recipe){liveRecipe=recipe;if(!renderHome(main,payload,recipe,products)){main.className='wrap profile-page menu-wrap';main.innerHTML=legacy;tenantChrome(org,recipe||{});}visitorActions(main,{services});}
   renderWebsite(design);
   listenForPreview(renderWebsite);
   try { renderAddons(addons, { main, orgSlug: org.slug }); } catch {}

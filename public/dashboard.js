@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 import {merchandisingFields,readMerchandising,wireMerchandising,mountMenuSchedules} from './menu-merchandising.js';
 import {branchesView} from './branches.js';
 import { startLive, onLive } from './realtime.js';
@@ -320,7 +321,7 @@ async function ownerMenu(el) {
     options: readGroups(form),
     sort: Number(v.sort || 0), active: !v.hidden,
   });
-  const intro = `<div class="section-intro row-between"><div><h2>${esc(t('menu'))}</h2><p>${A('أقسامك وأصنافك كما يراها العميل. أي تعديل يظهر فورًا في كل الفروع.', 'Your sections and items as customers see them. Changes appear instantly in every branch.')}</p></div>${branch ? `<a class="btn ghost sm" href="/m/${esc(branch.slug)}" target="_blank" rel="noopener">${A('معاينة المنيو', 'Preview menu')} ↗</a>` : ''}</div>`;
+  const intro = `<div class="section-intro row-between"><div><h2>${esc(t('menu'))}</h2><p>${A('أقسامك وأصنافك كما يراها العميل. أي تعديل يظهر فورًا في كل الفروع.', 'Your sections and items as customers see them. Changes appear instantly in every branch.')}</p></div>${branch ? `<a class="btn ghost sm" href="/m/${esc(branch.slug)}" target="_blank" rel="noopener">${A('معاينة المنيو', 'Preview menu')} ${icon("arrowUpRight")}</a>` : ''}</div>`;
 
   if (!items.length && !categories.length) {
     el.innerHTML = `${intro}<div class="card empty-hero"><span class="empty-ico">${ICON.menu}</span><h3>${A('منيوك فاضي حاليًا', 'Your menu is empty')}</h3>
@@ -567,7 +568,7 @@ function branchDisplay(el) {
   clearTimeout(displayTimer);
   let knownReady = new Set();
   let armed = false;
-  el.innerHTML = `<div class="row" style="margin:12px 0"><button class="btn ghost sm" id="fs" type="button">${esc(t('fullscreen'))}</button><button class="btn ghost sm" id="snd" type="button">🔔 ${esc(t('soundOn'))}</button></div>
+  el.innerHTML = `<div class="row" style="margin:12px 0"><button class="btn ghost sm" id="fs" type="button">${esc(t('fullscreen'))}</button><button class="btn ghost sm" id="snd" type="button">${icon("bell")} ${esc(t('soundOn'))}</button></div>
     <div class="board" id="disp"><div class="card" style="text-align:center"><h2>${esc(t('latest'))}</h2><div id="lt"></div></div><div class="card"><h2>${esc(t('readyNow'))}</h2><div id="rd" class="grid" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))"></div></div></div>`;
   el.querySelector('#fs').onclick = () => el.querySelector('#disp').requestFullscreen?.();
   el.querySelector('#snd').onclick = (e) => { armed = unlockAudio(); e.target.disabled = armed; };
@@ -688,7 +689,7 @@ try { lastIssued = JSON.parse(sessionStorage.getItem('zm_last_ticket_' + me.user
 
 const heading = document.createElement('div');
 heading.className = 'workspace-heading';
-heading.innerHTML = `<div><h1>${esc(me.user.role === 'admin' ? t('admin') : me.user.role === 'owner' ? t('owner') : t('branch'))}</h1><p class="muted">${esc(subtitle)}</p></div>${me.user.role === 'owner' && me.org?.slug ? `<a class="btn ghost sm heading-link" href="/p/${esc(me.org.slug)}" target="_blank" rel="noopener">${lang === 'ar' ? 'عرض صفحتي العامة' : 'View public page'} ↗</a>` : me.branch?.slug ? `<a class="btn ghost sm heading-link" href="/m/${esc(me.branch.slug)}" target="_blank" rel="noopener">${lang === 'ar' ? 'عرض المنيو' : 'View menu'} ↗</a>` : ''}`;
+heading.innerHTML = `<div><h1>${esc(me.user.role === 'admin' ? t('admin') : me.user.role === 'owner' ? t('owner') : t('branch'))}</h1><p class="muted">${esc(subtitle)}</p></div>${me.user.role === 'owner' && me.org?.slug ? `<a class="btn ghost sm heading-link" href="/p/${esc(me.org.slug)}" target="_blank" rel="noopener">${lang === 'ar' ? 'عرض صفحتي العامة' : 'View public page'} ${icon("arrowUpRight")}</a>` : me.branch?.slug ? `<a class="btn ghost sm heading-link" href="/m/${esc(me.branch.slug)}" target="_blank" rel="noopener">${lang === 'ar' ? 'عرض المنيو' : 'View menu'} ${icon("arrowUpRight")}</a>` : ''}`;
 heading.querySelector('h1').insertAdjacentHTML('beforeend',' <span aria-hidden="true">/</span> <span id="workspace-section"></span>');
 heading.insertAdjacentHTML('beforeend',`<button type="button" class="btn ghost workspace-find" id="workspace-find" aria-haspopup="dialog">${workspaceIcon('menu')}<span>${lang==='ar'?'ابحث في أدواتك':'Find your tools'}</span><kbd>⌘ / Ctrl K</kbd></button>`);
 main.before(heading);

@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 import { api, esc, lang, makeT, topbar } from './common.js';
 import { passkeyLogin, passkeysSupported } from './security-ui.js';
 
@@ -21,7 +22,7 @@ try {
       <div><label for="p">${esc(t('password'))}</label><input id="p" type="password" autocomplete="current-password" required></div>
       <div id="mfa-fields" hidden><label for="mfa-code">${esc(t('code'))}</label><input id="mfa-code" name="code" type="text" autocomplete="one-time-code" aria-describedby="mfa-help"><p id="mfa-help" class="small muted">${esc(t('codeHint'))}</p><label><input type="checkbox" id="recovery"> ${esc(t('recover'))}</label></div>
       <p id="err" role="alert"></p><button class="btn" type="submit">${esc(t('go'))}</button>
-      ${passkeysSupported() ? `<button class="btn ghost" type="button" id="passkey-login">🔑 ${esc(lang === 'ar' ? 'ادخل بمفتاح المرور (البصمة)' : 'Sign in with a passkey')}</button>` : ''}
+      ${passkeysSupported() ? `<button class="btn ghost" type="button" id="passkey-login">${icon("key")} ${esc(lang === 'ar' ? 'ادخل بمفتاح المرور (البصمة)' : 'Sign in with a passkey')}</button>` : ''}
     </form><p class="auth-footer">${esc(t('new'))} <a href="/register">${esc(t('create'))}</a></p><p class="small"><a href="/reset">${esc(lang === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot your password?')}</a></p>${new URLSearchParams(location.search).get('verified') === '1' ? `<p class="msg" role="status">${esc(lang === 'ar' ? 'تأكد بريدك. سجّل دخولك.' : 'Email confirmed. Please sign in.')}</p>` : new URLSearchParams(location.search).get('verified') === '0' ? `<p class="msg error" role="alert">${esc(lang === 'ar' ? 'رابط التأكيد غير صالح أو انتهى.' : 'This confirmation link is invalid or expired.')}</p>` : ''}</div>`;
   main.querySelector('#passkey-login')?.addEventListener('click', async (ev) => {
     const err = main.querySelector('#err');

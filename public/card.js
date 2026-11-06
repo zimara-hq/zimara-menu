@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 import { api, esc, lang, makeT, pick, qrSvg, setBrandColor, topbar, applyTenantFont, requestValue, announce } from './common.js';
 
 const t = makeT({
@@ -37,7 +38,7 @@ async function load() {
         ${c.stamps >= need ? `<p class="msg">${esc(t('earned'))}</p>` : ''}
       </div>
       ${c.messages?.length ? `<div class="card stack" id="card-inbox"><h2>${A('رسائل لك', 'For you')}</h2>${c.messages.map((m) => `<article class="inbox-msg"><b>${esc(pick(m, 'title'))}</b><p>${esc(pick(m, 'body'))}</p><small class="muted">${new Date(m.created_at).toLocaleDateString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-GB')}</small></article>`).join('')}</div>` : ''}
-      ${pushOk && !alertsOn ? `<p class="center"><button class="btn ghost" id="card-alerts" type="button">🔔 ${A('وصلني العروض على جوالي', 'Send offers to my phone')}</button></p>` : ''}
+      ${pushOk && !alertsOn ? `<p class="center"><button class="btn ghost" id="card-alerts" type="button">${icon("bell")} ${A('وصلني العروض على جوالي', 'Send offers to my phone')}</button></p>` : ''}
       ${c.history.length ? `<div class="card"><h2>${esc(t('history'))}</h2><table>${c.history
         .map((h) => `<tr><td>${esc(pts && h.kind === 'stamp' ? A('نقاط', 'Points') : t(h.kind))}</td><td>${h.delta > 0 ? '+' : ''}${h.delta}</td><td class="muted small">${new Date(h.created_at).toLocaleString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-GB')}</td></tr>`)
         .join('')}</table></div>` : ''}<p class="small" style="text-align:center"><button class="btn danger sm" id="delete-card" type="button">${lang === 'ar' ? 'إلغاء البطاقة' : 'Revoke card'}</button></p>`;

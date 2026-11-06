@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 // Passkeys and signed-in devices, for the account screen and the login page.
 import { api, esc, lang, relTime, announce } from './common.js';
 const a = (ar, en) => (lang === 'ar' ? ar : en);
@@ -35,11 +36,11 @@ export async function securityPanel(el) {
   const when = (t) => (t ? relTime(Date.now() - t) : '—');
   el.innerHTML = `<h2>${a('مفاتيح المرور', 'Passkeys')}</h2>
     <p class="muted">${a('ادخل ببصمة الوجه أو الإصبع بدل كلمة المرور. أقوى حماية ضد سرقة الحساب، والمفتاح ما يطلع من جهازك.', 'Sign in with Face ID or a fingerprint instead of a password. The strongest protection against account theft, and the key never leaves your device.')}</p>
-    ${passkeys.length ? `<ul class="plain-list" id="pk-list">${passkeys.map((p) => `<li><span>🔑 <b>${esc(p.name)}</b> <small class="muted">${a('آخر استخدام', 'last used')}: ${esc(when(p.last_used_at))}${p.backed_up ? ' · ' + a('محفوظ في حسابك السحابي', 'synced to your cloud account') : ''}</small></span><button type="button" class="btn ghost sm" data-pk="${esc(p.id)}">${a('حذف', 'Remove')}</button></li>`).join('')}</ul>` : ''}
+    ${passkeys.length ? `<ul class="plain-list" id="pk-list">${passkeys.map((p) => `<li><span>${icon("key")} <b>${esc(p.name)}</b> <small class="muted">${a('آخر استخدام', 'last used')}: ${esc(when(p.last_used_at))}${p.backed_up ? ' · ' + a('محفوظ في حسابك السحابي', 'synced to your cloud account') : ''}</small></span><button type="button" class="btn ghost sm" data-pk="${esc(p.id)}">${a('حذف', 'Remove')}</button></li>`).join('')}</ul>` : ''}
     ${passkeysSupported() ? `<button type="button" class="btn" id="pk-add">${a('أضف مفتاح مرور لهذا الجهاز', 'Add a passkey for this device')}</button>` : `<p class="small muted">${a('هذا المتصفح ما يدعم مفاتيح المرور.', 'This browser does not support passkeys.')}</p>`}
     <div role="status" id="pk-msg"></div>
     <h2 style="margin-top:24px">${a('أجهزتك', 'Your devices')}</h2>
-    <ul class="plain-list" id="dev-list">${sessions.map((s) => `<li><span>${s.kind === 'app' ? '📱' : '💻'} <b>${esc(s.label || a('جهاز', 'Device'))}</b>${s.current ? ` <span class="pill">${a('هذا الجهاز', 'This device')}</span>` : ''} <small class="muted">${s.via === 'passkey' ? '🔑 · ' : ''}${a('آخر نشاط', 'last active')}: ${esc(when(s.last_seen_at || s.created_at))}</small></span>${s.current ? '' : `<button type="button" class="btn ghost sm" data-sid="${esc(s.id)}">${a('خروج', 'Sign out')}</button>`}</li>`).join('')}</ul>
+    <ul class="plain-list" id="dev-list">${sessions.map((s) => `<li><span>${icon(s.kind === 'app' ? 'phone' : 'laptop')} <b>${esc(s.label || a('جهاز', 'Device'))}</b>${s.current ? ` <span class="pill">${a('هذا الجهاز', 'This device')}</span>` : ''} <small class="muted">${s.via === 'passkey' ? icon('key') + ' · ' : ''}${a('آخر نشاط', 'last active')}: ${esc(when(s.last_seen_at || s.created_at))}</small></span>${s.current ? '' : `<button type="button" class="btn ghost sm" data-sid="${esc(s.id)}">${a('خروج', 'Sign out')}</button>`}</li>`).join('')}</ul>
     ${sessions.length > 1 ? `<button type="button" class="btn danger" id="dev-others">${a('اخرج من كل الأجهزة الثانية', 'Sign out of all other devices')}</button>` : ''}`;
   const msg = el.querySelector('#pk-msg');
   el.querySelector('#pk-add')?.addEventListener('click', async (e) => {

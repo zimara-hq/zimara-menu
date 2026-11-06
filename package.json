@@ -30,7 +30,12 @@
     "test:launch": "node test/e2e/launch.mjs",
     "test:customer-menu": "node test/e2e/customer-menu.mjs",
     "test:menu-merchandising": "node test/e2e/menu-owner-phase1.mjs",
-    "test:menu-performance": "node scripts/menu-performance.mjs"
+    "test:menu-performance": "node scripts/menu-performance.mjs",
+    "test:studio-entry": "node test/e2e/studio-entry.mjs",
+    "test:studio-inline": "node test/e2e/studio-inline.mjs",
+    "test:studio-canvas": "node test/e2e/studio-canvas.mjs",
+    "test:customer-worlds": "node test/e2e/customer-worlds.mjs",
+    "test:design-gallery": "node test/e2e/design-gallery.mjs"
   },
   "repository": {
     "type": "git",

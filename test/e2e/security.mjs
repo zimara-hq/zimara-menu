@@ -26,7 +26,7 @@ try{
  await owner.locator('#passkey-login').click();await owner.waitForURL(/\/app/);await owner.locator('[data-k=account]').waitFor();
  pass('owner signs in with the passkey, no password');
  await owner.locator('[data-k=account]').click();await owner.locator('#dev-list').waitFor();
- assert.ok(await owner.locator('#dev-list li',{hasText:'🔑'}).count()>=1);pass('the device list shows the passkey sign-in');
+ assert.ok(await owner.locator('#dev-list li').filter({has:owner.locator('small svg.ui-icon')}).count()>=1);pass('the device list shows the passkey sign-in');
 
  // Live updates: a guest joins the waitlist and the cashier screen shows it at once.
  const cash=await open();

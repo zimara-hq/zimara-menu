@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 // Magic start: a five-step wizard that takes a new owner from an empty account to
 // a live, designed menu with a QR code, and the AI import (photo, PDF, link or
 // description → menu draft) that the wizard and the import tab share.
@@ -8,10 +9,10 @@ const a = (ar, en) => (lang === 'ar' ? ar : en);
 
 // Trades shown in the wizard, their profile sector, and the design sector they match.
 const TRADES = [
-  ['cafe', '☕', 'مقهى', 'Café', 'cafe'], ['roastery', '🫘', 'محمصة', 'Roastery', 'cafe'], ['restaurant', '🍽', 'مطعم', 'Restaurant', 'restaurant'],
-  ['burger', '🍔', 'برجر ووجبات سريعة', 'Burgers & fast food', 'restaurant'], ['oriental', '🥙', 'شعبي وشرقي', 'Arabic & traditional', 'restaurant'],
-  ['bakery', '🥐', 'مخبز وحلويات', 'Bakery & sweets', 'cafe'], ['juice', '🥤', 'عصائر', 'Juice bar', 'cafe'],
-  ['clinic', '🩺', 'عيادة', 'Clinic', 'clinic'], ['salon', '💇', 'صالون', 'Salon', 'service'], ['laundry', '🧺', 'مغسلة وخدمات', 'Laundry & services', 'service'],
+  ['cafe', 'coffee', 'مقهى', 'Café', 'cafe'], ['roastery', 'bean', 'محمصة', 'Roastery', 'cafe'], ['restaurant', 'dish', 'مطعم', 'Restaurant', 'restaurant'],
+  ['burger', 'burger', 'برجر ووجبات سريعة', 'Burgers & fast food', 'restaurant'], ['oriental', 'dish', 'شعبي وشرقي', 'Arabic & traditional', 'restaurant'],
+  ['bakery', 'bread', 'مخبز وحلويات', 'Bakery & sweets', 'cafe'], ['juice', 'cup', 'عصائر', 'Juice bar', 'cafe'],
+  ['clinic', 'medical', 'عيادة', 'Clinic', 'clinic'], ['salon', 'scissors', 'صالون', 'Salon', 'service'], ['laundry', 'basket', 'مغسلة وخدمات', 'Laundry & services', 'service'],
 ];
 const ERR = {
   ai_not_configured: ['القراءة الذكية غير مفعلة بعد. استخدم المنيو النموذجي أو أضف أصنافك بنفسك.', 'Smart reading is not enabled yet. Use the sample menu or add items yourself.'],
@@ -53,16 +54,16 @@ async function fileData(file) {
 export function aiImportPanel(el, { enabled, onSaved } = {}) {
   let mode = 'photo', rows = [];
   if (!enabled) {
-    el.innerHTML = `<div class="ai-box off"><h3>✨ ${a('صوّر منيوك ونبنيه لك', 'Snap your menu and we build it')}</h3><p class="small muted">${a('القراءة الذكية للصور والـ PDF بتتفعل قريب في حسابك.', 'Smart reading for photos and PDFs is coming to your account soon.')}</p></div>`;
+    el.innerHTML = `<div class="ai-box off"><h3>${icon("sparkles")} ${a('صوّر منيوك ونبنيه لك', 'Snap your menu and we build it')}</h3><p class="small muted">${a('القراءة الذكية للصور والـ PDF بتتفعل قريب في حسابك.', 'Smart reading for photos and PDFs is coming to your account soon.')}</p></div>`;
     return;
   }
   const modes = [['photo', a('صورة', 'Photo')], ['pdf', 'PDF'], ['link', a('رابط', 'Link')], ['text', a('نص أو وصف', 'Text or description')]];
   function render() {
-    el.innerHTML = `<div class="ai-box"><h3>✨ ${a('صوّر منيوك ونبنيه لك', 'Snap your menu and we build it')}</h3>
+    el.innerHTML = `<div class="ai-box"><h3>${icon("sparkles")} ${a('صوّر منيوك ونبنيه لك', 'Snap your menu and we build it')}</h3>
       <p class="small muted">${a('نقرأ الأقسام والأصناف والأسعار ونترجمها للغتين. تراجعها قبل الحفظ.', 'We read sections, items and prices and fill both languages. You review before saving.')}</p>
       <div class="seg" role="tablist">${modes.map(([k, t]) => `<button type="button" role="tab" aria-selected="${k === mode}" data-mode="${k}">${t}</button>`).join('')}</div>
-      <div class="stack" id="ai-input">${mode === 'photo' ? `<label class="btn ghost upload-btn"><input type="file" accept="image/*" capture="environment" class="visually-hidden" id="ai-file">📷 ${a('صوّر المنيو أو اختر صورة', 'Take or choose a photo')}</label>`
-        : mode === 'pdf' ? `<label class="btn ghost upload-btn"><input type="file" accept="application/pdf" class="visually-hidden" id="ai-file">📄 ${a('اختر ملف PDF', 'Choose a PDF')}</label>`
+      <div class="stack" id="ai-input">${mode === 'photo' ? `<label class="btn ghost upload-btn"><input type="file" accept="image/*" capture="environment" class="visually-hidden" id="ai-file">${icon("camera")} ${a('صوّر المنيو أو اختر صورة', 'Take or choose a photo')}</label>`
+        : mode === 'pdf' ? `<label class="btn ghost upload-btn"><input type="file" accept="application/pdf" class="visually-hidden" id="ai-file">${icon("file")} ${a('اختر ملف PDF', 'Choose a PDF')}</label>`
         : mode === 'link' ? `<label for="ai-url">${a('رابط صفحة المنيو', 'Menu page link')}</label><div class="row"><input id="ai-url" dir="ltr" inputmode="url" placeholder="https://"><button type="button" class="btn" id="ai-go">${a('اقرأ', 'Read')}</button></div>`
         : `<label for="ai-text">${a('الصق المنيو أو صف نشاطك', 'Paste your menu or describe your business')}</label><textarea id="ai-text" rows="5" maxlength="20000" placeholder="${a('مثال: مقهى مختص في حائل، نقدم قهوة مختصة وحلويات… أو الصق الأصناف والأسعار', 'e.g. A specialty café in Hail with coffee and desserts… or paste items and prices')}"></textarea><button type="button" class="btn" id="ai-go">${a('ابنِ المنيو', 'Build the menu')}</button>`}</div>
       <div id="ai-status" role="status" aria-live="polite"></div><div id="ai-review"></div></div>`;
@@ -84,7 +85,7 @@ export function aiImportPanel(el, { enabled, onSaved } = {}) {
   }
   function review() {
     const box = el.querySelector('#ai-review');
-    box.innerHTML = `<div class="table-scroll"><table class="ai-table"><thead><tr><th>${a('القسم', 'Section')}</th><th>${a('الاسم بالعربي', 'Arabic name')}</th><th>${a('بالإنجليزي', 'English name')}</th><th>${a('السعر', 'Price')}</th><th><span class="visually-hidden">${a('حذف', 'Remove')}</span></th></tr></thead><tbody>${rows.map((r, i) => `<tr data-i="${i}"><td><input aria-label="${a('القسم', 'Section')}" data-f="category_ar" value="${esc(r.category_ar)}"></td><td><input aria-label="${a('الاسم بالعربي', 'Arabic name')}" data-f="name_ar" value="${esc(r.name_ar)}"></td><td><input aria-label="${a('الاسم بالإنجليزي', 'English name')}" dir="ltr" data-f="name_en" value="${esc(r.name_en)}"></td><td><input aria-label="${a('السعر', 'Price')}" class="${r.price === '' ? 'invalid' : ''}" inputmode="decimal" dir="ltr" data-f="price" value="${esc(r.price)}" placeholder="${a('مطلوب', 'Required')}"></td><td><button type="button" class="btn ghost sm" data-del="${i}" aria-label="${a('احذف الصنف', 'Remove item')}">✕</button></td></tr>`).join('')}</tbody></table></div>
+    box.innerHTML = `<div class="table-scroll"><table class="ai-table"><thead><tr><th>${a('القسم', 'Section')}</th><th>${a('الاسم بالعربي', 'Arabic name')}</th><th>${a('بالإنجليزي', 'English name')}</th><th>${a('السعر', 'Price')}</th><th><span class="visually-hidden">${a('حذف', 'Remove')}</span></th></tr></thead><tbody>${rows.map((r, i) => `<tr data-i="${i}"><td><input aria-label="${a('القسم', 'Section')}" data-f="category_ar" value="${esc(r.category_ar)}"></td><td><input aria-label="${a('الاسم بالعربي', 'Arabic name')}" data-f="name_ar" value="${esc(r.name_ar)}"></td><td><input aria-label="${a('الاسم بالإنجليزي', 'English name')}" dir="ltr" data-f="name_en" value="${esc(r.name_en)}"></td><td><input aria-label="${a('السعر', 'Price')}" class="${r.price === '' ? 'invalid' : ''}" inputmode="decimal" dir="ltr" data-f="price" value="${esc(r.price)}" placeholder="${a('مطلوب', 'Required')}"></td><td><button type="button" class="btn ghost sm" data-del="${i}" aria-label="${a('احذف الصنف', 'Remove item')}">${icon("close",18)}</button></td></tr>`).join('')}</tbody></table></div>
       <div class="row"><button type="button" class="btn" id="ai-save">${a(`احفظ ${rows.length} صنف في المنيو`, `Save ${rows.length} items to the menu`)}</button></div><div id="ai-save-msg" role="status"></div>`;
     box.querySelectorAll('input[data-f]').forEach((inp) => inp.addEventListener('input', () => {
       const r = rows[inp.closest('tr').dataset.i];
@@ -141,14 +142,14 @@ export async function magicStart(me, { onClose } = {}) {
   dlg.className = 'app-dialog magic';
   dlg.setAttribute('aria-labelledby', 'magic-title');
   document.body.append(dlg);
-  const titles = [a('وش نشاطك؟', 'What do you do?'), a('هويتك', 'Your brand'), a('اختر تصميمك', 'Pick your design'), a('منيوك', 'Your menu'), a('جاهز! 🎉', 'You are live! 🎉')];
+  const titles = [a('وش نشاطك؟', 'What do you do?'), a('هويتك', 'Your brand'), a('اختر تصميمك', 'Pick your design'), a('منيوك', 'Your menu'), a('جاهز! ', 'You are live! ')];
   const sendPreview = (recipe) => dlg.querySelector('#mg-frame')?.contentWindow?.postMessage({ type: 'zm-design', recipe }, location.origin);
   const onMsg = (e) => { if (e.origin === location.origin && e.source === dlg.querySelector('#mg-frame')?.contentWindow && e.data?.type === 'zm-design-ready') { const recipe = previewRecipe(); if (recipe) sendPreview(recipe); } };
   window.addEventListener('message', onMsg);
   dlg.addEventListener('close', () => { window.removeEventListener('message', onMsg); dlg.remove(); onClose?.(); });
 
   function frame(inner, { back = true, next = true, nextLabel } = {}) {
-    dlg.innerHTML = `<div class="magic-head"><span class="eyebrow">${a('البداية السحرية', 'MAGIC START')} · ${step + 1}/5</span><button type="button" class="btn ghost sm" id="mg-x" aria-label="${a('إغلاق', 'Close')}">✕</button></div>
+    dlg.innerHTML = `<div class="magic-head"><span class="eyebrow">${a('البداية السحرية', 'MAGIC START')} · ${step + 1}/5</span><button type="button" class="btn ghost sm" id="mg-x" aria-label="${a('إغلاق', 'Close')}">${icon("close",18)}</button></div>
       <div class="progress" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="${step + 1}"><span style="width:${(step + 1) * 20}%"></span></div>
       <h2 id="magic-title">${titles[step]}</h2><div class="stack" id="mg-body">${inner}</div><div id="mg-msg" role="status"></div>
       <div class="row magic-foot">${back && step ? `<button type="button" class="btn ghost" id="mg-back">${a('رجوع', 'Back')}</button>` : '<span></span>'}${next ? `<button type="button" class="btn" id="mg-next">${nextLabel || a('التالي', 'Next')}</button>` : ''}</div>`;
@@ -160,7 +161,7 @@ export async function magicStart(me, { onClose } = {}) {
 
   function show() {
     if (step === 0) {
-      frame(`<p class="muted">${a('نختار لك تصاميم وأمثلة تناسب نشاطك.', 'We suggest designs and examples that fit your trade.')}</p><div class="trade-grid" role="radiogroup">${TRADES.map(([k, ic, ar, en]) => `<label class="trade ${k === trade ? 'on' : ''}"><input type="radio" name="trade" value="${k}" ${k === trade ? 'checked' : ''}><span aria-hidden="true">${ic}</span>${a(ar, en)}</label>`).join('')}</div>`);
+      frame(`<p class="muted">${a('نختار لك تصاميم وأمثلة تناسب نشاطك.', 'We suggest designs and examples that fit your trade.')}</p><div class="trade-grid" role="radiogroup">${TRADES.map(([k, ic, ar, en]) => `<label class="trade ${k === trade ? 'on' : ''}"><input type="radio" name="trade" value="${k}" ${k === trade ? 'checked' : ''}><span aria-hidden="true">${icon(ic, 24)}</span>${a(ar, en)}</label>`).join('')}</div>`);
       dlg.querySelectorAll('[name=trade]').forEach((r) => r.addEventListener('change', () => { trade = r.value; dlg.querySelectorAll('.trade').forEach((l) => l.classList.toggle('on', l.querySelector('input').checked)); }));
       dlg.querySelector('#mg-next').onclick = (e) => advance(e.target, () => api('/api/owner/profile', { method: 'PATCH', body: { sector: TRADES.find((t) => t[0] === trade)[4] } }));
     } else if (step === 1) {
@@ -208,7 +209,7 @@ export async function magicStart(me, { onClose } = {}) {
       dlg.querySelector('#mg-next').onclick = () => { step++; show(); };
     } else {
       frame(`<p>${a('منيوك منشور بتصميمه. اطبع الكود وحطه على الطاولات أو الكاشير.', 'Your menu is live with its design. Print the code for tables or the counter.')}</p>
-        <div class="magic-done"><div class="share-qr">${qrSvg(menuUrl, 5)}</div><div class="stack"><a class="btn" href="${esc(menuUrl)}" target="_blank" rel="noopener">${a('افتح منيوك', 'Open your menu')} ↗</a><button type="button" class="btn ghost" id="mg-print">${a('اطبع الكود', 'Print the code')}</button><p class="small muted" dir="ltr">${esc(menuUrl)}</p>${itemCount ? `<p class="small">${a(`${itemCount} صنف في منيوك`, `${itemCount} items on your menu`)}</p>` : ''}</div></div>
+        <div class="magic-done"><div class="share-qr">${qrSvg(menuUrl, 5)}</div><div class="stack"><a class="btn" href="${esc(menuUrl)}" target="_blank" rel="noopener">${a('افتح منيوك', 'Open your menu')} ${icon("arrowUpRight")}</a><button type="button" class="btn ghost" id="mg-print">${a('اطبع الكود', 'Print the code')}</button><p class="small muted" dir="ltr">${esc(menuUrl)}</p>${itemCount ? `<p class="small">${a(`${itemCount} صنف في منيوك`, `${itemCount} items on your menu`)}</p>` : ''}</div></div>
         <p class="small muted">${a('الخطوة الجاية: أضف صور الأصناف وأوقات العمل من لوحة التحكم. نسبة التجهيز تظهر لك بالنظرة العامة.', 'Next: add item photos and opening hours. Your setup score is on the overview.')}</p>`, { back: false, nextLabel: a('خلصنا', 'Done') });
       dlg.querySelector('#mg-print').onclick = () => { const w = window.open('', '_blank'); if (!w) return; w.document.write(`<!doctype html><meta charset="utf-8"><title>QR</title><body style="display:grid;place-items:center;min-height:95vh;font-family:system-ui;text-align:center"><div><h1>${esc(lang === 'ar' ? me.org.name_ar : me.org.name_en)}</h1>${qrSvg(menuUrl, 8)}<p>${a('امسح الكود لعرض المنيو', 'Scan to view the menu')}</p></div>`); w.document.close(); w.focus(); w.print(); };
       dlg.querySelector('#mg-next').onclick = () => dlg.close();
