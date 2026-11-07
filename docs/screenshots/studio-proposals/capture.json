@@ -1,0 +1,105 @@
+{
+  "baselineSha": "0f0cb5ac740a7184b980c028424fe53d99d70095",
+  "fixture": "same isolated synthetic cafe database snapshot and published recipe in local main/candidate Workers; official existing ZIMARA icon chosen only to demonstrate local color extraction",
+  "operatorTheme": "actual stored light/dark; merchant previews retain their own recipe",
+  "reducedMotion": true,
+  "viewportCaptures": true,
+  "cssOverrides": false,
+  "settledFontsAndVisibleImages": true,
+  "records": [
+    {
+      "phase": "before",
+      "width": 390,
+      "theme": "light",
+      "surface": "studio",
+      "actualWidth": 390
+    },
+    {
+      "phase": "before",
+      "width": 1440,
+      "theme": "light",
+      "surface": "studio",
+      "actualWidth": 1440
+    },
+    {
+      "phase": "before",
+      "width": 390,
+      "theme": "dark",
+      "surface": "studio",
+      "actualWidth": 390
+    },
+    {
+      "phase": "before",
+      "width": 1440,
+      "theme": "dark",
+      "surface": "studio",
+      "actualWidth": 1440
+    },
+    {
+      "phase": "after",
+      "width": 390,
+      "theme": "light",
+      "surface": "studio",
+      "actualWidth": 390
+    },
+    {
+      "phase": "after",
+      "width": 390,
+      "theme": "light",
+      "surface": "comparison",
+      "actualWidth": 390,
+      "mode": "مطابقة محلية",
+      "proposals": 3
+    },
+    {
+      "phase": "after",
+      "width": 1440,
+      "theme": "light",
+      "surface": "studio",
+      "actualWidth": 1440
+    },
+    {
+      "phase": "after",
+      "width": 1440,
+      "theme": "light",
+      "surface": "comparison",
+      "actualWidth": 1440,
+      "mode": "مطابقة محلية",
+      "proposals": 3
+    },
+    {
+      "phase": "after",
+      "width": 390,
+      "theme": "dark",
+      "surface": "studio",
+      "actualWidth": 390
+    },
+    {
+      "phase": "after",
+      "width": 390,
+      "theme": "dark",
+      "surface": "comparison",
+      "actualWidth": 390,
+      "mode": "مطابقة محلية",
+      "proposals": 3
+    },
+    {
+      "phase": "after",
+      "width": 1440,
+      "theme": "dark",
+      "surface": "studio",
+      "actualWidth": 1440
+    },
+    {
+      "phase": "after",
+      "width": 1440,
+      "theme": "dark",
+      "surface": "comparison",
+      "actualWidth": 1440,
+      "mode": "مطابقة محلية",
+      "proposals": 3
+    }
+  ],
+  "capturedAt": "2026-11-07T20:36:04.347794+00:00",
+  "reviewCorrection": "Replaced low-contrast accent text on entry, mode labels and selected segment with existing readable ink/surface tokens; all final views recaptured."
+}

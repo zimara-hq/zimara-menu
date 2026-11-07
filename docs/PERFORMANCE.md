@@ -107,3 +107,16 @@ The existing source files named `.woff2` contained uncompressed TrueType data. N
 | `public/fonts/menu-jakarta.woff2` | `jakarta-latin-0.woff2` | 22,176 | 781 / 721 |
 
 FontTools 4.61.1 `TTFont`, `font.flavor='woff2'`, `font.save(output)` with Brotli 1.2.1 performed encoding. Reopening each output asserted equality of `getGlyphOrder()` and `getBestCmap()` with its source. The existing `public/fonts/Tajawal-OFL.txt` and `Plus-Jakarta-Sans-OFL.txt` licenses remain alongside the assets. Original files were not changed. The client declares menu-only aliases and synthesizes weights from the selected static faces, and translates only the matching default family names; merchant custom fonts and other curated families remain their own recipe choices.
+
+## Studio proposal release — 2026-11-07
+
+Paired rerun against main `0f0cb5a`, same canonical café recipe and synthetic SQLite snapshot, direct local Workers (no gzip proxy), Lighthouse13.0.3/Chromium154/Node24.19, standard mobile simulation with cold storage reset. Three candidate runs followed by three main runs; no concurrent tests, builds, graph updates or browser reviews.
+
+| Source | LCP ms, all runs | Performance | Accessibility | SEO |
+|---|---|---|---|---|
+| main |2434 /2428 /2420|94 /97 /97|100 /100 /100|91 /91 /91|
+| studio proposals |2416 /2408 /2421|97 /97 /97|100 /100 /100|91 /91 /91|
+
+All candidate runs meet 2500ms. Median candidate2416ms versus main2428ms: no regression within this shared-host laboratory comparison; this small difference is not a user-device speed guarantee. Candidate encoded non-image transfer88875/88875/88866bytes. The new editor modules are lazy-loaded from the owner studio, not by public menu navigation. The public entry change only carries the private-preview tracking guard.
+
+[Raw measurements, source hashes and conditions](performance/studio-proposals-2026-11-07/measurements.json) link all six full Lighthouse JSON and transfer records, without omitting a run. SEO91 reflects the noindex local/review environment. These numbers are local laboratory results; HTTPS functional checks are reported separately after protected review deployment.

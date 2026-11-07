@@ -40,7 +40,9 @@
     "test:studio-canvas": "node test/e2e/studio-canvas.mjs",
     "test:customer-worlds": "node test/e2e/customer-worlds.mjs",
     "test:design-gallery": "node test/e2e/design-gallery.mjs",
-    "test:menu-first-load": "node test/e2e/menu-first-load.mjs"
+    "test:menu-first-load": "node test/e2e/menu-first-load.mjs",
+    "test:studio-proposals": "node test/e2e/studio-proposals.mjs",
+    "test:preview-privacy": "node test/e2e/preview-privacy.mjs"
   },
   "repository": {
     "type": "git",

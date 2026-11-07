@@ -59,6 +59,8 @@ jobs:
           npm run test:menu-first-load -- http://127.0.0.1:8787 output/playwright/menu-first-load
           npm run test:customer-menu -- http://127.0.0.1:8787 output/playwright/next-menu
           npm run test:menu-merchandising -- http://127.0.0.1:8787 output/playwright/menu-owner-phase1
+          npm run test:preview-privacy -- output/playwright/preview-privacy
+          npm run test:studio-proposals -- http://127.0.0.1:8787 output/playwright/studio-proposals
           npm run test:studio-entry -- http://127.0.0.1:8787 output/playwright/studio-entry
           npm run test:studio-inline -- http://127.0.0.1:8787 output/playwright/studio-inline
           npm run test:studio-canvas -- http://127.0.0.1:8787 output/playwright/studio-canvas
