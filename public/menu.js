@@ -1,11 +1,12 @@
 import { icon } from './icons.js';
-import { discoverItems } from './menu-discovery.js';
+import { discoverItems, responsiveMedia, firstMenuImage } from './menu-discovery.js';
 import {applyMenuContent} from './tenant-pages.js';
 import {applyTenantTheme,bannerGallery,coverImage} from './tenant-theme.js';
 import { applyDesign, listenForPreview } from './design-engine.js';
-import { api, esc, lang, makeT, money, pick, setBrandColor, topbar, announce } from './common.js';
+import { api, esc, lang, makeT, money as formatMoney, pick, setBrandColor, topbar, announce } from './common.js';
 import { renderAddons, trackPurchase } from './addons-public.js';
 
+const money=amount=>data?.price_labels?.[lang]?.[amount] ?? formatMoney(amount);
 const a = (ar, en) => (lang === 'ar' ? ar : en);
 const t = makeT({
   ar: { search: 'ابحث عن صنف', soldout: 'نفد', kcal: '{n} سعرة', notFound: 'هذا المنيو غير متاح حاليًا. تأكد من الرابط وحاول مجددًا.', empty: 'لا توجد أصناف تطابق بحثك.', loyalty: 'بطاقة الولاء', clear: 'مسح' },
@@ -67,7 +68,7 @@ function itemCard(i, index = 0) {
       <p class="dish-meta"><span class="dish-price">${i.options?.length && i.options[0].required ? a('من ', 'From ') : ''}${esc(money(i.price))}</span>${i.compare_price > i.price ? `<s class="dish-was">${esc(money(i.compare_price))}</s><span class="dish-off">${a('خصم', 'Save')} ${Math.round((1 - i.price / i.compare_price) * 100)}٪</span>` : ''}${profile?.theme?.show_calories!==false && i.calories != null ? `<span class="dish-kcal">${esc(t('kcal', { n: i.calories }))}</span>` : ''}${i.caffeine_mg != null ? `<span class="dish-kcal">${a('كافيين', 'Caffeine')} ${i.caffeine_mg} ${a('ملغ', 'mg')}</span>` : ''}${i.sodium_mg != null ? `<span class="dish-kcal">${a('صوديوم', 'Sodium')} ${i.sodium_mg} ${a('ملغ', 'mg')}</span>` : ''}${i.available ? '' : `<span class="dish-out">${esc(t('soldout'))}</span>`}</p>
       ${i.allergens?.length ? `<p class="dish-allergens"><span class="visually-hidden">${a('مسببات الحساسية:', 'Allergens:')}</span>${i.allergens.map((k) => `<span class="allergen">${esc(allergenName(k))}</span>`).join('')}</p>` : ''}
     </div>
-    ${photo ? `<div class="dish-photo"><img src="${esc(i.image_url)}" alt="" loading="${index < 2 ? 'eager' : 'lazy'}" ${index === 0 ? 'fetchpriority="high"' : ''} ${mediaAttrs(i.gallery?.[0])} width="320" height="240">${canAdd ? addBtn(i, inCart) : ''}</div>` : canAdd ? `<div class="dish-photo no-photo">${addBtn(i, inCart)}</div>` : ''}
+    ${photo ? `<div class="dish-photo"><img src="${esc(i.image_url)}" alt="" loading="${index < 4 ? 'eager' : 'lazy'}" ${index === 0 ? 'fetchpriority="high"' : ''} ${mediaAttrs(i.gallery?.[0])} width="320" height="240">${canAdd ? addBtn(i, inCart) : ''}</div>` : canAdd ? `<div class="dish-photo no-photo">${addBtn(i, inCart)}</div>` : ''}
   </article>`;
 }
 const BADGE = {
@@ -82,8 +83,8 @@ const ALLERGEN = {
 };
 const allergenName = (k) => a(...(ALLERGEN[k] || [k, k]));
 function mediaAttrs(media) {
-  const variants = media?.variants?.filter(v => [320,640,960].includes(v.width));
-  return variants?.length ? `srcset="${variants.map(v => esc(v.url)+' '+v.width+'w').join(', ')}" sizes="(max-width: 600px) 45vw, 320px"` : '';
+  const {srcset,sizes}=responsiveMedia(media);
+  return srcset?`srcset="${esc(srcset)}" sizes="${sizes}"`:'';
 }
 // A cart line is "itemId" or "itemId|choiceA,choiceB" so the same dish with different options stays separate.
 const lineKey = (id, opts = []) => (opts.length ? id + '|' + [...opts].sort().join(',') : id);
@@ -107,8 +108,9 @@ function render(preserveInputs = false) {
   const restoreId = restoreKey && active.dataset[restoreKey];
   const items = discoverItems(data.items, data.categories, { ...filters, query: q });
   const cats = data.categories.filter((c) => items.some((i) => i.category_id === c.id));
+  let rendered=0;
   main.querySelector('#list').innerHTML = cats.length
-    ? cats.map((c) => `<section class="menu-section" id="c-${esc(c.id)}" aria-labelledby="h-${esc(c.id)}"><h2 id="h-${esc(c.id)}">${esc(pick(c, 'name'))}</h2><div class="dish-list">${items.filter((i) => i.category_id === c.id).map(i=>itemCard(i,items.indexOf(i))).join('')}</div></section>`).join('')
+    ? cats.map((c) => `<section class="menu-section" id="c-${esc(c.id)}" aria-labelledby="h-${esc(c.id)}"><h2 id="h-${esc(c.id)}">${esc(pick(c, 'name'))}</h2><div class="dish-list">${items.filter((i) => i.category_id === c.id).map(i=>itemCard(i,rendered++)).join('')}</div></section>`).join('')
     : `<p class="empty">${esc(t('empty'))}</p>`;
   main.querySelectorAll('[data-detail]').forEach(b => b.onclick = () => openOptions(data.items.find(i => i.id === b.dataset.detail), b));
   main.querySelector('#result-count') && (main.querySelector('#result-count').textContent = a(`${items.length} صنف`, `${items.length} items`));
@@ -372,28 +374,37 @@ function watchSections() {
 
 let merchantOrg;
 try {
-  data = await api('/api/public/menu/' + slug);
+  let initial;
+  try {
+    const embedded=document.getElementById('menu-bootstrap')?.textContent;
+    if(embedded && embedded.length<=1024*1024){
+      const parsed=JSON.parse(embedded);
+      if(parsed?.branch?.slug===slug && Array.isArray(parsed.items) && Array.isArray(parsed.categories) && parsed.profile_data?.profile && Array.isArray(parsed.profile_data.branches))initial=parsed;
+    }
+  } catch {} // Old, malformed or mismatched HTML recovers through the public API.
+  data = initial || await api('/api/public/menu/' + slug);
   if (data.ordering) ordering = data.ordering;
   setBrandColor(data.branch.brand_color);
   const name = lang === 'ar' ? data.branch.org_name_ar : data.branch.org_name_en;
   try {
-    const profileRequest=api('/api/public/profile/' + data.branch.org_slug);
-    // Prepare known visible media and default fonts while the profile is in flight,
-    // instead of discovering them only after constructing all product cards.
-    if(data.design?.layout!=='text'&&data.design?.show?.images!==false){
-      const first=data.items.find(item=>item.image_url&&item.available);
-      if(first){const preload=document.createElement('link');preload.rel='preload';preload.as='image';preload.href=first.image_url;preload.fetchPriority='high';const variants=first.gallery?.[0]?.variants;if(variants?.length){preload.imageSrcset=variants.map(v=>v.url+' '+v.width+'w').join(', ');preload.imageSizes='(max-width: 600px) 45vw, 320px';}document.head.append(preload);}
-    }
-    if(!data.design||data.design.font_ar==='tajawal')document.fonts.load('16px MenuTajawal').catch(()=>{});
-    if(!data.design||data.design.font_en==='jakarta')document.fonts.load('16px MenuJakarta').catch(()=>{});
-    money(0);
-    const p = await profileRequest;
+    const p = data.profile_data || await api('/api/public/profile/' + data.branch.org_slug);
     profile = p.profile;
     merchantOrg=p.org;
     applyTenantTheme(profile);
     applyDesign(data.design);
     settings = p.branches.find((b) => b.slug === slug)?.settings || settings;
     loyalty = p.loyalty;
+    // Share the rendered category order and media descriptor; do not prioritize
+    // a hidden photo or a different item's responsive image.
+    const first=firstMenuImage({...data,profile_data:p});
+    if(first && !document.querySelector('link[data-menu-first-image]')){
+      const preload=document.createElement('link');preload.dataset.menuFirstImage='';preload.rel='preload';preload.as='image';preload.href=first.src;preload.fetchPriority='high';
+      if(first.srcset){preload.imageSrcset=first.srcset;preload.imageSizes=first.sizes;}
+      document.head.append(preload);
+    }
+    if(!data.design||data.design.font_ar==='tajawal')document.fonts.load('16px MenuTajawal').catch(()=>{});
+    if(!data.design||data.design.font_en==='jakarta')document.fonts.load('16px MenuJakarta').catch(()=>{});
+    money(0);
   } catch {}
   topbar(document.getElementById('top'), t, { subtitle: name });
   document.title = `${name} · ${t('brand')}`;
@@ -494,7 +505,8 @@ function installMenuNameFitting() {
 function optimizeMenuFonts(){
  const root=document.documentElement;
  for(const prop of ['--font','--tenant-heading-font']){
- const family=getComputedStyle(root).getPropertyValue(prop);
+ // Recipes write both families inline. Read those without forcing a style/layout flush.
+ const family=root.style.getPropertyValue(prop)||getComputedStyle(root).getPropertyValue(prop);
  if(family)root.style.setProperty(prop,family.replace(/Plus Jakarta Sans/g,'MenuJakarta').replace(/\bTajawal\b/g,'MenuTajawal'));
  }
 }

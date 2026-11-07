@@ -1,5 +1,7 @@
 import { discoveryFields, discoverMenu, recommendations, registerMenuSchedules } from './menu-discovery.js';
 import { itemExtras, itemView } from './menu-extras.js';
+import { publicPriceLabels } from '../public/menu-discovery.js';
+import { menuPage } from './menu-page.js';
 import { registerDemo, expireDemo } from './demo.js';
 import { sampleMenuStatements, sampleItemCount } from './sample-menu.js';
 import { Hono } from 'hono';
@@ -7,7 +9,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { body, requireRole, audit, newUser, isSecure, assertPlanQuota, subscriptionFor, planFor, rateLimit } from './context.js';
 import { registerAccounts, expireSubscriptions } from './accounts.js';
 import { consumeMfa } from './mfa.js';
-import { registerFeatures } from './features.js';
+import { registerFeatures, publicMenuContext } from './features.js';
 import { registerAddons, publicAddons } from './addons.js';
 import { registerTemplates } from './templates.js';
 import { registerDomains, customHostRedirect } from './domains.js';
@@ -733,19 +735,28 @@ app.get('/api/public/menu/:branchSlug/recommendations/:itemId', async (c) => {
   return c.json(await recommendations(c.env,b.org_id,b.id,await orgMenu(c.env,b.org_id,{branchId:b.id}),c.req.param('itemId')));
 });
 
-app.get('/api/public/menu/:branchSlug', async (c) => {
-  const b = await c.env.DB.prepare(
+async function publicMenu(env, branchSlug) {
+  const b = await env.DB.prepare(
     `SELECT b.id, b.slug, b.name_ar, b.name_en, o.id AS org_id, o.slug AS org_slug, o.name_ar AS org_name_ar, o.name_en AS org_name_en, o.brand_color, o.logo_url
        FROM branches b JOIN orgs o ON o.id = b.org_id WHERE b.slug = ? AND b.active = 1 AND o.active = 1`,
   )
-    .bind(c.req.param('branchSlug'))
+    .bind(branchSlug)
     .first();
   if (!b) throw notFound();
-  const menu = await orgMenu(c.env, b.org_id, { branchId: b.id });
+  const [menu, { results: siblings }, addons, design, ordering, waitlist, profile_data] = await Promise.all([
+    orgMenu(env, b.org_id, { branchId: b.id }),
+    env.DB.prepare('SELECT slug, name_ar, name_en FROM branches WHERE org_id = ? AND active = 1 ORDER BY created_at').bind(b.org_id).all(),
+    publicAddons(env, b.org_id),
+    activeDesign(env, b.org_id),
+    getOrdering(env, b.id).then(publicOrdering),
+    waitSettings(env, b.id).then(settings => settings.active),
+    publicMenuContext(env, b),
+  ]);
   const { org_id, ...branchInfo } = b;
-  const { results: siblings } = await c.env.DB.prepare('SELECT slug, name_ar, name_en FROM branches WHERE org_id = ? AND active = 1 ORDER BY created_at').bind(org_id).all();
-  return c.json({ branch: branchInfo, ...menu, addons: await publicAddons(c.env, org_id), design: await activeDesign(c.env, org_id), ordering: publicOrdering(await getOrdering(c.env, b.id)), waitlist: (await waitSettings(c.env, b.id)).active, branches: siblings });
-});
+  return { branch: branchInfo, ...menu, addons, design, ordering, waitlist, branches: siblings, profile_data, price_labels: publicPriceLabels(menu.items) };
+}
+
+app.get('/api/public/menu/:branchSlug', async (c) => c.json(await publicMenu(c.env, c.req.param('branchSlug'))));
 
 async function ticketByToken(env, token) {
   const t = await env.DB.prepare(
@@ -937,6 +948,10 @@ app.get('*', async (c) => {
   if (path.startsWith('/api/')) throw notFound();
   const own = await customHostRedirect(c);
   if (own) return own;
+  const menuMatch = /^\/m\/([^/]+)\/?$/.exec(path);
+  if (menuMatch) {
+    return menuPage(c.env, c.req.raw, decodeURIComponent(menuMatch[1]), publicMenu);
+  }
   for (const [prefix, page] of Object.entries(PAGES)) {
     if (path.startsWith(prefix) && path.length > prefix.length) {
       return c.env.ASSETS.fetch(new Request(new URL(page, c.req.url), c.req.raw));

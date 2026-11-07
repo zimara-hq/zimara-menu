@@ -1,0 +1,90 @@
+{
+  "baselineSha": "1b2f71045ae374df3a1e1e5a7b08d2d6968f4c82",
+  "fixture": "same isolated cafe room/published recipe in both local databases",
+  "dark": "actual merchant dark color recipe, not a device preference override",
+  "reducedMotion": true,
+  "viewport": "unmodified live layout; visible images decoded; fonts/layout settled across animation frames",
+  "fullPage": "content-visibility forced visible for complete offscreen rasterization, both before and after; no source modification",
+  "results": [
+    {
+      "phase": "before",
+      "width": 390,
+      "theme": "light",
+      "actualWidth": 390,
+      "items": 16,
+      "overflow": false,
+      "file": "before-390-light.png",
+      "viewportFile": "before-390-light-viewport.png"
+    },
+    {
+      "phase": "before",
+      "width": 1440,
+      "theme": "light",
+      "actualWidth": 1440,
+      "items": 16,
+      "overflow": false,
+      "file": "before-1440-light.png",
+      "viewportFile": "before-1440-light-viewport.png"
+    },
+    {
+      "phase": "before",
+      "width": 390,
+      "theme": "dark",
+      "actualWidth": 390,
+      "items": 16,
+      "overflow": false,
+      "file": "before-390-dark.png",
+      "viewportFile": "before-390-dark-viewport.png"
+    },
+    {
+      "phase": "before",
+      "width": 1440,
+      "theme": "dark",
+      "actualWidth": 1440,
+      "items": 16,
+      "overflow": false,
+      "file": "before-1440-dark.png",
+      "viewportFile": "before-1440-dark-viewport.png"
+    },
+    {
+      "phase": "after",
+      "width": 390,
+      "theme": "light",
+      "actualWidth": 390,
+      "items": 16,
+      "overflow": false,
+      "file": "after-390-light.png",
+      "viewportFile": "after-390-light-viewport.png"
+    },
+    {
+      "phase": "after",
+      "width": 1440,
+      "theme": "light",
+      "actualWidth": 1440,
+      "items": 16,
+      "overflow": false,
+      "file": "after-1440-light.png",
+      "viewportFile": "after-1440-light-viewport.png"
+    },
+    {
+      "phase": "after",
+      "width": 390,
+      "theme": "dark",
+      "actualWidth": 390,
+      "items": 16,
+      "overflow": false,
+      "file": "after-390-dark.png",
+      "viewportFile": "after-390-dark-viewport.png"
+    },
+    {
+      "phase": "after",
+      "width": 1440,
+      "theme": "dark",
+      "actualWidth": 1440,
+      "items": 16,
+      "overflow": false,
+      "file": "after-1440-dark.png",
+      "viewportFile": "after-1440-dark-viewport.png"
+    }
+  ]
+}
