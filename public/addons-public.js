@@ -96,7 +96,7 @@ function consent(orgSlug, pixels) {
   bar.className = 'consent-bar';
   bar.setAttribute('role', 'dialog');
   bar.setAttribute('aria-label', a('أدوات القياس', 'Measurement tools'));
-  bar.innerHTML = `<p>${a('تستخدم هذه المنشأة أدوات قياس إعلانية لتحسين عروضها. توافق؟', 'This business uses ad measurement tools to improve its offers. Do you agree?')}</p><div><button type="button" class="btn sm" data-c="yes">${a('موافق', 'Agree')}</button><button type="button" class="btn ghost sm" data-c="no">${a('لا، شكرًا', 'No thanks')}</button></div>`;
+  bar.innerHTML = `<p>${a('تستخدم هذه المنشأة أدوات قياس إعلانية لتحسين عروضها. توافق؟', 'This business uses ad measurement tools to improve its offers. Do you agree?')} <a href="/legal?section=privacy" target="_blank" rel="noopener">${a('الخصوصية', 'Privacy')}</a></p><div><button type="button" class="btn sm" data-c="yes">${a('موافق', 'Agree')}</button><button type="button" class="btn ghost sm" data-c="no">${a('لا، شكرًا', 'No thanks')}</button></div>`;
   bar.addEventListener('click', (e) => {
     const c = e.target.closest('[data-c]')?.dataset.c;
     if (!c) return;

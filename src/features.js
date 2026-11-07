@@ -5,6 +5,7 @@ import { itemView, priceWithOptions } from './menu-extras.js';
 import { DEFAULT_THEME, validateTheme } from './identity.js';
 import { publicAddons, notifyTelegram, orderMessage, orderButtons, later } from './addons.js';
 import { loadUser, verifyPassword } from './auth.js';
+import { DELETION_GRACE_MS } from './privacy.js';
 import { orderExtras, replayOrderDetails } from './ordering.js';
 import { acceptOrder, rejectOrder } from './orders.js';
 import {
@@ -541,7 +542,7 @@ export function registerFeatures(app) {
   });
   app.get('/api/owner/data/deletion-request', privacyOwner, async (c) => {
     const request = await c.env.DB.prepare(
-      'SELECT id,status,created_at,updated_at FROM data_deletion_requests WHERE org_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1',
+      'SELECT id,status,created_at,updated_at,scheduled_for,completed_at FROM data_deletion_requests WHERE org_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1',
     )
       .bind(c.get('user').org_id)
       .first();
@@ -563,19 +564,19 @@ export function registerFeatures(app) {
       throw new HttpError(401, 'wrong_password');
     const stamp = now();
     const result = await c.env.DB.prepare(
-      "INSERT INTO data_deletion_requests(id,org_id,requested_by,status,created_at,updated_at) VALUES(?,?,?,'pending',?,?) ON CONFLICT DO NOTHING",
+      "INSERT INTO data_deletion_requests(id,org_id,requested_by,status,created_at,updated_at,scheduled_for) VALUES(?,?,?,'pending',?,?,?) ON CONFLICT DO NOTHING",
     )
-      .bind(id(), u.org_id, u.id, stamp, stamp)
+      .bind(id(), u.org_id, u.id, stamp, stamp, stamp + DELETION_GRACE_MS)
       .run();
     const request = await c.env.DB.prepare(
-      "SELECT id,status,created_at,updated_at FROM data_deletion_requests WHERE org_id=? AND status='pending'",
+      "SELECT id,status,created_at,updated_at,scheduled_for FROM data_deletion_requests WHERE org_id=? AND status='pending'",
     )
       .bind(u.org_id)
       .first();
     if (result.meta.changes)
       await audit(c.env, u, 'data.deletion.request', { id: request.id });
     return c.json(
-      { request, message: 'deletion_request_pending_review', deleted: false },
+      { request, message: 'deletion_scheduled', deleted: false, scheduled_for: request.scheduled_for },
       result.meta.changes ? 201 : 200,
     );
   });

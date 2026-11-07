@@ -6,11 +6,17 @@ import { sendVerification } from './mail.js';
 import { billingConfigured, isDemoBillingOrg } from './billing.js';
 import { simpleFatooraConfigured } from './providers/simple-fatoora.js';
 
+// Bump when the terms or privacy notice change materially.
+export const TERMS_VERSION = '2026-11-07';
+
 export function registerAccounts(app) {
   app.post('/api/register', async (c) => {
     await rateLimit(c, 'signup', { limit: 5, window: 3600000 });
     if (c.env.SIGNUP_ENABLED === 'false') throw new HttpError(503, 'signup_unavailable');
     const b = await body(c);
+    // E-commerce law and PDPL: the subscriber must accept the terms and privacy notice,
+    // and we keep which version they accepted and when.
+    if (b.accept_terms !== true) throw bad('terms_acceptance_required');
     const nameAr = str(b.name_ar, 'name_ar', { max: 80 });
     const nameEn = str(b.name_en || nameAr, 'name_en', { max: 80 });
     const sector = b.sector || 'cafe';
@@ -25,7 +31,7 @@ export function registerAccounts(app) {
     try {
       await c.env.DB.batch([
         c.env.DB.prepare('INSERT INTO orgs (id,slug,name_ar,name_en,brand_color,created_at) VALUES (?,?,?,?,?,?)').bind(orgId,slug,nameAr,nameEn,'#23003f',t),
-        c.env.DB.prepare("INSERT INTO users (id,email,name,role,org_id,password_hash,created_at) VALUES (?,?,?,'owner',?,?,?)").bind(user.id,user.email,user.name,orgId,user.password_hash,t),
+        c.env.DB.prepare("INSERT INTO users (id,email,name,role,org_id,password_hash,created_at,terms_version,terms_accepted_at) VALUES (?,?,?,'owner',?,?,?,?,?)").bind(user.id,user.email,user.name,orgId,user.password_hash,t,TERMS_VERSION,t),
         c.env.DB.prepare('INSERT INTO branches (id,org_id,slug,name_ar,name_en,created_at) VALUES (?,?,?,?,?,?)').bind(branchId,orgId,branchSlug,b.branch_name ? str(b.branch_name,'branch_name',{max:80}) : 'الفرع الرئيسي','Main branch',t),
         c.env.DB.prepare('INSERT INTO loyalty_programs (org_id) VALUES (?)').bind(orgId),
         c.env.DB.prepare('INSERT INTO org_profiles (org_id,sector,updated_at) VALUES (?,?,?)').bind(orgId,sector,t),

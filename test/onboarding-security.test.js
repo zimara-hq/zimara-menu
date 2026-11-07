@@ -4,7 +4,7 @@ import { client, makeEnv, seedAdmin } from './helpers.js';
 import { totp } from '../src/mfa.js';
 import { hashPassword } from '../src/auth.js';
 
-const signup = (n = 'demo-cafe') => ({ name_ar:'مقهى تجريبي',name_en:'Demo Cafe',slug:n,email:n+'@example.test',password:'test-password-123',sector:'cafe' });
+const signup = (n = 'demo-cafe') => ({ name_ar:'مقهى تجريبي',name_en:'Demo Cafe',slug:n,email:n+'@example.test',password:'test-password-123',sector:'cafe',accept_terms:true });
 
 test('self signup is transactional, signs in an owner and starts a real 14-day trial',async()=>{
  const env=makeEnv(),c=client(env),r=await c.post('/api/register',signup());

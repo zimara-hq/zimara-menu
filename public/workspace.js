@@ -14,6 +14,7 @@ export async function overviewView(el,me){
   [Boolean(setup.design_published),a('انشر تصميمك','Publish your design'),a('اختر من 100 تصميم جاهز وخصّصه.','Pick one of 100 designs and tailor it.'),'design'],
   [items.length>0,a('جهّز المنيو','Build your menu'),a(`${items.length} صنف في ${categories.length} قسم`,`${items.length} items across ${categories.length} categories`),'menu'],
   [setup.items>0&&setup.photos>=Math.ceil(setup.items/2),a('أضف صور الأصناف','Add item photos'),a(`${setup.photos||0} من ${setup.items||0} صنف بصورة. الصور ترفع الطلب.`,`${setup.photos||0} of ${setup.items||0} items have a photo. Photos sell.`),'menu'],
+  [setup.items>0&&!setup.missing_calories,a('السعرات الحرارية لكل صنف','Calories for every item'),a(`إلزامية من هيئة الغذاء والدواء. ${setup.missing_calories||0} صنف بدون سعرات.`,`Required by SFDA. ${setup.missing_calories||0} items have no calories.`),'menu'],
   [Boolean(setup.hours&&setup.location),a('أوقات العمل والموقع','Hours and location'),a('عشان يظهر «مفتوح الآن» والخريطة.','So guests see “Open now” and the map.'),'settings'],
   [Boolean(profile.description_ar||profile.description_en),a('عرّف عملاءك عليك','Tell your story'),a('الوصف، البنرات وروابط التواصل.','Description, banners and social links.'),'profile'],
   [branches.some(b=>b.account_email),a('جهّز فريق الكاشير','Set up your cashier'),a('حساب مستقل لكل فرع.','A separate account for each branch.'),'branches'],

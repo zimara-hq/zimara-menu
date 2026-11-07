@@ -144,4 +144,16 @@ export function registerLoyalty(app) {
     }
     return c.json({ ok: true });
   });
+
+  // Opt-out from offer messages. Without an endpoint every device of the card stops.
+  app.post('/api/cards/:token/unsubscribe', async (c) => {
+    const card = await c.env.DB.prepare('SELECT id FROM loyalty_cards WHERE token=? AND revoked_at IS NULL').bind(c.req.param('token')).first();
+    if (!card) throw notFound();
+    const b = await body(c);
+    if (b.endpoint) {
+      if (!validEndpoint(b.endpoint)) throw bad('invalid_endpoint');
+      await c.env.DB.prepare('DELETE FROM card_push WHERE card_id=? AND endpoint=?').bind(card.id, b.endpoint).run();
+    } else await c.env.DB.prepare('DELETE FROM card_push WHERE card_id=?').bind(card.id).run();
+    return c.json({ ok: true });
+  });
 }

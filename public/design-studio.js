@@ -29,7 +29,8 @@ const L = {
   'button.animation': { none: ['بدون', 'None'], pulse: ['نبض', 'Pulse'], glow: ['توهج', 'Glow'], bounce: ['قفز', 'Bounce'], shine: ['لمعة', 'Shine'] },
 };
 const COLORS = [['primary', 'اللون الأساسي (الأزرار والسعر)', 'Main colour (buttons, prices)'], ['accent', 'اللون الثاني (التدرج واللمسات)', 'Second colour (gradients, touches)'], ['bg', 'خلفية الصفحة', 'Page background'], ['surface', 'خلفية البطاقات', 'Card background'], ['text', 'لون النص', 'Text colour']];
-const SHOW = [['images', 'صور الأصناف', 'Item photos'], ['calories', 'السعرات', 'Calories'], ['descriptions', 'الأوصاف', 'Descriptions'], ['allergens', 'مسببات الحساسية', 'Allergens']];
+// Calories and allergens are always shown (SFDA menu labelling), so they are not toggles.
+const SHOW = [['images', 'صور الأصناف', 'Item photos'], ['descriptions', 'الأوصاف', 'Descriptions']];
 const CAT = { modern: ['حديث', 'Modern'], classic: ['كلاسيكي', 'Classic'], decorative: ['زخرفي', 'Decorative'] };
 const lbl = (pair) => a(pair[0], pair[1]);
 const get = (r, path) => path.split('.').reduce((o, k) => o?.[k], r);

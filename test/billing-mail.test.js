@@ -69,6 +69,9 @@ test('amount tampering at the provider is refused and VAT is added only when con
   const p = fakeProviders(); const env = makeEnv({ ...p.env, VAT_RATE_BPS: '1500' }); const c = client(env);
   await c.post('/api/register', signup());
   await completeBillingProfile(c);
+  // VAT is never charged while ZIMARA has no VAT registration number on file.
+  assert.equal((await c.post('/api/owner/billing/checkout', { plan: 'pro', cycle: 'monthly' })).json.error, 'seller_vat_registration_missing');
+  await env.DB.prepare("INSERT INTO platform_settings (key, value, updated_at) VALUES ('vat_number', '300000000000003', 0)").run();
   const co = await c.post('/api/owner/billing/checkout', { plan: 'pro', cycle: 'monthly' });
   assert.equal(co.json.vat, 3735);
   assert.equal(co.json.total, 28635);
