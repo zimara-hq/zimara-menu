@@ -1,0 +1,543 @@
+{
+  "capturedAt": "2026-11-07T21:55:44.207Z",
+  "baseSha": "1e59d69bdfc7c9059f8f7df30000ddf456cc7ff9",
+  "fixture": "same canonical published synthetic cafe recipe and consistent SQLite snapshot; forced Ramadan shows true calculated dates/times; existing credited local merchant demo photos",
+  "operatorThemes": "actual localStorage theme selection; merchant retains its own recipe colors",
+  "viewportCaptures": true,
+  "reducedMotion": true,
+  "cssOverrides": false,
+  "settledFontsAndVisibleImages": true,
+  "records": [
+    {
+      "phase": "before",
+      "view": "profile",
+      "width": 390,
+      "theme": "light",
+      "actualWidth": 390,
+      "overflow": false
+    },
+    {
+      "phase": "before",
+      "view": "menu",
+      "width": 390,
+      "theme": "light",
+      "actualWidth": 390,
+      "overflow": false
+    },
+    {
+      "phase": "before",
+      "view": "profile",
+      "width": 1440,
+      "theme": "light",
+      "actualWidth": 1440,
+      "overflow": false
+    },
+    {
+      "phase": "before",
+      "view": "menu",
+      "width": 1440,
+      "theme": "light",
+      "actualWidth": 1440,
+      "overflow": false
+    },
+    {
+      "phase": "before",
+      "view": "profile",
+      "width": 390,
+      "theme": "dark",
+      "actualWidth": 390,
+      "overflow": false
+    },
+    {
+      "phase": "before",
+      "view": "menu",
+      "width": 390,
+      "theme": "dark",
+      "actualWidth": 390,
+      "overflow": false
+    },
+    {
+      "phase": "before",
+      "view": "profile",
+      "width": 1440,
+      "theme": "dark",
+      "actualWidth": 1440,
+      "overflow": false
+    },
+    {
+      "phase": "before",
+      "view": "menu",
+      "width": 1440,
+      "theme": "dark",
+      "actualWidth": 1440,
+      "overflow": false
+    },
+    {
+      "phase": "after",
+      "view": "profile",
+      "width": 390,
+      "theme": "light",
+      "actualWidth": 390,
+      "overflow": false
+    },
+    {
+      "phase": "after",
+      "view": "menu",
+      "width": 390,
+      "theme": "light",
+      "actualWidth": 390,
+      "overflow": false
+    },
+    {
+      "view": "owner",
+      "width": 390,
+      "theme": "light",
+      "actualWidth": 390,
+      "overflow": false
+    },
+    {
+      "phase": "after",
+      "view": "profile",
+      "width": 1440,
+      "theme": "light",
+      "actualWidth": 1440,
+      "overflow": false
+    },
+    {
+      "phase": "after",
+      "view": "menu",
+      "width": 1440,
+      "theme": "light",
+      "actualWidth": 1440,
+      "overflow": false
+    },
+    {
+      "view": "owner",
+      "width": 1440,
+      "theme": "light",
+      "actualWidth": 1440,
+      "overflow": false
+    },
+    {
+      "phase": "after",
+      "view": "profile",
+      "width": 390,
+      "theme": "dark",
+      "actualWidth": 390,
+      "overflow": false
+    },
+    {
+      "phase": "after",
+      "view": "menu",
+      "width": 390,
+      "theme": "dark",
+      "actualWidth": 390,
+      "overflow": false
+    },
+    {
+      "view": "owner",
+      "width": 390,
+      "theme": "dark",
+      "actualWidth": 390,
+      "overflow": false
+    },
+    {
+      "phase": "after",
+      "view": "profile",
+      "width": 1440,
+      "theme": "dark",
+      "actualWidth": 1440,
+      "overflow": false
+    },
+    {
+      "phase": "after",
+      "view": "menu",
+      "width": 1440,
+      "theme": "dark",
+      "actualWidth": 1440,
+      "overflow": false
+    },
+    {
+      "view": "owner",
+      "width": 1440,
+      "theme": "dark",
+      "actualWidth": 1440,
+      "overflow": false
+    }
+  ],
+  "supplementalScroll": {
+    "capturedAt": "2026-11-07T21:59:26.659Z",
+    "method": "8 actual390x844 viewport captures scrolled to real featured/gallery or second menu section; visible images decoded/fonts settled. Invalid optional full-page captures removed because content-visibility/lazy rendering omitted offscreen content. No CSS overrides/stitching.",
+    "records": [
+      {
+        "phase": "before",
+        "view": "profile",
+        "theme": "light",
+        "file": "scroll-before-profile-390-light.png",
+        "width": 390,
+        "height": 844,
+        "scrollY": 460,
+        "scrollHeight": 3113,
+        "visibleImages": [
+          {
+            "loaded": true,
+            "src": "/editorial/counter.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/espresso-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/iced-latte-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/butter-croissant-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/san-sebastian-cheesecake-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/americano-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/cold-brew-640.webp"
+          }
+        ]
+      },
+      {
+        "phase": "before",
+        "view": "menu",
+        "theme": "light",
+        "file": "scroll-before-menu-390-light.png",
+        "width": 390,
+        "height": 844,
+        "scrollY": 710,
+        "scrollHeight": 2964,
+        "visibleImages": [
+          {
+            "loaded": true,
+            "src": "/menu-art/latte-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/cappuccino-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/flat-white-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/saudi-coffee-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/iced-latte-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/cold-brew-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/spanish-latte-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/lemon-mint-640.webp"
+          }
+        ],
+        "recaptureAt": "2026-11-07T22:06:03.285Z",
+        "compositorSettleMs": 750
+      },
+      {
+        "phase": "before",
+        "view": "profile",
+        "theme": "dark",
+        "file": "scroll-before-profile-390-dark.png",
+        "width": 390,
+        "height": 844,
+        "scrollY": 460,
+        "scrollHeight": 3113,
+        "visibleImages": [
+          {
+            "loaded": true,
+            "src": "/editorial/counter.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/espresso-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/iced-latte-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/butter-croissant-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/san-sebastian-cheesecake-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/americano-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/cold-brew-640.webp"
+          }
+        ]
+      },
+      {
+        "phase": "before",
+        "view": "menu",
+        "theme": "dark",
+        "file": "scroll-before-menu-390-dark.png",
+        "width": 390,
+        "height": 844,
+        "scrollY": 710,
+        "scrollHeight": 2964,
+        "visibleImages": [
+          {
+            "loaded": true,
+            "src": "/menu-art/latte-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/cappuccino-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/flat-white-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/saudi-coffee-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/iced-latte-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/cold-brew-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/spanish-latte-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/lemon-mint-640.webp"
+          }
+        ]
+      },
+      {
+        "phase": "after",
+        "view": "profile",
+        "theme": "light",
+        "file": "scroll-after-profile-390-light.png",
+        "width": 390,
+        "height": 844,
+        "scrollY": 1017,
+        "scrollHeight": 3529,
+        "visibleImages": [
+          {
+            "loaded": true,
+            "src": "/editorial/counter.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/espresso-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/iced-latte-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/butter-croissant-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/san-sebastian-cheesecake-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/americano-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/cold-brew-640.webp"
+          }
+        ]
+      },
+      {
+        "phase": "after",
+        "view": "menu",
+        "theme": "light",
+        "file": "scroll-after-menu-390-light.png",
+        "width": 390,
+        "height": 844,
+        "scrollY": 629,
+        "scrollHeight": 2465,
+        "visibleImages": [
+          {
+            "loaded": true,
+            "src": "/menu-art/iced-latte-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/cold-brew-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/spanish-latte-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/lemon-mint-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/butter-croissant-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/zaatar-cheese-croissant-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/chocolate-cookie-640.webp"
+          }
+        ]
+      },
+      {
+        "phase": "after",
+        "view": "profile",
+        "theme": "dark",
+        "file": "scroll-after-profile-390-dark.png",
+        "width": 390,
+        "height": 844,
+        "scrollY": 1017,
+        "scrollHeight": 3529,
+        "visibleImages": [
+          {
+            "loaded": true,
+            "src": "/editorial/counter.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/espresso-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/iced-latte-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/butter-croissant-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/san-sebastian-cheesecake-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/americano-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/cold-brew-640.webp"
+          }
+        ]
+      },
+      {
+        "phase": "after",
+        "view": "menu",
+        "theme": "dark",
+        "file": "scroll-after-menu-390-dark.png",
+        "width": 390,
+        "height": 844,
+        "scrollY": 629,
+        "scrollHeight": 2465,
+        "visibleImages": [
+          {
+            "loaded": true,
+            "src": "/menu-art/iced-latte-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/cold-brew-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/spanish-latte-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/lemon-mint-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/butter-croissant-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/zaatar-cheese-croissant-640.webp"
+          },
+          {
+            "loaded": true,
+            "src": "/menu-art/chocolate-cookie-640.webp"
+          }
+        ]
+      }
+    ]
+  },
+  "finalMenuTouchRecapture": {
+    "capturedAt": "2026-11-07T22:06:57.934Z",
+    "rows": [
+      {
+        "width": 390,
+        "theme": "light",
+        "touchHeight": 44
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "touchHeight": 44
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "touchHeight": 44
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "touchHeight": 44
+      }
+    ]
+  },
+  "sourceSha256": {
+    "seasonal.css": "4f701355c6321647f7248277ae60bc8d1714df3a84aff8917a20edb68d4f3a3f",
+    "seasonal.js": "f926826fcb3e08d0b8bbed33dac42af7548414fca4b071a9da0f05faa492c42c",
+    "seasonal-client.js": "53ee265f1e444b6855ef506fdc1289ad9afede67c907561226beb14c5509009b",
+    "studio-seasons.js": "8044fc25f07474485ac57b01f674406a21aaeeacc7503890232437cc6122e717",
+    "studio-seasons.css": "7af4e4c4e0f5d77dac88beb15824df8bbf4bb666b2095d9cb00850555493743c",
+    "hq-seasons.js": "92bc43265c0fd98ef10475e98b95c239f82cda9b7a274e52e1d7161ac03c002a",
+    "menu-entry.js": "2a00552080b9d7fdecd99cd9cb792690afd1f1eeb5f5bb39965a59a2fbb60650",
+    "menu-entry.css": "6defde5d7793c30b89b1954399cdd3a93f6a1dddd07a9e05b240fefb600c9c13"
+  },
+  "hqMockedUi": {
+    "file": "hq-mocked-390.png",
+    "scope": "Isolated HQ UI with explicit mocked responses; create/edit/availability44px contract only. Actualserverauthorization/MFA/storage covered in node tests."
+  }
+}

@@ -1,3 +1,4 @@
+import { publicSeason } from './seasons.js';
 import { discoverMenu, categoryAvailable } from './menu-discovery.js';
 import { activeDesign } from './design.js';
 import { publish } from './realtime.js';
@@ -514,12 +515,14 @@ export function registerFeatures(app) {
     )
       .bind(orgId)
       .first();
+    const seasonSettings=await c.env.DB.prepare('SELECT config_json,revision,updated_at FROM org_seasons WHERE org_id=?').bind(orgId).first();
     const exportData = {
       schema_version: 1,
       exported_at: now(),
       organization,
       profile,
       branch_settings: settings,
+      season_settings: seasonSettings?{config:JSON.parse(seasonSettings.config_json),revision:seasonSettings.revision,updated_at:seasonSettings.updated_at}:null,
       subscription,
       loyalty_program: program,
       data,
@@ -729,6 +732,7 @@ export function registerFeatures(app) {
       loyalty: program || null,
       addons: await publicAddons(c.env, org.id),
       design: await activeDesign(c.env, org.id),
+      season: await publicSeason(c.env, org.id, branches[0]?.id||null),
       branches: branches.map((b) => ({
         ...branchPublic(b),
         settings:

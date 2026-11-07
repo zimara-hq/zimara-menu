@@ -1,3 +1,4 @@
+import{seasonLayer}from'./seasonal-client.js';
 import { icon } from './icons.js';
 import { discoverItems, responsiveMedia, firstMenuImage } from './menu-discovery.js';
 import {applyMenuContent} from './tenant-pages.js';
@@ -25,6 +26,7 @@ const ICON = {
 
 const slug = decodeURIComponent(location.pathname.split('/')[2] || '');
 const main = document.getElementById('main');
+const seasons=seasonLayer(main,'menu');
 let loyalty = null, data, profile = null, q = '', settings = { orders_enabled: false }, cart = new Map(), orderToken = null, orderTimer = null, orderKey = crypto.randomUUID(), orderNote = '', quoteNeedsReview = false;
 // Checkout choices survive re-renders; a table number comes from the table's QR (?table=7).
 const checkout = { type: null, table: '', name: '', phone: '', address: '', car: '', coupon: '', discount: 0, couponFor: 0 };
@@ -124,6 +126,7 @@ function render(preserveInputs = false) {
   }));
   main.querySelector('#clear-q').hidden = !q;
   renderCart(preserveInputs);
+  if(data)seasons.set(data.season);
 }
 
 function addLine(key) {
@@ -514,10 +517,10 @@ function optimizeMenuFonts(){
 async function refreshAvailability(){
  if(document.hidden || !navigator.onLine || !data) return;
  try {const fresh=await api('/api/public/menu/'+slug);
- const changed=JSON.stringify([fresh.items,fresh.categories,fresh.ordering])!==JSON.stringify([data.items,data.categories,data.ordering]);
+ const changed=JSON.stringify([fresh.items,fresh.categories,fresh.ordering,fresh.season])!==JSON.stringify([data.items,data.categories,data.ordering,data.season]);
  if(!changed)return;
  const previousQuote = cartQuote();
- data.items=fresh.items;data.categories=fresh.categories;data.discovery=fresh.discovery;data.ordering=fresh.ordering;
+ data.season=fresh.season;data.items=fresh.items;data.categories=fresh.categories;data.discovery=fresh.discovery;data.ordering=fresh.ordering;
  if(fresh.ordering) ordering=fresh.ordering;
  if(cart.size && previousQuote !== cartQuote()) quoteNeedsReview = true;
  const unavailable=[...cart.keys()].some(k=>!data.items.find(i=>i.id===splitKey(k).id)?.available);

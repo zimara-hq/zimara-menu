@@ -1,0 +1,36 @@
+{
+  "capturedAt": "2026-11-07T21:57:13.396Z",
+  "fixture": "six actual manual activations in the isolated canonical demo; original config restored; no style overrides",
+  "records": [
+    {
+      "id": "ramadan",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "id": "eid-fitr",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "id": "eid-adha",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "id": "national",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "id": "founding",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "id": "winter",
+      "width": 1440,
+      "overflow": false
+    }
+  ]
+}

@@ -14,7 +14,7 @@ const javascript = await build({
     context.onResolve({ filter: /(?:^|\/)studio-inline\.js$/ }, () => ({ path: '/studio-inline.js', external: true }));
   } }],
 });
-const cssFiles = ['styles.css', 'design.css', 'tenant-studio.css', 'menu-next.css', 'customer-worlds.css', 'icons.css'];
+const cssFiles = ['styles.css', 'design.css', 'tenant-studio.css', 'menu-next.css', 'customer-worlds.css', 'icons.css', 'seasonal.css'];
 const stylesheet = await build({
   ...common,
   stdin: { contents: cssFiles.map(file => `@import './${file}';`).join('\n'), resolveDir: resolve(root, 'public'), sourcefile: 'menu-entry-source.css', loader: 'css' },

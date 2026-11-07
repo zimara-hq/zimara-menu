@@ -1,0 +1,116 @@
+{
+  "verifiedAtUTC": "2026-11-07T22:15:28.927242+00:00",
+  "clientDate": "2026-11-08 Asia/Riyadh",
+  "branch": "codex/next-seasonal",
+  "baseLastVerifiedMain": "1e59d69bdfc7c9059f8f7df30000ddf456cc7ff9",
+  "npmTest": {
+    "tests": 257,
+    "pass": 257,
+    "fail": 0,
+    "durationMs": 48272.179244
+  },
+  "browser": {
+    "seasonal": {
+      "checks": [
+        "Owner opens a read-only Ramadan preview while live seasonal settings remain off",
+        "Public date/occasion parameters and a top-level message cannot activate a season",
+        "Unsaved message and a different motif preview use real merchant content without writing settings",
+        "Explicit save activates the actual public homepage without mutating any recipe or publication",
+        "The same layer renders before menu discovery, without inline editing or pager QR",
+        "Branch time windows affect public availability and reject fresh checkout on the server",
+        "Switching off restores the exact identity and releases seasonal category restrictions",
+        "City-dependent Ramadan estimates are dated/labeled and previewing never re-enables the live season",
+        "Preview failure retains inputs and a manual retry succeeds",
+        "Arabic owner controls fit360/390/1440 in both themes; mobile switches preserve inputs",
+        "English has the same saved state, controls and real preview flow",
+        "Cashier cannot access owner settings; no browser JavaScript errors"
+      ],
+      "errors": []
+    },
+    "hq_mocked": {
+      "checks": [
+        "create payload",
+        "immutable built-in UI",
+        "edit payload/stable id",
+        "explicit availability state",
+        "390px fit"
+      ],
+      "errors": []
+    },
+    "connected": {
+      "checks": [
+        "UI creates isolated room",
+        "independent cashier sessions linked without admin access",
+        "invoice distinct from automatic pager number",
+        "public menu contains no ticket token or pager QR",
+        "customer link hides private display QR",
+        "cashier ready reaches independent mobile customer",
+        "second cashier cannot overwrite stale ticket version",
+        "seen acknowledgment does not imply collection",
+        "customer state recovers after offline and reload",
+        "actual pickup and rating complete persisted journey",
+        "loyalty stamps and redeem update persistent customer balance",
+        "English landing pricing and interactive portal work",
+        "mobile fits viewport and honors reduced motion",
+        "no browser JavaScript errors"
+      ],
+      "errors": []
+    },
+    "proposals": {
+      "checks": [
+        "Real owner studio opens a clearly labeled local-mode native dialog",
+        "Logo colors are extracted in the browser without an upload request",
+        "Three different structures use real private-draft content; generation changes no draft/publication",
+        "Actual read-only iframe previews reflect each recipe and display measured AA text contrast",
+        "Homepage and menu compare the same three directions without saving",
+        "Applying saves one revisioned private draft and preserves unpublished content/public website",
+        "All20 actual authored-design thumbnails remain in the owner catalogue",
+        "Failed generation retains input and a manual retry succeeds",
+        "Modal keyboard shortcuts do not change the background studio draft",
+        "Changed brief invalidates previous choices until regeneration",
+        "360/390 layouts fit, reduced motion and Escape restore focus without hidden changes",
+        "Keyboard entry has no animation; English and readiness-error retry work without enabling AI",
+        "A concurrent owner edit blocks stale apply; regeneration adopts the current saved draft without losing copy",
+        "New entry and truthful local-mode labels meet AA contrast in the dark workspace"
+      ],
+      "errors": []
+    }
+  },
+  "additionalPassed": [
+    "private preview tracking:design/season/public(with all external requests intercepted)",
+    "menu first load envelope/media/privacy/olderAPI",
+    "studio canvas publish/private upload/preservedcontent",
+    "normalbuild",
+    "previewbuild",
+    "check:menu",
+    "git diff --check"
+  ],
+  "lighthouseFinal": {
+    "offLcpMs": 2429,
+    "activeLcpMs": 2441,
+    "performance": 97,
+    "accessibility": 100,
+    "rawRunsRetained": 11
+  },
+  "sourceSha256": {
+    "src/seasons.js": "c591b9ce290a9f16db9201adbedddd7d59ddb19ddeddeba69a5dd790ea823262",
+    "src/season-calendar.js": "ab6bbd9e512e86682b84a3eef4c7d1eb7a0144c8710d27b5ce24ba7ad1e01a0d",
+    "src/app.js": "7e205a83da3f7eecd21fe28e991772ffd2acf3c7940cb094e5ea391a4867ffc3",
+    "src/features.js": "de79d2b97924116e1bcb864f8765f8fc45839b5fc450b84c8a0fc9e9b4c375a2",
+    "src/menu-discovery.js": "cb0ecfd06921129a8e860568b0742a8ac1712a9abfd2789cb96e1f2e3670c07c",
+    "migrations/0027_seasonal_experiences.sql": "db5888fc30ac2a1218007c59e28a314a5917f80a673b0924f98e9833102d32ef",
+    "public/seasonal.js": "f926826fcb3e08d0b8bbed33dac42af7548414fca4b071a9da0f05faa492c42c",
+    "public/seasonal.css": "4f701355c6321647f7248277ae60bc8d1714df3a84aff8917a20edb68d4f3a3f",
+    "public/studio-seasons.js": "8044fc25f07474485ac57b01f674406a21aaeeacc7503890232437cc6122e717",
+    "public/hq-seasons.js": "92bc43265c0fd98ef10475e98b95c239f82cda9b7a274e52e1d7161ac03c002a",
+    "public/studio-seasons.css": "7af4e4c4e0f5d77dac88beb15824df8bbf4bb666b2095d9cb00850555493743c",
+    "public/menu-entry.js": "2a00552080b9d7fdecd99cd9cb792690afd1f1eeb5f5bb39965a59a2fbb60650",
+    "public/menu-entry.css": "6defde5d7793c30b89b1954399cdd3a93f6a1dddd07a9e05b240fefb600c9c13"
+  },
+  "release": {
+    "state": "local_only",
+    "GitHub": "fetch andREST403 account suspended; no push/PR/remoteCI/deployment attempted after denial",
+    "laterPhases": "gated"
+  },
+  "review": "finish-review.md"
+}
