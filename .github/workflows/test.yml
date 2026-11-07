@@ -28,6 +28,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - run: npm run check:menu
       - name: Configure isolated local test environment
         run: node -e "require('fs').writeFileSync('.dev.vars','AUTH_SECRET='+require('crypto').randomBytes(32).toString('hex')+'\nREQUIRE_ADMIN_MFA=true\n')"
       - run: npm run db:migrate:local
@@ -55,6 +56,7 @@ jobs:
           npm run test:design -- http://127.0.0.1:8787 output/playwright/design
           npm run test:magic -- http://127.0.0.1:8787 output/playwright/magic
           npm run test:ordering -- http://127.0.0.1:8787 output/playwright/ordering
+          npm run test:menu-first-load -- http://127.0.0.1:8787 output/playwright/menu-first-load
           npm run test:customer-menu -- http://127.0.0.1:8787 output/playwright/next-menu
           npm run test:menu-merchandising -- http://127.0.0.1:8787 output/playwright/menu-owner-phase1
           npm run test:studio-entry -- http://127.0.0.1:8787 output/playwright/studio-entry

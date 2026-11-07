@@ -1,0 +1,31 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import {mkdir,writeFile} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
+const base=process.argv[2]||'http://127.0.0.1:8793',out=process.argv[3]||'output/playwright/menu-lcp/first-load';await mkdir(out,{recursive:true});
+const browser=await chromium.launch({...((process.env.CHROMIUM_PATH||existsSync('/usr/bin/chromium'))?{executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium'}:{})});
+const owner=await browser.newPage(),guest=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'}),errors=[];guest.on('pageerror',e=>errors.push(e.message));
+const call=(path,method='GET',body)=>owner.evaluate(async([path,method,body])=>{const r=await fetch(path,{method,headers:{'content-type':'application/json'},body:body?JSON.stringify(body):undefined});if(!r.ok)throw Error(path+' '+r.status);return r.json()},[path,method,body]);
+try{
+ await owner.goto(base+'/demo');const room=await call('/api/demo','POST',{});await call('/api/demo/'+room.token+'/session','POST',{role:'owner'});
+ const menu=await call('/api/owner/menu');const firstCategory=menu.categories[0].id;
+ for(const item of menu.items.filter(i=>i.category_id===firstCategory))await call('/api/owner/items/'+item.id,'PATCH',{sort:100+item.sort});
+ let menuRequests=0;let profileRequests=0;guest.on('request',r=>{if(new URL(r.url()).pathname.startsWith('/api/public/menu/'))menuRequests++;if(new URL(r.url()).pathname.startsWith('/api/public/profile/'))profileRequests++;});
+ await guest.goto(base+'/m/'+room.branch_slug);await guest.locator('.dish').first().waitFor();assert.equal(menuRequests,0,'bootstrap avoids initial menu API');assert.equal(profileRequests,0,'first navigation consumes the public context envelope, without a serial profile request');
+ const actual=await guest.locator('.dish-photo img').first().evaluate(i=>({src:i.src,srcset:i.getAttribute('srcset')||'',sizes:i.getAttribute('sizes')||''}));
+ const preload=await guest.locator('link[rel=preload][as=image]').first().evaluate(i=>({src:i.href,srcset:i.imageSrcset,sizes:i.imageSizes}));assert.deepEqual(preload,actual,'preload matches first rendered category/item and responsive media descriptor');
+ const eager=await guest.locator('.dish-photo img').evaluateAll(images=>images.slice(0,4).map(i=>i.loading));assert.deepEqual(eager,['eager','eager','eager','eager'],'all four above-fold candidates load eagerly in category order');
+ await guest.locator('.menu-cats a').last().click();await guest.locator('.menu-section').last().locator('.dish').first().waitFor({state:'visible'});
+ await guest.evaluate(()=>scrollTo(0,0));
+ const initialFonts=await guest.evaluate(()=>performance.getEntriesByType('resource').filter(e=>e.name.endsWith('.woff2')).map(e=>e.name.split('/').at(-1)));
+ assert.ok(initialFonts.includes('menu-jakarta-core.woff2'));assert.ok(!initialFonts.includes('menu-jakarta.woff2'),'full Latin fallback is deferred for the default Arabic fixture');
+ await guest.evaluate(()=>document.fonts.load('16px MenuJakarta','Ā'));assert.ok(await guest.evaluate(()=>performance.getEntriesByType('resource').some(e=>e.name.endsWith('/menu-jakarta.woff2'))),'extended Latin remains supported');
+ await guest.screenshot({path:out+'/first-menu-390.png'});
+ const oldProfile=(await call('/api/owner/profile')).profile;await call('/api/owner/profile','PATCH',{...oldProfile,theme:{...oldProfile.theme,show_images:false}});
+ await guest.reload();await guest.locator('.dish').first().waitFor();assert.equal(await guest.locator('.dish-photo img').count(),0);assert.equal(await guest.locator('link[rel=preload][as=image]').count(),0,'hidden merchant images are not preloaded');
+ await guest.route('**/m/'+room.branch_slug,async route=>{const r=await route.fetch();const html=(await r.text()).replace(/<script type="application\/json" id="menu-bootstrap">[\s\S]*?<\/script>/,'<script type="application/json" id="menu-bootstrap">{malformed</script>');await route.fulfill({response:r,body:html});});
+ profileRequests=0;menuRequests=0;await guest.reload();await guest.locator('.dish').first().waitFor();assert.equal(menuRequests,1,'malformed bootstrap recovers through menu API');assert.equal(profileRequests,0,'envelope fallback needs no profile request');
+ profileRequests=0;await guest.route('**/api/public/menu/'+room.branch_slug,async route=>{const r=await route.fetch();const json=await r.json();delete json.profile_data;await route.fulfill({response:r,json});});
+ await guest.reload();await guest.locator('.dish').first().waitFor();assert.equal(profileRequests,1,'older menu API still renders through the compatible profile fallback');assert.equal(await guest.locator('.dish-photo img').count(),0);
+ assert.deepEqual(errors,[]);await writeFile(out+'/results.json',JSON.stringify({envelopeNoProfileFetch:true,preloadMatchesRender:true,hiddenPhotos:true,legacyFallback:true,errors},null,2));console.log('PASS envelope first paint, correct media preload, hidden-photo privacy and older API compatibility');
+}finally{await browser.close()}

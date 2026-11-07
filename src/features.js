@@ -200,6 +200,26 @@ function branchPublic(b) {
     google_review_url: b.google_review_url,
   };
 }
+
+// The caller has resolved an active public branch and its organization. Reuse
+// the profile endpoint's projections without another org lookup or design read.
+export async function publicMenuContext(env, b) {
+  const [profile, branch, loyalty] = await Promise.all([
+    env.DB.prepare('SELECT * FROM org_profiles WHERE org_id=?').bind(b.org_id).first(),
+    env.DB.prepare(
+      'SELECT b.id,b.slug,b.name_ar,b.name_en,b.google_review_url,s.orders_enabled,s.address,s.maps_url,s.hours_json,s.game FROM branches b LEFT JOIN branch_settings s ON s.branch_id=b.id WHERE b.id=? AND b.org_id=? AND b.active=1',
+    ).bind(b.id, b.org_id).first(),
+    env.DB.prepare('SELECT stamps_required,reward_ar,reward_en FROM loyalty_programs WHERE org_id=? AND active=1').bind(b.org_id).first(),
+  ]);
+  return {
+    org: { slug: b.org_slug, name_ar: b.org_name_ar, name_en: b.org_name_en, brand_color: b.brand_color, logo_url: b.logo_url },
+    profile: profileView(profile),
+    loyalty: loyalty || null,
+    branches: branch ? [{ ...branchPublic(branch), settings: branch.hours_json === null ? { ...DEFAULT_SETTINGS } : settingsView(branch) }] : [],
+    timezone: 'Asia/Riyadh',
+  };
+}
+
 async function menuFor(env, orgId, branchId) {
   const { results: categories } = await env.DB.prepare(
     'SELECT id,name_ar,name_en,sort FROM categories WHERE org_id=? AND active=1 ORDER BY sort,name_ar',

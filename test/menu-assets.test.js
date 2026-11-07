@@ -49,3 +49,12 @@ test('fresh standard and studio demos attach distinct gallery media without chan
   }
  }
 });
+
+test('default Latin critical face is a real small WOFF2 with full extended fallback',()=>{
+ const file=readFileSync(new URL('../public/fonts/menu-jakarta-core.woff2',import.meta.url));
+ assert.equal(file.toString('ascii',0,4),'wOF2');assert.ok(file.length<15000);
+ const css=readFileSync(new URL('../public/menu-next.css',import.meta.url),'utf8');
+ assert.match(css,/menu-jakarta-core\.woff2.*unicode-range:U\+0000-00FF,U\+2000-206F,U\+20A0-20CF/);
+ assert.match(css,/menu-jakarta\.woff2.*unicode-range:U\+0100-0148/);
+ assert.doesNotMatch(css,/unicode-range:U\+0100-1FFF/,'extended fallback must not claim Arabic codepoints it does not contain');
+});

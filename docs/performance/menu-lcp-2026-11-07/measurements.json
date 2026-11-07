@@ -1,0 +1,121 @@
+{
+  "mainSha": "1b2f71045ae374df3a1e1e5a7b08d2d6968f4c82",
+  "candidateBranch": "codex/next-menu-lcp",
+  "fixture": "same isolated synthetic cafe room and published market/grid recipe copied into both local D1 databases; 16 original sample images; Arabic/light; default Tajawal/Jakarta",
+  "conditions": "Direct local Worker; no gzip proxy; Lighthouse13.0.3/Chrome154/Node24.19; standard mobile simulation; all audits; storage reset; sequential runs without tests/builds",
+  "measurements": [
+    {
+      "phase": "main",
+      "name": "direct-main-1",
+      "timestamp": "2026-11-07T00:52:31.506Z",
+      "scores": {
+        "performance": 91,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "lcpMs": 3135.4442500000005,
+      "nonImageBytes": 142091,
+      "benchmarkIndex": 1812.5,
+      "rawLighthouse": "direct-main-1.lighthouse.json",
+      "transfer": "direct-main-1.transfer.json"
+    },
+    {
+      "phase": "main",
+      "name": "direct-main-2",
+      "timestamp": "2026-11-07T00:53:04.092Z",
+      "scores": {
+        "performance": 90,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "lcpMs": 3050.0216,
+      "nonImageBytes": 142098,
+      "benchmarkIndex": 1795.5,
+      "rawLighthouse": "direct-main-2.lighthouse.json",
+      "transfer": "direct-main-2.transfer.json"
+    },
+    {
+      "phase": "main",
+      "name": "direct-main-3",
+      "timestamp": "2026-11-07T00:53:37.377Z",
+      "scores": {
+        "performance": 86,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "lcpMs": 3170.8732499999996,
+      "nonImageBytes": 142098,
+      "benchmarkIndex": 1682.5,
+      "rawLighthouse": "direct-main-3.lighthouse.json",
+      "transfer": "direct-main-3.transfer.json"
+    },
+    {
+      "phase": "candidate",
+      "name": "viewport-1",
+      "timestamp": "2026-11-07T01:02:50.715Z",
+      "scores": {
+        "performance": 96,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "lcpMs": 2421.2694,
+      "nonImageBytes": 88877,
+      "benchmarkIndex": 1708,
+      "rawLighthouse": "viewport-1.lighthouse.json",
+      "transfer": "viewport-1.transfer.json"
+    },
+    {
+      "phase": "candidate",
+      "name": "viewport-2",
+      "timestamp": "2026-11-07T01:03:21.317Z",
+      "scores": {
+        "performance": 75,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "lcpMs": 2418.7162,
+      "nonImageBytes": 88873,
+      "benchmarkIndex": 315,
+      "rawLighthouse": "viewport-2.lighthouse.json",
+      "transfer": "viewport-2.transfer.json"
+    },
+    {
+      "phase": "candidate",
+      "name": "viewport-3",
+      "timestamp": "2026-11-07T01:03:36.343Z",
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "lcpMs": 2417.917,
+      "nonImageBytes": 88877,
+      "benchmarkIndex": 2076,
+      "rawLighthouse": "viewport-3.lighthouse.json",
+      "transfer": "viewport-3.transfer.json"
+    },
+    {
+      "phase": "candidate",
+      "name": "viewport-confirm",
+      "timestamp": "2026-11-07T01:04:13.947Z",
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "lcpMs": 2423.6512000000002,
+      "nonImageBytes": 88877,
+      "benchmarkIndex": 1937,
+      "rawLighthouse": "viewport-confirm.lighthouse.json",
+      "transfer": "viewport-confirm.transfer.json"
+    }
+  ],
+  "candidateSourceHashes": {
+    "public/menu.js": "c5f77fdd108847706165183ab983e75101d1f8834948c14abe9eb149c3fc756d",
+    "public/menu-entry.js": "2a5c79160a0467fe62069ef09d1b74df69e9ebf322255bd213faabd2d168597b",
+    "public/menu-entry.css": "2c1b252053edc1f57b77a970ef43435b721310ebc4912960238a322e685a2a8e",
+    "src/menu-page.js": "821602cafe8e68fdf5e46fe640e31c51c4d5c295db7247f53629809a33ba7399",
+    "src/app.js": "68a6cbfe64ce28634e9b62efd6412e65353ffefd31a8513db68e9ddc8c2c5211",
+    "src/features.js": "0077558660e70f05522c1305c4d2291200758ca75ddc7192c7b164114079569a"
+  }
+}

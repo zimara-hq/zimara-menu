@@ -68,8 +68,9 @@ try{
  await writeFile(`${out}/lighthouse.json`,result.report[0]);
  await writeFile(`${out}/lighthouse.html`,result.report[1]);
  const lhr=result.lhr;
- const summary={timestamp:new Date().toISOString(),target:input,transport:transfer.transport,node:process.version,platform:`${os.platform()} ${os.release()} ${os.arch()}`,browser:lhr.environment,lighthouseVersion:lhr.lighthouseVersion,config:lhr.configSettings,recipe,scores:Object.fromEntries(Object.entries(lhr.categories).map(([k,v])=>[k,Math.round(v.score*100)])),encodedNonImageTransferBytes:bytes,nonImageLimitBytes:150000,runtimeError:lhr.runtimeError||null,warnings:lhr.runWarnings,failedAudits:Object.entries(lhr.audits).filter(([,v])=>v.score!==null&&v.score<1).map(([id,v])=>({id,title:v.title,score:v.score,displayValue:v.displayValue,details:v.details}))};
+ const lcpMs=lhr.audits['largest-contentful-paint'].numericValue;
+ const summary={largestContentfulPaintMs:lcpMs,lcpLimitMs:2500,lcpPass:Number.isFinite(lcpMs)&&lcpMs<=2500,timestamp:new Date().toISOString(),target:input,transport:transfer.transport,node:process.version,platform:`${os.platform()} ${os.release()} ${os.arch()}`,browser:lhr.environment,lighthouseVersion:lhr.lighthouseVersion,config:lhr.configSettings,recipe,scores:Object.fromEntries(Object.entries(lhr.categories).map(([k,v])=>[k,Math.round(v.score*100)])),encodedNonImageTransferBytes:bytes,nonImageLimitBytes:150000,runtimeError:lhr.runtimeError||null,warnings:lhr.runWarnings,failedAudits:Object.entries(lhr.audits).filter(([,v])=>v.score!==null&&v.score<1).map(([id,v])=>({id,title:v.title,score:v.score,displayValue:v.displayValue,details:v.details}))};
  await writeFile(`${out}/summary.json`,JSON.stringify(summary,null,2));
  console.log(JSON.stringify({...summary,failedAudits:summary.failedAudits.map(({id,title,score,displayValue})=>({id,title,score,displayValue})),config:summary.config},null,2));
- if(lhr.runtimeError||Object.values(summary.scores).some(s=>s<90)||!transfer.pass||errors.length)process.exitCode=1;
+ if(!summary.lcpPass||lhr.runtimeError||Object.values(summary.scores).some(s=>s<90)||!transfer.pass||errors.length)process.exitCode=1;
 }finally{await browser.close();if(server)await new Promise(resolve=>server.close(resolve));}

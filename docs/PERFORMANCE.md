@@ -1,4 +1,48 @@
-# Customer menu performance — phase 1
+# Customer menu performance
+
+## Current phase-2 LCP correction — 7 November 2026 (Riyadh)
+
+PR #36 was already merged at `1b2f71045ae374df3a1e1e5a7b08d2d6968f4c82` and its final-head CI was green ([run 42246489947](https://github.com/zimara-hq/zimara-menu/actions/runs/42246489947)). This correction is a separate `codex/next-menu-lcp` change; it preserves the 20 authored designs, catalogue, inline editing and published recipes.
+
+The comparison below uses that exact main source and the candidate, separate local Workers, cloned isolated D1 fixture data, the **same published market/grid recipe**, Arabic/light, 16 unchanged sample item images and default menu fonts. Direct Worker transport matches the documented phase-1 measurement method. Both use Lighthouse 13.0.3, Chrome 154, Node 24.19, standard mobile simulated network/4× CPU, cold storage resets, all performance/accessibility/SEO audits, and the existing transfer accounting. Runs are sequential with tests/builds stopped. No audits, page content or preview noindex protections were removed.
+
+| Run | LCP | Performance | Accessibility | SEO | Encoded non-image transfer | Runtime benchmark |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| direct-main-1 | 3.135s | 91 | 100 | 91 | 142,091 B | 1812.5 |
+| direct-main-2 | 3.050s | 90 | 100 | 91 | 142,098 B | 1795.5 |
+| direct-main-3 | 3.171s | 86 | 100 | 91 | 142,098 B | 1682.5 |
+| viewport-1 | 2.421s | 96 | 100 | 91 | 88,877 B | 1708 |
+| viewport-2 | 2.419s | 75 | 100 | 91 | 88,873 B | 315 |
+| viewport-3 | 2.418s | 97 | 100 | 91 | 88,877 B | 2076 |
+| viewport-confirm | 2.424s | 97 | 100 | 91 | 88,877 B | 1937 |
+
+All three planned candidate runs and the additional confirmation meet **LCP ≤2500ms**. The three-run median is approximately **2.419s**, compared with **3.135s** for main. Candidate median performance is96, accessibility100 and local SEO91. The second candidate run scored75 because its trace recorded over1s TBT; its benchmark index was315 versus1708/2076 in adjacent runs. It is retained, not discarded. A separate confirmation scored97/100/91, LCP2.424s, benchmark1937. These are shared-host lab observations, not a handset or per-tenant guarantee. The numeric LCP threshold is now an explicit harness failure gate in addition to the existing score/transfer/error gates; the middle run therefore still has a recorded score-gate failure.
+
+Reproduction:
+
+```sh
+npm run test:menu-performance -- http://127.0.0.1:8793/m/SYNTHETIC-BRANCH output/playwright/menu-lcp/check
+```
+
+The committed [measurement index](performance/menu-lcp-2026-11-07/measurements.json) contains timestamps, raw Lighthouse/transfer filenames and candidate source hashes. Full raw Lighthouse and CDP transfer records are alongside it. Earlier intermediate misses (including explicit local-gzip-proxy experiments) are retained locally in `output/playwright/menu-lcp/diagnostics-pre-release.tar.gz` and the subsequent diagnostic directories; they are not substituted for the direct controlled comparison above. Proxy experiments used the same audits but a different transport and are not compared numerically to the historical direct phase-1 result.
+
+The correction removes the serial profile request and serial independent database reads, embeds only the existing public projection as escaped inert JSON, and preloads the four initially visible image candidates in category order. Hidden photos remain unrequested. The HTML has browser/CDN `no-store`, strips obsolete asset validators and uses a bounded escaped payload; invalid/missing/mismatched payloads recover through the public API. The normal API continues to work for older clients. Server-generated public price strings avoid cold browser currency initialization; checkout amounts and totals still use existing server pricing.
+
+A deterministic, checked-in esbuild bundle removes unused QR loading and stylesheet/module request chains without changing recipe CSS. Studio editing remains a lazy `/studio-inline.js` import. Offscreen categories and dishes use native `content-visibility:auto`; content remains in the DOM and accessibility tree, and category anchors/search are browser-tested. Mobile install/connection guidance initializes after the menu's first paint; permissions are still never requested automatically.
+
+### Latin critical-font provenance
+
+`menu-jakarta-core.woff2` is an OFL-preserving subset of the existing full `menu-jakarta.woff2`:243 mapped codepoints,11,820 bytes. FontTools4.61.1 with Brotli1.2.0 generated it using:
+
+```sh
+pyftsubset public/fonts/menu-jakarta.woff2 --unicodes='U+0000-00FF,U+2000-206F,U+20A0-20CF' --flavor=woff2 --glyph-names --layout-features='*' --output-file=public/fonts/menu-jakarta-core.woff2
+```
+
+The cmap for every selected source codepoint was compared and preserved. The original full face and its license remain. CSS assigns the complete original extended-codepoint ranges to the full face, so unsupported Arabic codepoints do not trigger an unnecessary Latin fallback download. A real browser check verifies only the core face loads for the default Arabic page and that an extended Latin `Ā` loads the full fallback on demand. Source SHA256: `3c7c489a2604b9b96806a8f34d7a13f9b3919aa642d2dede581bce0e72fcf6d7`; core SHA256: `529a71eb1074a9e92d5002bcb8b3e1bf33c95cc53c4f6a5a09aaaa3c92708bb7`.
+
+HTTPS review keeps `noindex, nofollow`; the local SEO91 score does not assert public indexing. No external integration, DNS, production database, real payment or real email is activated by this patch.
+
+## Historical phase-1 measurements
 
 Actual measurements use the isolated local synthetic Worker, not the embedded preview bundle size. The HTTPS review deployment retains `X-Robots-Tag: noindex, nofollow`. An indexable local result does not demonstrate that the review URL is indexable or that its Lighthouse SEO score reaches 90.
 
