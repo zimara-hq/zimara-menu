@@ -43,7 +43,9 @@ try {
   const dlg=page.locator('dialog.magic');await dlg.locator('#mg-next').click();await dlg.locator('#mg-color').waitFor();
   const selected='#c0392b';await dlg.locator('#mg-color').fill(selected);await dlg.locator('#mg-next').click();
   await dlg.locator('#mg-frame').waitFor({timeout:3000});
-  await page.waitForFunction(color=>document.querySelector('#mg-frame').contentDocument?.documentElement.style.getPropertyValue('--brand')===color,selected,{timeout:3000}).catch(async error=>{console.log(JSON.stringify({errors,frames:await page.locator('#mg-frame').evaluate(f=>({src:f.src,html:f.contentDocument?.body?.innerText,style:f.contentDocument?.documentElement.style.cssText}))}));throw error;});
+  // A visible iframe can still be replacing its initial document. Wait for the
+  // actual root/color rather than throwing during that navigation boundary.
+  await page.waitForFunction(color=>document.querySelector('#mg-frame')?.contentDocument?.documentElement?.style.getPropertyValue('--brand')===color,selected,{timeout:3000}).catch(async error=>{console.log(JSON.stringify({errors,frames:await page.locator('#mg-frame').evaluate(f=>({src:f.src,html:f.contentDocument?.body?.innerText,style:f.contentDocument?.documentElement.style.cssText}))}));throw error;});
   const before=(await setup.owner.get('/api/owner/design')).json;
   assert.equal(Boolean(before.published),existing,'preview keeps publication unchanged');
   if(existing) assert.equal(before.published.home.footer_en,'PUBLISHED MERCHANT COPY','private copy stays private before consent');

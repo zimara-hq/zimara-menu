@@ -1962,9 +1962,9 @@
     "semantic_hash": ""
   },
   "test/e2e/magic-color-regression.mjs": {
-    "mtime": 1793877221.2192416,
-    "seen": 1793894869.791112,
-    "ast_hash": "1ad1d6a5f0a72e334675c910c12d47d6",
+    "mtime": 1794014208.9042368,
+    "seen": 1794014310.1813455,
+    "ast_hash": "37cafc903633b3f8c1ee6fabe5248bfe",
     "semantic_hash": ""
   },
   "test/e2e/pwa.py": {
