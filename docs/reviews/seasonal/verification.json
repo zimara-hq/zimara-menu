@@ -132,6 +132,13 @@
     },
     "localD1Migrations": "new isolateddatabase includes0028; passed",
     "normalAndPreviewBuilds": "passed",
-    "CloudflareAppAPI": "requires reauthentication; automaticprotectedbuild not bypassed"
+    "CloudflareAppAPI": "requires reauthentication; automaticprotectedbuild not bypassed",
+    "navigationBrowserCorrection": {
+      "originalCI": 43474792281,
+      "reason": "expected19owner destinations before newseasons entry; actual20",
+      "checks": "exact20 plus explicitnewseason destination in agency/workspace/finder; role restrictions retained",
+      "local": "agency/workspace/brand-workspace allpassed",
+      "publicCodeChanged": false
+    }
   }
 }

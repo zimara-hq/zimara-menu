@@ -786,9 +786,9 @@
     "semantic_hash": ""
   },
   "test/e2e/workspace.mjs": {
-    "mtime": 1793895740.0322351,
-    "seen": 1793895783.4019709,
-    "ast_hash": "46752058e8ae4cd58ab081ff99ef8b0e",
+    "mtime": 1794591722.059739,
+    "seen": 1794591822.4429438,
+    "ast_hash": "688a3c1f9b149c4adffa65e6225a288d",
     "semantic_hash": ""
   },
   "test/features-data.test.js": {
@@ -1938,15 +1938,15 @@
     "semantic_hash": ""
   },
   "test/e2e/agency.mjs": {
-    "mtime": 1793978711.3009613,
-    "seen": 1793980021.1817887,
-    "ast_hash": "fb812ba01ba23d57acb3dc081a07656a",
+    "mtime": 1794591722.0586953,
+    "seen": 1794591822.4421983,
+    "ast_hash": "8031b0e71806da7fa7b4ec152c401f05",
     "semantic_hash": ""
   },
   "test/e2e/brand-workspace.mjs": {
-    "mtime": 1793895822.4972131,
-    "seen": 1793895859.7988806,
-    "ast_hash": "b97b956105e6ff80888500da85ad72b1",
+    "mtime": 1794591722.0603135,
+    "seen": 1794591822.4422,
+    "ast_hash": "793422d2cfab299d76084afc3ccc7500",
     "semantic_hash": ""
   },
   "test/e2e/identity-ownership.mjs": {
@@ -4458,9 +4458,9 @@
     "semantic_hash": ""
   },
   "docs/reviews/seasonal/verification.json": {
-    "mtime": 1794591417.5459633,
-    "seen": 1794591468.1070154,
-    "ast_hash": "daf028d02b32b75485b7d5cf80eefddd",
+    "mtime": 1794591484.103045,
+    "seen": 1794591822.438616,
+    "ast_hash": "c4a61c5b1a17a70e7ca73b607b116d05",
     "semantic_hash": ""
   },
   "package-lock.json": {
