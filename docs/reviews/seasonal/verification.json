@@ -98,19 +98,40 @@
     "src/app.js": "7e205a83da3f7eecd21fe28e991772ffd2acf3c7940cb094e5ea391a4867ffc3",
     "src/features.js": "de79d2b97924116e1bcb864f8765f8fc45839b5fc450b84c8a0fc9e9b4c375a2",
     "src/menu-discovery.js": "cb0ecfd06921129a8e860568b0742a8ac1712a9abfd2789cb96e1f2e3670c07c",
-    "migrations/0027_seasonal_experiences.sql": "db5888fc30ac2a1218007c59e28a314a5917f80a673b0924f98e9833102d32ef",
     "public/seasonal.js": "f926826fcb3e08d0b8bbed33dac42af7548414fca4b071a9da0f05faa492c42c",
     "public/seasonal.css": "4f701355c6321647f7248277ae60bc8d1714df3a84aff8917a20edb68d4f3a3f",
     "public/studio-seasons.js": "8044fc25f07474485ac57b01f674406a21aaeeacc7503890232437cc6122e717",
     "public/hq-seasons.js": "92bc43265c0fd98ef10475e98b95c239f82cda9b7a274e52e1d7161ac03c002a",
     "public/studio-seasons.css": "7af4e4c4e0f5d77dac88beb15824df8bbf4bb666b2095d9cb00850555493743c",
     "public/menu-entry.js": "2a00552080b9d7fdecd99cd9cb792690afd1f1eeb5f5bb39965a59a2fbb60650",
-    "public/menu-entry.css": "6defde5d7793c30b89b1954399cdd3a93f6a1dddd07a9e05b240fefb600c9c13"
+    "public/menu-entry.css": "6defde5d7793c30b89b1954399cdd3a93f6a1dddd07a9e05b240fefb600c9c13",
+    "migrations/0028_seasonal_experiences.sql": "db5888fc30ac2a1218007c59e28a314a5917f80a673b0924f98e9833102d32ef"
   },
   "release": {
     "state": "local_only",
     "GitHub": "fetch andREST403 account suspended; no push/PR/remoteCI/deployment attempted after denial",
     "laterPhases": "gated"
   },
-  "review": "finish-review.md"
+  "review": "finish-review.md",
+  "migrationRename": {
+    "date": "2026-11-13",
+    "from": "migrations/0027_seasonal_experiences.sql",
+    "to": "migrations/0028_seasonal_experiences.sql",
+    "sqlContentsChanged": false,
+    "reason": "reserve0027 for separate openPR39",
+    "freshLocalD1Migration": "passed"
+  },
+  "releaseResume": {
+    "date": "2026-11-13",
+    "freshMain": "1e59d69bdfc7c9059f8f7df30000ddf456cc7ff9",
+    "GitHub": "access restored; currentheadCI/deployment still required",
+    "tests": {
+      "pass": 257,
+      "fail": 0,
+      "durationMs": 55874.034416
+    },
+    "localD1Migrations": "new isolateddatabase includes0028; passed",
+    "normalAndPreviewBuilds": "passed",
+    "CloudflareAppAPI": "requires reauthentication; automaticprotectedbuild not bypassed"
+  }
 }

@@ -2256,9 +2256,9 @@
     "semantic_hash": ""
   },
   "docs/AZ-ACTIONS.md": {
-    "mtime": 1794088928.4050279,
-    "seen": 1794089477.0783894,
-    "ast_hash": "c002d7e161b48d23f73807018756a073",
+    "mtime": 1794591347.7847133,
+    "seen": 1794591468.115087,
+    "ast_hash": "2c2b762fcbaae2b77b3039f3d76e0030",
     "semantic_hash": ""
   },
   "docs/MENU-ASSETS.md": {
@@ -3600,8 +3600,8 @@
     "semantic_hash": ""
   },
   "public/menu-entry.js": {
-    "mtime": 1794089388.6740031,
-    "seen": 1794089477.0719676,
+    "mtime": 1794591390.9012322,
+    "seen": 1794591468.1081855,
     "ast_hash": "2644d89af0f29b660ccaffa7d1eb1a2d",
     "semantic_hash": ""
   },
@@ -4212,21 +4212,21 @@
     "semantic_hash": ""
   },
   "docs/SEASONS.md": {
-    "mtime": 1794088928.4050279,
-    "seen": 1794089477.0787828,
-    "ast_hash": "9ebe4a6bcda259949e59bb9aca056735",
+    "mtime": 1794591347.7845483,
+    "seen": 1794591468.115578,
+    "ast_hash": "193468f68e4dff764da04486b5fff784",
     "semantic_hash": ""
   },
   "docs/plans/2026-11-08-seasonal-experiences.md": {
-    "mtime": 1794089543.2935395,
-    "seen": 1794089590.059091,
-    "ast_hash": "b445f9cc2b3f123d15a63b8f58d90f7f",
+    "mtime": 1794591347.784354,
+    "seen": 1794591468.1158292,
+    "ast_hash": "2b57ad2f0cc6d149608b162e8f82a8f6",
     "semantic_hash": ""
   },
   "docs/reviews/seasonal/PR.md": {
-    "mtime": 1794089427.8799736,
-    "seen": 1794089477.0792632,
-    "ast_hash": "a8bef16908c56f89de9e79922f745ba4",
+    "mtime": 1794591347.784643,
+    "seen": 1794591468.1160386,
+    "ast_hash": "12fb38b901b7e5d21a33e1590e8b4bb0",
     "semantic_hash": ""
   },
   "docs/reviews/seasonal/finish-review.md": {
@@ -4455,6 +4455,12 @@
     "mtime": 1794088759.1898277,
     "seen": 1794089477.0816412,
     "ast_hash": "09edb3684d18440f2d5194cbe86e2ba5",
+    "semantic_hash": ""
+  },
+  "docs/reviews/seasonal/verification.json": {
+    "mtime": 1794591417.5459633,
+    "seen": 1794591468.1070154,
+    "ast_hash": "daf028d02b32b75485b7d5cf80eefddd",
     "semantic_hash": ""
   },
   "package-lock.json": {

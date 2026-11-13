@@ -1,6 +1,6 @@
 # Seasonal experiences: calendar overlays and branch menu windows
 
-Prepared PR description; not a created PR. GitHub fetch and REST return403/account suspended. Branch codex/next-seasonal is based on cached, previously verified main1e59d69. Fetch/reconcile freshmain and obtain final-head greenCI before protected deployment after access is restored.
+Access restored on 2026-11-13. Fresh main remains1e59d69; this branch has no divergence. Seasonal migration renamed0028 to preserve0027 used by the separate open compliance PR39, without changing SQL contents. Current-head CI and protected review deployment remain required.
 
 The existing manual design schedules replace entire recipes. This change adds a separate opt-in seasonal layer for six occasions, a real UmmalQura calendar and city-dependent Ramadan estimates. Owners preview their published homepage/menu, attach actual menu categories to branch/matching-occasion service windows and save activation explicitly. Ending/disabling a layer retains the original recipe. Checkout enforces the same window as discovery. HQ adds bounded catalogue occasions behind existing role/MFA checks; availability is an explicit control rather than an edit-side effect.
 
@@ -8,6 +8,6 @@ Local validation:257unit/integration tests;12new realPlaywright checks;5mocked H
 
 Evidence: docs/SEASONS.md (behavior,Before/After/Why,attributedcompetitor table,refresh/calculation limits), docs/screenshots/seasonal/capture.json plusmotifs.json, docs/reviews/seasonal/finish-review.md, docs/PERFORMANCE.md and raw JSON. New UI uses SVG vocabulary, native calendar/time controls and existing tokens, noemoji or free CSS. Counter and base tenant isolation are preserved; previewtracking is suppressed; seasonal configuration is included in owner data export.
 
-Az: no newkeys, paid account orDNS required. RestoreGitHub access, then PR/CI/protected reviewdeploy with migration0027. Verify HTTPS after exact merge deployment; do not bypassguards orseed/resetproduction. No real payment/mail/invoice/provideractivation took place. Review rollback version2c519604-36d8-4406-b586-ebb7ca00854a(PR38); additive newtables can remain when rolling source back.
+Az: no newkeys, paid account orDNS required. PR/CI/protected reviewdeploy with migration0028. Verify HTTPS after exact merge deployment; do not bypassguards orseed/resetproduction. No real payment/mail/invoice/provideractivation took place. Review rollback version2c519604-36d8-4406-b586-ebb7ca00854a(PR38); additive newtables can remain when rolling source back.
 
 Skills used: using-superpowers,writing-plans,UI/UX Pro Max,test-driven-development,dispatching-parallel-agents,verification-before-completion and Impeccable (existing-system extension, one detector run, independent finish review). Playwright supplied actual browser evidence; Graphify scoped exploration and regenerated the AST graph. No claim that all installed third-party tools are live integrations.
