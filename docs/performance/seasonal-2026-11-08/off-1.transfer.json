@@ -1,0 +1,328 @@
+{
+  "url": "http://127.0.0.1:8793/m/demo-xjd2tghnx8w-hail",
+  "measuredURL": "http://127.0.0.1:8793/m/demo-xjd2tghnx8w-hail",
+  "transport": "direct Worker response",
+  "window": "cold navigation through networkidle + document.fonts.ready + 1500ms; no scroll",
+  "cache": "fresh context; HTTP cache disabled; service workers blocked",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 1
+  },
+  "encodedNonImageTransferBytes": 93481,
+  "limitBytes": 150000,
+  "pass": true,
+  "accounting": "CDP Network.loadingFinished.encodedDataLength summed for every non-image response including document, fonts, CSS, JS and API; includes HTTP headers (conservative). Failed/unfinished requests listed with missing byte counts.",
+  "responseHeaders": {
+    "cdn-cache-control": "no-store",
+    "cf-cache-status": "HIT",
+    "cache-control": "no-store",
+    "cloudflare-cdn-cache-control": "no-store",
+    "content-encoding": "gzip",
+    "content-security-policy": "default-src 'self'; script-src 'self' https://connect.facebook.net https://www.googletagmanager.com https://analytics.tiktok.com https://sc-static.net https://static.ads-twitter.com https://s.pinimg.com https://snap.licdn.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://www.facebook.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://www.google.com https://googleads.g.doubleclick.net https://analytics.tiktok.com https://*.tiktokw.us https://tr.snapchat.com https://*.snapchat.com https://analytics.twitter.com https://ct.pinterest.com https://px.ads.linkedin.com; frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'",
+    "content-type": "text/html; charset=utf-8",
+    "transfer-encoding": "chunked",
+    "x-frame-options": "SAMEORIGIN",
+    "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "x-content-type-options": "nosniff"
+  },
+  "recipe": {
+    "title": "رواق · تجربة زيمارا · زيمارا منيو",
+    "lang": "ar",
+    "bodyClass": "menu-page",
+    "firstDish": "flex",
+    "visibleImages": 16,
+    "fontFamily": "MenuJakarta, MenuTajawal, system-ui, sans-serif",
+    "background": "rgb(248, 243, 238)",
+    "theme": "light",
+    "menuClass": null
+  },
+  "errors": [],
+  "requests": [
+    {
+      "url": "http://127.0.0.1:8793/m/demo-xjd2tghnx8w-hail",
+      "type": "Document",
+      "mime": "text/html",
+      "status": 200,
+      "cache": false,
+      "headers": {
+        "CDN-Cache-Control": "no-store",
+        "CF-Cache-Status": "HIT",
+        "Cache-Control": "no-store",
+        "Cloudflare-CDN-Cache-Control": "no-store",
+        "Content-Encoding": "gzip",
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' https://connect.facebook.net https://www.googletagmanager.com https://analytics.tiktok.com https://sc-static.net https://static.ads-twitter.com https://s.pinimg.com https://snap.licdn.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://www.facebook.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://www.google.com https://googleads.g.doubleclick.net https://analytics.tiktok.com https://*.tiktokw.us https://tr.snapchat.com https://*.snapchat.com https://analytics.twitter.com https://ct.pinterest.com https://px.ads.linkedin.com; frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'",
+        "Content-Type": "text/html; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+        "X-Frame-Options": "SAMEORIGIN",
+        "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff"
+      },
+      "encodedTransferBytes": 7135
+    },
+    {
+      "url": "http://127.0.0.1:8793/menu-entry.css",
+      "type": "Stylesheet",
+      "mime": "text/css",
+      "status": 200,
+      "cache": false,
+      "headers": {
+        "Transfer-Encoding": "chunked",
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Content-Encoding": "gzip",
+        "CF-Cache-Status": "HIT",
+        "ETag": "\"028f85da65f07a539eb8fd1fb2fa3caa\"",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        "Content-Type": "text/css; charset=utf-8",
+        "X-Frame-Options": "DENY"
+      },
+      "encodedTransferBytes": 22920
+    },
+    {
+      "url": "http://127.0.0.1:8793/menu-art/americano-320.webp",
+      "type": "Image",
+      "mime": "image/webp",
+      "status": 200,
+      "cache": false,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "CF-Cache-Status": "HIT",
+        "ETag": "\"def2ce0ef4f54c0e9eae3180d4d38d59\"",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        "Content-Length": "1972",
+        "Content-Type": "image/webp",
+        "X-Frame-Options": "DENY"
+      },
+      "encodedTransferBytes": 2649
+    },
+    {
+      "url": "http://127.0.0.1:8793/menu-art/espresso-320.webp",
+      "type": "Image",
+      "mime": "image/webp",
+      "status": 200,
+      "cache": false,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "CF-Cache-Status": "HIT",
+        "ETag": "\"8c13af418a1d2a2e8c2bba42e619f62a\"",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        "Content-Length": "1836",
+        "Content-Type": "image/webp",
+        "X-Frame-Options": "DENY"
+      },
+      "encodedTransferBytes": 2513
+    },
+    {
+      "url": "http://127.0.0.1:8793/menu-entry.js",
+      "type": "Script",
+      "mime": "text/javascript",
+      "status": 200,
+      "cache": false,
+      "headers": {
+        "Transfer-Encoding": "chunked",
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Content-Encoding": "gzip",
+        "CF-Cache-Status": "HIT",
+        "ETag": "\"57516e5253e8960a2973ba68eaa09fb4\"",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        "Content-Type": "text/javascript; charset=utf-8",
+        "X-Frame-Options": "DENY"
+      },
+      "encodedTransferBytes": 30366
+    },
+    {
+      "url": "http://127.0.0.1:8793/fonts/menu-jakarta-core.woff2",
+      "type": "Font",
+      "mime": "font/woff2",
+      "status": 200,
+      "cache": false,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "CF-Cache-Status": "HIT",
+        "ETag": "\"89b7ac9ad51b7600bb4550db652dd039\"",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        "Content-Length": "11820",
+        "Content-Type": "font/woff2",
+        "X-Frame-Options": "DENY"
+      },
+      "encodedTransferBytes": 12498
+    },
+    {
+      "url": "http://127.0.0.1:8793/menu-art/latte-320.webp",
+      "type": "Image",
+      "mime": "image/webp",
+      "status": 200,
+      "cache": false,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "CF-Cache-Status": "HIT",
+        "ETag": "\"2c3fed02c1f8de1511e834654c7738e4\"",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        "Content-Length": "1752",
+        "Content-Type": "image/webp",
+        "X-Frame-Options": "DENY"
+      },
+      "encodedTransferBytes": 2429
+    },
+    {
+      "url": "http://127.0.0.1:8793/fonts/menu-tajawal.woff2",
+      "type": "Font",
+      "mime": "font/woff2",
+      "status": 200,
+      "cache": false,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "CF-Cache-Status": "HIT",
+        "ETag": "\"affa18704c9c80998723c0b524ac842c\"",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        "Content-Length": "19884",
+        "Content-Type": "font/woff2",
+        "X-Frame-Options": "DENY"
+      },
+      "encodedTransferBytes": 20562
+    },
+    {
+      "url": "http://127.0.0.1:8793/menu-art/cappuccino-320.webp",
+      "type": "Image",
+      "mime": "image/webp",
+      "status": 200,
+      "cache": false,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "CF-Cache-Status": "HIT",
+        "ETag": "\"3402b1d59739e61e83d3de84dd3772b0\"",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        "Content-Length": "1646",
+        "Content-Type": "image/webp",
+        "X-Frame-Options": "DENY"
+      },
+      "encodedTransferBytes": 2323
+    },
+    {
+      "url": "http://127.0.0.1:8793/brand/symbol.webp",
+      "type": "Image",
+      "mime": "image/webp",
+      "status": 200,
+      "cache": false,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "CF-Cache-Status": "HIT",
+        "ETag": "\"df33fb0dbe503dd5bdd6e0db63113173\"",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        "Content-Length": "13436",
+        "Content-Type": "image/webp",
+        "X-Frame-Options": "DENY"
+      },
+      "encodedTransferBytes": 14114
+    },
+    {
+      "url": "http://127.0.0.1:8793/editorial/counter.webp",
+      "type": "Image",
+      "mime": "image/webp",
+      "status": 200,
+      "cache": false,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "CF-Cache-Status": "HIT",
+        "ETag": "\"3c2fc90a223fe2c877da470da06f6e96\"",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        "Content-Length": "77312",
+        "Content-Type": "image/webp",
+        "X-Frame-Options": "DENY"
+      },
+      "encodedTransferBytes": 77990
+    },
+    {
+      "url": "http://127.0.0.1:8793/menu-art/flat-white-320.webp",
+      "type": "Image",
+      "mime": "image/webp",
+      "status": 200,
+      "cache": false,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "CF-Cache-Status": "HIT",
+        "ETag": "\"ffdb4812a693af045c2902fb311bf19e\"",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        "Content-Length": "1774",
+        "Content-Type": "image/webp",
+        "X-Frame-Options": "DENY"
+      },
+      "encodedTransferBytes": 2451
+    },
+    {
+      "url": "http://127.0.0.1:8793/menu-art/saudi-coffee-320.webp",
+      "type": "Image",
+      "mime": "image/webp",
+      "status": 200,
+      "cache": false,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "CF-Cache-Status": "HIT",
+        "ETag": "\"c72f4428033493d9f50ae54676c2a992\"",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        "Content-Length": "1904",
+        "Content-Type": "image/webp",
+        "X-Frame-Options": "DENY"
+      },
+      "encodedTransferBytes": 2581
+    },
+    {
+      "url": "http://127.0.0.1:8793/brand/icon-192.png",
+      "type": "Other",
+      "mime": "image/png",
+      "status": 200,
+      "cache": false,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "CF-Cache-Status": "HIT",
+        "ETag": "\"0e3ccb326012c8e2f0cd2ef9ff1ec28d\"",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        "Content-Length": "20935",
+        "Content-Type": "image/png",
+        "X-Frame-Options": "DENY"
+      },
+      "encodedTransferBytes": 21612
+    }
+  ]
+}

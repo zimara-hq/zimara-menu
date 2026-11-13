@@ -120,3 +120,19 @@ Paired rerun against main `0f0cb5a`, same canonical café recipe and synthetic S
 All candidate runs meet 2500ms. Median candidate2416ms versus main2428ms: no regression within this shared-host laboratory comparison; this small difference is not a user-device speed guarantee. Candidate encoded non-image transfer88875/88875/88866bytes. The new editor modules are lazy-loaded from the owner studio, not by public menu navigation. The public entry change only carries the private-preview tracking guard.
 
 [Raw measurements, source hashes and conditions](performance/studio-proposals-2026-11-07/measurements.json) link all six full Lighthouse JSON and transfer records, without omitting a run. SEO91 reflects the noindex local/review environment. These numbers are local laboratory results; HTTPS functional checks are reported separately after protected review deployment.
+
+## Seasonal experiences — 2026-11-08 (Asia/Riyadh)
+
+Local results only; this branch is **not deployed** because GitHub access returns403/account suspended. Base is last verified main1e59d69, same canonical synthetic café/SQLite snapshot, direct Worker without gzip proxy, Lighthouse13.0.3/Chromium154/Node24.19 mobile defaults and cold storage. Serial runs with no concurrent tests/build/graph/capture.
+
+| Tested state | LCP ms (all runs) | Performance | Accessibility | SEO |
+|---|---|---|---|---|
+| main1e59d69 |2415 /2383 /2398|97 /98 /97|100|91|
+| initial season off |2413 /2407 /2407|97 /97 /94|100|91|
+| initial active Ramadan |2459 /2457 /2431|97 /97 /96|100|91|
+| final44px control, off |2429|97|100|91|
+| final44px control, active |2441|97|100|91|
+
+The last two confirmations follow a36/40→44px native-hours disclosure correction, with corresponding visual/browser rechecks. No customer-menu code change followed these measurements. Two HQ-only control refinements do not enter the public menu bundle. All11rawruns retained, including the off-run performance94; none was dropped or selected as a substitute for a failure. Every measured LCP stays below2500ms. The final active result2441ms versus main median2398ms shows an approximately43ms feature cost in this shared-host comparison, not an improvement claim or universal-device guarantee.
+
+Final encoded non-image transfer is93477bytes off and93772bytes active (<150000byte gate). Checked-in public JS is89641rawbytes (<100KB) and CSS126074rawbytes. No new provider, remote font or illustration fetch is required for the seasonal geometry/calculation. SEO91 reflects the noindex local/review environment. [All11full Lighthouse JSON/transfer records, conditions and exact source hashes](performance/seasonal-2026-11-08/measurements.json).

@@ -1,3 +1,4 @@
+import{seasonLayer}from'./seasonal-client.js';
 import {visitorActions} from './visitor-actions.js';
 import {renderHome,tenantChrome} from './tenant-pages.js';
 import {applyTenantTheme,bannerGallery,coverImage} from './tenant-theme.js';
@@ -7,6 +8,7 @@ import { renderAddons } from './addons-public.js';
 const a = (ar, en) => (lang === 'ar' ? ar : en);
 const t = makeT({ ar: { title: 'عن المنشأة' }, en: { title: 'About the business' } });
 const main = document.getElementById('main');
+const seasons=seasonLayer(main,'home');
 main.className = 'wrap profile-page menu-wrap';
 
 const icon = (d) => `<svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -111,7 +113,7 @@ try {
   };
   const info = sections.map(k=>bits[k]||'').join('');
   const legacy=hero + bannerGallery(p.banners) + (info ? `<div class="profile-info">${info}</div>` : '');
-  function renderWebsite(recipe){liveRecipe=recipe;if(!renderHome(main,payload,recipe,products)){main.className='wrap profile-page menu-wrap';main.innerHTML=legacy;tenantChrome(org,recipe||{});}visitorActions(main,{services});}
+  function renderWebsite(recipe){liveRecipe=recipe;if(!renderHome(main,payload,recipe,products)){main.className='wrap profile-page menu-wrap';main.innerHTML=legacy;tenantChrome(org,recipe||{});}visitorActions(main,{services});seasons.set(payload.season);}
   renderWebsite(design);
   listenForPreview(renderWebsite);
   try { renderAddons(addons, { main, orgSlug: org.slug }); } catch {}
