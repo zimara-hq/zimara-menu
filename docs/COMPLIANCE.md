@@ -79,3 +79,5 @@
 ## تحديث 7 نوفمبر 2026
 
 ما نفّذ في الكود (حذف المنشأة الفعلي بعد مهلة 14 يومًا، حذف بيانات التواصل بعد 90 يومًا، إيقاف رسائل العروض، تسجيل قبول الشروط، السعرات الإلزامية، منع الشراء من التطبيق، ملف ربط Apple) مع قائمة تقديم App Store: [COMPLIANCE-2026-11-07.md](COMPLIANCE-2026-11-07.md).
+
+Privacy processing introduced by PR #39 is disabled by default and requires explicit operator activation. Existing unscheduled requests remain under review; enabled deletion always preserves the 14-day cancellation period. External cleanup failures require operator remediation from audit references. See `AZ-ACTIONS.md` and `COMPLIANCE-2026-11-07.md`; deployment alone is not evidence of active retention processing or legal compliance.

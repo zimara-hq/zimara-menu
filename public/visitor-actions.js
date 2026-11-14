@@ -5,7 +5,7 @@ const arrow='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke=
 // and deliberately absent destinations do not acquire a new navigation owner.
 export function visitorActions(main,{services=false}={}){
  document.querySelector('#visitor-actions')?.remove();document.body.classList.remove('has-visitor-actions');
- if(new URLSearchParams(location.search).has('design_preview')&&window.parent!==window)return;
+ if(['design_preview','season_preview'].some(key=>new URLSearchParams(location.search).has(key))&&window.parent!==window)return;
  const menu=[...main.querySelectorAll('a[href]')].find(link=>link.getAttribute('href').startsWith('/m/'));
  if(!menu)return;
  const direction=[...main.querySelectorAll('a[href]')].find(link=>/^(https:\/\/)(maps\.app\.goo\.gl|(?:www\.)?google\.[a-z.]+\/maps|maps\.google\.[a-z.]+)(?:[/?]|$)/i.test(link.href));

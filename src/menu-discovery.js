@@ -1,3 +1,4 @@
+import { publicSeason, seasonCategoryAvailable } from './seasons.js';
 // Public discovery derives claims only from merchant inputs and accepted orders.
 import { bad, notFound } from './util.js';
 import { body, requireRole } from './context.js';
@@ -49,12 +50,16 @@ export async function schedulesFor(env, branchId) {
 }
 export async function categoryAvailable(env, branchId, categoryId, at = Date.now()) {
   const s = await env.DB.prepare('SELECT days_json,start,end FROM menu_category_schedules WHERE branch_id=? AND category_id=?').bind(branchId, categoryId).first();
-  return scheduleAvailable(s ? {...s,days:JSON.parse(s.days_json)} : null,at);
+  if (!scheduleAvailable(s ? {...s,days:JSON.parse(s.days_json)} : null,at)) return false;
+  const branch = await env.DB.prepare('SELECT org_id FROM branches WHERE id=?').bind(branchId).first();
+  return branch ? seasonCategoryAvailable(env,branch.org_id,branchId,categoryId,at) : false;
 }
 const accepted = "q.status='accepted' AND (t.id IS NULL OR t.status!='cancelled')";
 export async function discoverMenu(env, orgId, branchId, menu, at = Date.now()) {
   const schedules = new Map((await schedulesFor(env,branchId)).map(s=>[s.category_id,s]));
-  const categories = menu.categories.map(c=>({...c,scheduled_available:scheduleAvailable(schedules.get(c.id),at)}));
+  const season=await publicSeason(env,orgId,branchId,at);
+  const seasonalAvailable=id=>{const periods=season?.periods?.filter(p=>p.category_ids.includes(id))||[];return !periods.length||periods.some(p=>p.active_now);};
+  const categories = menu.categories.map(c=>({...c,scheduled_available:scheduleAvailable(schedules.get(c.id),at)&&seasonalAvailable(c.id)}));
   const availability = new Map(categories.map(c=>[c.id,c.scheduled_available]));
   const {results} = await env.DB.prepare(`SELECT json_extract(j.value,'$.id') AS item_id,COUNT(DISTINCT q.id) AS n FROM customer_orders q LEFT JOIN tickets t ON t.id=q.ticket_id AND t.org_id=q.org_id AND t.branch_id=q.branch_id JOIN json_each(q.items_json) j WHERE q.org_id=? AND q.branch_id=? AND ${accepted} AND q.created_at>=? AND q.created_at<=? GROUP BY item_id`).bind(orgId,branchId,riyadhDayStart(at),at).all();
   const counts = new Map(results.map(r=>[r.item_id,r.n]));

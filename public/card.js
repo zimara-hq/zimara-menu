@@ -10,6 +10,27 @@ let revoked = false;
 const main = document.getElementById('main');
 main.className = 'wrap narrow';
 
+async function untrackCard(reg) {
+  if (!reg) return;
+  const worker = reg.active || reg.waiting || reg.installing;
+  if (!worker) throw new Error('worker_unavailable');
+  await new Promise((resolve, reject) => {
+    const channel = new MessageChannel();
+    const finish = (error) => {
+      clearTimeout(timeout);
+      channel.port1.close();
+      channel.port2.close();
+      if (error) reject(error); else resolve();
+    };
+    const timeout = setTimeout(() => finish(new Error('untrack_timeout')), 3000);
+    channel.port1.onmessage = ({ data }) => {
+      if (data?.type === 'untracked' && data.token === token && data.kind === 'c') finish();
+    };
+    try { worker.postMessage({ type: 'untrack', token, kind: 'c' }, [channel.port2]); }
+    catch (error) { finish(error); }
+  });
+}
+
 async function load() {
   if (revoked) return;
   try {
@@ -65,6 +86,9 @@ async function load() {
         const reg = await navigator.serviceWorker.getRegistration('/sw.js');
         const sub = await reg?.pushManager.getSubscription();
         await api('/api/cards/' + token + '/unsubscribe', { method: 'POST', body: { endpoint: sub?.endpoint || null } });
+        // The browser subscription is shared with other cards and pager tickets.
+        // Remove this card from payload-less push lookup before reporting success.
+        await untrackCard(reg);
         try { localStorage.removeItem('zm_card_push_' + token); } catch {}
         announce(A('تم. لن تصلك رسائل العروض.', 'Done. You will not receive offer messages.'));
         e.target.remove();

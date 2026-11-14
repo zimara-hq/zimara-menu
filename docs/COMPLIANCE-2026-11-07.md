@@ -42,3 +42,9 @@ Last reviewed 2026-11-07. This is engineering guidance, not legal advice. Items 
 - Simple Fatoora while not VAT-registered: checkout currently requires e-invoicing to be configured; confirm the provider can issue non-VAT invoices, or decide to issue plain invoices until registration.
 - When VAT registration happens: set the VAT number, `VAT_RATE_BPS=1500`, and change the pricing note to "prices include VAT" with VAT-inclusive amounts.
 - Apple Developer account, Team ID and bundle IDs; Google Wallet issuer account.
+
+## Merge verification safeguards — 2026-11-14
+
+Destructive privacy processing is opt-in via `PRIVACY_ERASURE_ENABLED=true`, disabled by default. No existing deletion request is backfilled with a schedule. Admin completion cannot bypass the 14-day grace period. Request claiming and data changes share one database transaction; a cancellation winning first prevents deletion. Seasonal organisation data is included. The UI distinguishes review-only requests, scheduled requests and paused processing. External storage/domain cleanup failures retain audit references for manual remediation; automatic retries are not implemented. See `AZ-ACTIONS.md` before activation. No production erasure, live messaging or payment was used for verification.
+
+Card offer opt-out removes that card from service-worker tracking and database subscriptions while preserving other cards and pager subscriptions. Local regression tests exercise the actual scripts, including timeout/retry behavior. Readiness checks do not certify Saudi or app-store compliance.

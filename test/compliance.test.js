@@ -13,7 +13,7 @@ test('every database table is classified as erased, retained by law or platform-
 });
 
 test('an organisation deletion request can be cancelled, then really erases data after the grace period', async () => {
-  const env = makeEnv();
+  const env = makeEnv({PRIVACY_ERASURE_ENABLED:'true'});
   const s = await setupOrg(env);
   const orgId = (await env.DB.prepare('SELECT id FROM orgs WHERE slug=?').bind(s.orgSlug).first()).id;
   const cat = (await s.owner.post('/api/owner/categories', { name_ar: 'قهوة', name_en: 'Coffee' })).json.id;
@@ -54,19 +54,21 @@ test('an organisation deletion request can be cancelled, then really erases data
 });
 
 test('admins see deletion requests and owners cannot complete them', async () => {
-  const env = makeEnv();
+  const env = makeEnv({PRIVACY_ERASURE_ENABLED:'true'});
   const s = await setupOrg(env);
   const req = await s.owner.post('/api/owner/data/deletion-request', { confirm: 'DELETE ORGANIZATION', password: 'owner-pass-123' });
   assert.equal((await s.owner.post('/api/admin/deletion-requests/' + req.json.request.id + '/complete', {})).status, 403);
   const list = await s.admin.get('/api/admin/deletion-requests');
   assert.equal(list.json.requests[0].status, 'pending');
+  assert.equal((await s.admin.post('/api/admin/deletion-requests/' + req.json.request.id + '/complete', {})).status,409);
+  await env.DB.prepare('UPDATE data_deletion_requests SET scheduled_for=0 WHERE id=?').bind(req.json.request.id).run();
   const done = await s.admin.post('/api/admin/deletion-requests/' + req.json.request.id + '/complete', {});
   assert.equal(done.json.erased, true);
   assert.equal((await s.admin.post('/api/admin/deletion-requests/' + req.json.request.id + '/complete', {})).status, 404);
 });
 
 test('customer contact details are stripped after the retention period', async () => {
-  const env = makeEnv({ PII_RETENTION_DAYS: '30' });
+  const env = makeEnv({ PII_RETENTION_DAYS: '30',PRIVACY_ERASURE_ENABLED:'true' });
   const s = await setupOrg(env);
   const entry = await s.cashier.post('/api/branch/waitlist', { name: 'سارة', party: 2, phone: '0551234567', note: 'قرب النافذة' });
   await env.DB.prepare("UPDATE waitlist SET status='seated', created_at=? WHERE id=?").bind(Date.now() - 31 * 86400000, entry.json.id).run();
@@ -136,4 +138,38 @@ test('Apple app association is published only with real Apple identifiers', asyn
   assert.deepEqual(res.json.appclips.apps, ['ABCDE12345.co.zimara.menu.Clip']);
   assert.equal(res.json.applinks.details[0].appIDs[0], 'ABCDE12345.co.zimara.menu');
   assert.equal((await client(makeEnv()).get('/.well-known/apple-app-site-association')).status, 404);
+});
+
+test('deployment alone cannot schedule or execute legacy deletion requests', async () => {
+  const env=makeEnv();
+  const s=await setupOrg(env);
+  const req=await s.owner.post('/api/owner/data/deletion-request',{confirm:'DELETE ORGANIZATION',password:'owner-pass-123'});
+  assert.equal(req.status,201);
+  assert.equal(req.json.request.scheduled_for,null);
+  assert.equal(req.json.message,'deletion_request_pending_review');
+  assert.equal((await s.owner.get('/api/owner/data/deletion-request')).json.erasure_enabled,false);
+  assert.deepEqual(await privacyCron(env),{erased:0,enabled:false});
+  assert.equal((await s.admin.post('/api/admin/deletion-requests/'+req.json.request.id+'/complete',{})).status,503);
+  env.PRIVACY_ERASURE_ENABLED='true';
+  assert.equal((await privacyCron(env)).erased,0,'legacy unscheduled requests stay under review');
+  assert.equal((await s.admin.post('/api/admin/deletion-requests/'+req.json.request.id+'/complete',{})).status,409);
+  assert.equal((await s.owner.get('/api/owner/data/deletion-request')).json.request.status,'pending');
+});
+
+test('a cancellation winning just before the deletion transaction prevents every destructive write', async () => {
+  const env=makeEnv({PRIVACY_ERASURE_ENABLED:'true'});
+  const s=await setupOrg(env);
+  const req=await s.owner.post('/api/owner/data/deletion-request',{confirm:'DELETE ORGANIZATION',password:'owner-pass-123'});
+  const orgId=(await env.DB.prepare('SELECT id FROM orgs WHERE slug=?').bind(s.orgSlug).first()).id;
+  await env.DB.prepare('UPDATE data_deletion_requests SET scheduled_for=0 WHERE id=?').bind(req.json.request.id).run();
+  const original=env.DB.batch.bind(env.DB);
+  env.DB.batch=async statements=>{
+    await env.DB.prepare("UPDATE data_deletion_requests SET status='cancelled' WHERE id=?").bind(req.json.request.id).run();
+    return original(statements);
+  };
+  assert.deepEqual(await eraseOrganization(env,orgId),{erased:false,cancelled:true});
+  assert.equal((await env.DB.prepare('SELECT active,erased_at FROM orgs WHERE id=?').bind(orgId).first()).active,1);
+  assert.equal((await env.DB.prepare('SELECT COUNT(*) AS n FROM branches WHERE org_id=?').bind(orgId).first()).n,1);
+  assert.equal((await env.DB.prepare('SELECT COUNT(*) AS n FROM users WHERE org_id=? AND disabled=0').bind(orgId).first()).n,2);
+  assert.equal((await env.DB.prepare('SELECT status FROM data_deletion_requests WHERE id=?').bind(req.json.request.id).first()).status,'cancelled');
 });

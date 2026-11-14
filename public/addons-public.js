@@ -142,5 +142,5 @@ export function renderAddons(addons, { main, orgSlug }) {
   }
   // Private studio previews receive draft content from their parent. Keep
   // third-party tracking scripts out even when a visitor previously consented.
-  if(!new URLSearchParams(location.search).has('design_preview'))consent(orgSlug, addons.pixels);
+  if(!['design_preview','season_preview'].some(key=>new URLSearchParams(location.search).has(key)))consent(orgSlug, addons.pixels);
 }

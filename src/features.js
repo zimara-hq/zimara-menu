@@ -1,3 +1,4 @@
+import { publicSeason } from './seasons.js';
 import { discoverMenu, categoryAvailable } from './menu-discovery.js';
 import { activeDesign } from './design.js';
 import { publish } from './realtime.js';
@@ -5,7 +6,7 @@ import { itemView, priceWithOptions } from './menu-extras.js';
 import { DEFAULT_THEME, validateTheme } from './identity.js';
 import { publicAddons, notifyTelegram, orderMessage, orderButtons, later } from './addons.js';
 import { loadUser, verifyPassword } from './auth.js';
-import { DELETION_GRACE_MS } from './privacy.js';
+import { DELETION_GRACE_MS, privacyErasureEnabled } from './privacy.js';
 import { orderExtras, replayOrderDetails } from './ordering.js';
 import { acceptOrder, rejectOrder } from './orders.js';
 import {
@@ -515,12 +516,14 @@ export function registerFeatures(app) {
     )
       .bind(orgId)
       .first();
+    const seasonSettings=await c.env.DB.prepare('SELECT config_json,revision,updated_at FROM org_seasons WHERE org_id=?').bind(orgId).first();
     const exportData = {
       schema_version: 1,
       exported_at: now(),
       organization,
       profile,
       branch_settings: settings,
+      season_settings: seasonSettings?{config:JSON.parse(seasonSettings.config_json),revision:seasonSettings.revision,updated_at:seasonSettings.updated_at}:null,
       subscription,
       loyalty_program: program,
       data,
@@ -546,7 +549,7 @@ export function registerFeatures(app) {
     )
       .bind(c.get('user').org_id)
       .first();
-    return c.json({ request });
+    return c.json({ request, erasure_enabled: privacyErasureEnabled(c.env) });
   });
   app.post('/api/owner/data/deletion-request', privacyOwner, async (c) => {
     await rateLimit(c, 'data-deletion', { limit: 5, window: 900000 });
@@ -566,7 +569,7 @@ export function registerFeatures(app) {
     const result = await c.env.DB.prepare(
       "INSERT INTO data_deletion_requests(id,org_id,requested_by,status,created_at,updated_at,scheduled_for) VALUES(?,?,?,'pending',?,?,?) ON CONFLICT DO NOTHING",
     )
-      .bind(id(), u.org_id, u.id, stamp, stamp, stamp + DELETION_GRACE_MS)
+      .bind(id(), u.org_id, u.id, stamp, stamp, privacyErasureEnabled(c.env)?stamp + DELETION_GRACE_MS:null)
       .run();
     const request = await c.env.DB.prepare(
       "SELECT id,status,created_at,updated_at,scheduled_for FROM data_deletion_requests WHERE org_id=? AND status='pending'",
@@ -576,7 +579,7 @@ export function registerFeatures(app) {
     if (result.meta.changes)
       await audit(c.env, u, 'data.deletion.request', { id: request.id });
     return c.json(
-      { request, message: 'deletion_scheduled', deleted: false, scheduled_for: request.scheduled_for },
+      { request, message: request.scheduled_for===null?'deletion_request_pending_review':'deletion_scheduled', deleted: false, scheduled_for: request.scheduled_for, erasure_enabled: privacyErasureEnabled(c.env) },
       result.meta.changes ? 201 : 200,
     );
   });
@@ -730,6 +733,7 @@ export function registerFeatures(app) {
       loyalty: program || null,
       addons: await publicAddons(c.env, org.id),
       design: await activeDesign(c.env, org.id),
+      season: await publicSeason(c.env, org.id, branches[0]?.id||null),
       branches: branches.map((b) => ({
         ...branchPublic(b),
         settings:

@@ -1,0 +1,170 @@
+{
+  "baseSha": "1e59d69bdfc7c9059f8f7df30000ddf456cc7ff9",
+  "branch": "codex/next-seasonal",
+  "conditions": "Direct local Worker; identical isolated canonical caf\u00e9 recipe/data; Lighthouse13.0.3 Chromium154 Node24.19; mobile default simulation; cold HTTP/storage; runs serial with no concurrent tests/captures/build/graph. Main3, initialoff3/active3, final44px confirmationoff1/active1. All11 retained.",
+  "sourceSha256": {
+    "public/menu-entry.js": "2a00552080b9d7fdecd99cd9cb792690afd1f1eeb5f5bb39965a59a2fbb60650",
+    "public/menu-entry.css": "6defde5d7793c30b89b1954399cdd3a93f6a1dddd07a9e05b240fefb600c9c13",
+    "public/seasonal.js": "f926826fcb3e08d0b8bbed33dac42af7548414fca4b071a9da0f05faa492c42c",
+    "public/seasonal.css": "4f701355c6321647f7248277ae60bc8d1714df3a84aff8917a20edb68d4f3a3f",
+    "public/seasonal-client.js": "53ee265f1e444b6855ef506fdc1289ad9afede67c907561226beb14c5509009b",
+    "src/seasons.js": "c591b9ce290a9f16db9201adbedddd7d59ddb19ddeddeba69a5dd790ea823262",
+    "src/season-calendar.js": "ab6bbd9e512e86682b84a3eef4c7d1eb7a0144c8710d27b5ce24ba7ad1e01a0d"
+  },
+  "measurements": [
+    {
+      "name": "active-1",
+      "timestamp": "2026-11-07T22:02:12.566Z",
+      "lcpMs": 2459.2714499999997,
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 93775,
+      "raw": "active-1.lighthouse.json",
+      "transfer": "active-1.transfer.json",
+      "revision": "prior numeric touch-size correction"
+    },
+    {
+      "name": "active-2",
+      "timestamp": "2026-11-07T22:02:27.760Z",
+      "lcpMs": 2456.7342,
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 93784,
+      "raw": "active-2.lighthouse.json",
+      "transfer": "active-2.transfer.json",
+      "revision": "prior numeric touch-size correction"
+    },
+    {
+      "name": "active-3",
+      "timestamp": "2026-11-07T22:02:43.877Z",
+      "lcpMs": 2431.3534,
+      "scores": {
+        "performance": 96,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 93783,
+      "raw": "active-3.lighthouse.json",
+      "transfer": "active-3.transfer.json",
+      "revision": "prior numeric touch-size correction"
+    },
+    {
+      "name": "final-active",
+      "timestamp": "2026-11-07T22:08:32.957Z",
+      "lcpMs": 2440.7306,
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 93772,
+      "raw": "final-active.lighthouse.json",
+      "transfer": "final-active.transfer.json",
+      "revision": "final44px menu control"
+    },
+    {
+      "name": "final-off",
+      "timestamp": "2026-11-07T22:08:16.075Z",
+      "lcpMs": 2428.5892,
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 93477,
+      "raw": "final-off.lighthouse.json",
+      "transfer": "final-off.transfer.json",
+      "revision": "final44px menu control"
+    },
+    {
+      "name": "main-1",
+      "timestamp": "2026-11-07T22:00:36.095Z",
+      "lcpMs": 2414.6152,
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 88877,
+      "raw": "main-1.lighthouse.json",
+      "transfer": "main-1.transfer.json",
+      "revision": "prior numeric touch-size correction"
+    },
+    {
+      "name": "main-2",
+      "timestamp": "2026-11-07T22:00:51.564Z",
+      "lcpMs": 2382.6516,
+      "scores": {
+        "performance": 98,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 88871,
+      "raw": "main-2.lighthouse.json",
+      "transfer": "main-2.transfer.json",
+      "revision": "prior numeric touch-size correction"
+    },
+    {
+      "name": "main-3",
+      "timestamp": "2026-11-07T22:01:07.106Z",
+      "lcpMs": 2397.6068,
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 88863,
+      "raw": "main-3.lighthouse.json",
+      "transfer": "main-3.transfer.json",
+      "revision": "prior numeric touch-size correction"
+    },
+    {
+      "name": "off-1",
+      "timestamp": "2026-11-07T22:01:24.343Z",
+      "lcpMs": 2413.2961999999998,
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 93481,
+      "raw": "off-1.lighthouse.json",
+      "transfer": "off-1.transfer.json",
+      "revision": "prior numeric touch-size correction"
+    },
+    {
+      "name": "off-2",
+      "timestamp": "2026-11-07T22:01:39.657Z",
+      "lcpMs": 2406.92,
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 93487,
+      "raw": "off-2.lighthouse.json",
+      "transfer": "off-2.transfer.json",
+      "revision": "prior numeric touch-size correction"
+    },
+    {
+      "name": "off-3",
+      "timestamp": "2026-11-07T22:01:55.155Z",
+      "lcpMs": 2407.2802,
+      "scores": {
+        "performance": 94,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 93481,
+      "raw": "off-3.lighthouse.json",
+      "transfer": "off-3.transfer.json",
+      "revision": "prior numeric touch-size correction"
+    }
+  ]
+}

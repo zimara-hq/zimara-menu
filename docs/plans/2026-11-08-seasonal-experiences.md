@@ -1,0 +1,29 @@
+# Seasonal experiences implementation plan
+
+Goal: extend the published merchant homepage/menu with an opt-in seasonal layer, true Umm al-Qura calendar, branch-city Ramadan windows and a protected HQ occasion catalogue. Preserve all recipe/content/publication work from PR38; no free CSS, false orders, provider activation or DNS.
+
+Architecture: independent seasonal settings with revisioned saves, bounded occasion rules and motif vocabulary. Resolve the active layer on the server without overwriting a merchant recipe. Owner-only preview can simulate any catalogue occasion; public URLs cannot select a date or unlock timed products. Calendar/solar calculations are pure and deterministic; city prayer times are explicitly estimates, with owner override for service windows. Menu category availability and checkout enforce configured seasonal windows.
+
+Base: last verified main1e59d69. GitHub currently returns403/account suspended for fetch and REST; no new remote main is assumed. Complete local implementation/evidence and commit; do not bypass protected PR/CI/deployment if suspension persists.
+
+## Global constraints
+Arabic/mobile first, bilingual, SVG only, platform Tajawal/Jakarta semantic tokens, merchant original recipe preserved, no paid/external calls. Branch-scoped queries and optimistic revision, no production seed/reset. Graphify update after code. New Playwright in CI and independent final visual review. Phase4 remains gated by merge/green.
+
+## Interfaces and tasks
+
+- [ ] Pure `src/season-calendar.js`: `BUILTIN_OCCASIONS` six (`ramadan`, `eid-fitr`, `eid-adha`, `national`, `founding`, `winter`) with `rule:{calendar:'hijri'|'gregorian',month,day,duration}` and motif ID; `CITIES` bounded Saudi lat/lon; `hijriParts(at)`, `occasionRange(occasion,at) -> {starts_on,ends_on,active}` nearest current/next occurrence, actual Saudi civil-day boundaries; `cityTimes(city,at)->{sunset,fajr,date,source:'calculated'}` localHH:MM, no exact-notification claims. RED then GREEN date/leap/yearwrap/solar-plausibility tests.
+- [ ] `src/seasons.js`, migration0028, `test/seasons.test.js`: `registerSeasons(app)`, `publicSeason(env,orgId,branchId=null,at=Date.now(),previewId=null)->season|null`, `seasonCategoryAvailable(env,orgId,branchId,categoryId,at)`. OwnerGET/PUT `/api/owner/seasons`, GET `/api/owner/seasons/preview?occasion=...&branch_id=...`, HQGET/POST/PUT/DELETE `/api/admin/seasons[/id]` (super/admin only existingMFA). Config `{mode:'off'|'auto'|'manual',manual_id,enabled_ids:[],overrides:{[id]:{banner_ar,banner_en}},branches:[{branch_id,city,periods:[{kind:'iftar'|'suhoor'|'seasonal',start:null|'HH:MM',end:null|'HH:MM',category_ids:[]}]}]}`. PUT `{revision,config}`. GET `{revision,config,occasions,cities,branches,categories,active}`. Projection `{id,name_ar,name_en,motif,accent,banner_ar,banner_en,starts_on,ends_on,hijri_label,city,periods:[{kind,start,end,category_ids,active_now,source:'calculated'|'merchant'}],preview:boolean}`. No HQ free SVG/CSS, six bounded motifs. Strict input, tenant/category checks, mutation only explicitsave; reject conflicts. Calendar unavailable errors truthful. Public no simulated dates. Tests auth/tenant/limits/rules/revision/return-to-base/overnight/checkout eligibility.
+- [ ] `public/seasonal.js`/css: `renderSeason(main,season,{view:'home'|'menu'}={})` replaces owned layer only, null removes and restores originalpage. Large original decorative geometric seasonal header, six visually distinct motifs, clear banner/name/time/city, matching mobile/menu compact variant, accessible real category links. Escape text, HEX only, SVG fixed vocabulary, reduced motion. Preview listener exact origin/parent/embed only. Does not import platform common API or mutate recipe/globalcolor. Root integrates public API/profile/menu + owner preview message.
+- [ ] Owner `public/studio-seasons.js`/css: existing studio tab «المواسم», modesoff/auto/manual, selectoccasion, nextHijri/Gregoriandates, peroccasionmessage, actualbranchcity/period/categorychoices, explicitsave/revisionerror, actualhomepage/menu preview with simulated overlay not publication; six motif strips reuse renderer. HQ section existing dashboard adds/edits/disables boundedcustomoccasions. No new signup/email or fakeactivecounter.
+- [ ] Root integrations `src/app.js`, `src/features.js`, `src/menu-discovery.js`, `public/{profile,menu,design-studio,dashboard}.js`, buildmenu, CI. Node tests+newPlaywright: enablewinter/ramadanpreview, actualprofile/menu overlay, publicdateparamdoesnothing, branchcategorywindow/checkout, offrestoresbase, nonownerdenied, HQcustomoccasion. Match before/after390/1440 light/dark;3coldLH<=2500/no regression; freshreview/Graphify; documentAzsteps/competitortable/limits.
+
+## Review focus
+1. Calendar boundary at midnightRiyadh and winter Gregorian year wrap; trueUmmalQura not30dayarithmetic.
+2. Draft preview must not enable live season or bypass scheduled category checkout.
+3. Disabled/foreign categories/branches cannot be attached or leaked.
+4. Ramadan windows are city-dependent **calculated estimates**; manual service times override and appear labeled; no invented merchantproducts.
+5. Disabling a layer restores the exact merchant identity/content; seasonalmarkup never gets inline-edit metadata accidentally.
+
+## Local completion — 2026-11-08
+
+Calendar,storage/API,customerlayer,owner/HQcontrols and integrations are implemented locally.257unit/integration tests,12newrealPlaywright checks,5mockedHQUI contracts,privacy and existingjourneys pass; bothbuilds pass.11serialrawLH runs retained,finaloff2429ms/active2441ms. Screenshots and independentreview underdocs/screenshots/seasonal anddocs/reviews/seasonal. GitHub403account suspended blocksfetch/push/PR/remoteCI/protecteddeploy; no attempt to bypass. Laterphases remain gated.

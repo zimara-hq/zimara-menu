@@ -48,6 +48,13 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('message', (e) => {
+  if (e.data?.type === 'untrack' && e.data.kind === 'c' && typeof e.data.token === 'string') {
+    e.waitUntil((async () => {
+      const tokens = await readTokens();
+      await writeTokens(tokens.filter((x) => x.token !== e.data.token || x.kind !== 'c'));
+      e.ports[0]?.postMessage({ type: 'untracked', token: e.data.token, kind: 'c' });
+    })());
+  }
   if (e.data?.type === 'track' && typeof e.data.token === 'string') {
     e.waitUntil((async () => {
       const tokens = await readTokens();

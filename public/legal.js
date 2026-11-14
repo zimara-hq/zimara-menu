@@ -27,7 +27,7 @@ const sections=[
   ])
   +`<h3>${a('مدة الحفظ','Retention')}</h3>`+list([
    ['تذكرة النداء تنتهي خلال 12 ساعة.','A pager ticket expires within 12 hours.'],
-   ['الاسم والجوال والعنوان في الطلبات وقائمة الانتظار، وتعليقات التقييم، تُحذف تلقائيًا بعد 90 يومًا.','Names, phones and addresses in orders and the waitlist, and rating comments, are erased automatically after 90 days.'],
+   ['الاسم والجوال والعنوان في الطلبات وقائمة الانتظار، وتعليقات التقييم، تخضع لسياسة احتفاظ مدتها الافتراضية 90 يومًا؛ المعالجة الآلية تتطلب تفعيلًا من المشغّل.','Names, phones and addresses in orders and the waitlist, and rating comments, follow a default 90-day retention policy; automatic processing requires operator activation.'],
    ['بيانات الحساب تبقى ما دام الاشتراك قائمًا، ثم تُحذف عند طلب حذف المنشأة.','Account data is kept while the subscription is active and erased when the business requests deletion.'],
    ['الفواتير وسجلات الدفع وسجل الأمان تبقى المدة التي يلزم بها النظام (الدفاتر التجارية والزكاة والضريبة).','Invoices, payment records and the security log are kept for the period required by law (commercial books, zakat and tax).'],
   ])
@@ -72,8 +72,8 @@ const sections=[
  ['delete-account',a('حذف الحساب','Deleting your account'),
   list([
    ['من «بيانات منشأتك» في اللوحة أو التطبيق: اكتب DELETE ORGANIZATION وكلمة المرور.','From “Your business data” in the dashboard or app: type DELETE ORGANIZATION and your password.'],
-   ['يمكنك التراجع خلال 14 يومًا. بعدها تُحذف المنيو والفروع والعملاء والحسابات نهائيًا وتلقائيًا.','You can cancel within 14 days. After that the menus, branches, guests and accounts are erased permanently and automatically.'],
-   ['نُبقي الفواتير وسجلات الدفع فقط للمدة التي يلزم بها النظام.','We keep only invoices and payment records for the period the law requires.'],
+   ['تُعرض حالة طلب الحذف في لوحة بياناتك. الطلبات غير المجدولة قيد المراجعة. عند جدولة الحذف تتاح مهلة تراجع 14 يومًا؛ التنفيذ الآلي يتطلب تفعيلًا من المشغّل.','Your data panel shows the request status. Unscheduled requests remain under review. Scheduled deletion has a 14-day cancellation period; automatic processing requires operator activation.'],
+   ['تخضع السجلات المالية والأمنية وإثبات طلب الحذف لسياسة الاحتفاظ والمتطلبات النظامية.','Financial, security and deletion-request evidence records follow the retention policy and legal requirements.'],
    ['عميل المنشأة يلغي بطاقة الولاء من صفحتها مباشرة.','A guest revokes a loyalty card directly from its page.'],
   ])],
  ['dpa',a('شروط معالجة البيانات للمشتركين','Data processing terms for subscribers'),
@@ -87,7 +87,7 @@ const sections=[
 const focus=new URLSearchParams(location.search).get('section')||({'/privacy':'privacy','/terms':'terms'})[location.pathname.replace(/\/$/,'')];
 document.querySelector('#main').innerHTML=`<article class="card legal-doc"><span class="pill">${a('آخر تحديث','Last updated')} ${VERSION}</span><h1>${a('السياسات والشروط','Policies and terms')}</h1><nav aria-label="${a('الأقسام','Sections')}"><ul>${sections.map(([id,title])=>`<li><a href="#${id}">${e(title)}</a></li>`).join('')}</ul></nav>${sections.map(([id,title,html])=>`<section id="${id}"><h2>${e(title)}</h2>${html}</section>`).join('')}<p><a href="/">${a('العودة للرئيسية','Back to home')}</a></p></article>`;
 if(focus&&!location.hash)document.getElementById(focus)?.scrollIntoView();
-const pending=a('قيد الإصدار','Being issued');
+const pending=a('لم تُضف بعد','Not provided');
 fetch('/api/legal').then(r=>r.json()).then(({legal:l})=>{
  const support=[l.support_email||'hello@zimara.co',l.support_phone].filter(Boolean);
  const rows=[[a('الاسم القانوني','Legal name'),a(l.legal_name_ar,l.legal_name_en)||l.legal_name_ar||l.legal_name_en||pending],[a('السجل التجاري','CR number'),l.cr_number||pending],[a('الرقم الضريبي','VAT number'),l.vat_number||a('غير مسجلة في ضريبة القيمة المضافة','Not VAT-registered')],[a('العنوان','Address'),a(l.address_ar,l.address_en)||l.address_ar||l.address_en||pending]];

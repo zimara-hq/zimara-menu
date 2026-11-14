@@ -1,3 +1,4 @@
+import { registerSeasons, publicSeason } from './seasons.js';
 import { discoveryFields, discoverMenu, recommendations, registerMenuSchedules } from './menu-discovery.js';
 import { registerPrivacy, privacyCron } from './privacy.js';
 import { itemExtras, itemView } from './menu-extras.js';
@@ -746,7 +747,7 @@ async function publicMenu(env, branchSlug) {
     .bind(branchSlug)
     .first();
   if (!b) throw notFound();
-  const [menu, { results: siblings }, addons, design, ordering, waitlist, profile_data] = await Promise.all([
+  const [menu, { results: siblings }, addons, design, ordering, waitlist, profile_data, season] = await Promise.all([
     orgMenu(env, b.org_id, { branchId: b.id }),
     env.DB.prepare('SELECT slug, name_ar, name_en FROM branches WHERE org_id = ? AND active = 1 ORDER BY created_at').bind(b.org_id).all(),
     publicAddons(env, b.org_id),
@@ -754,9 +755,10 @@ async function publicMenu(env, branchSlug) {
     getOrdering(env, b.id).then(publicOrdering),
     waitSettings(env, b.id).then(settings => settings.active),
     publicMenuContext(env, b),
+    publicSeason(env, b.org_id, b.id),
   ]);
   const { org_id, ...branchInfo } = b;
-  return { branch: branchInfo, ...menu, addons, design, ordering, waitlist, branches: siblings, profile_data, price_labels: publicPriceLabels(menu.items) };
+  return { branch: branchInfo, ...menu, addons, design, ordering, waitlist, branches: siblings, profile_data, season, price_labels: publicPriceLabels(menu.items) };
 }
 
 app.get('/api/public/menu/:branchSlug', async (c) => c.json(await publicMenu(c.env, c.req.param('branchSlug'))));
@@ -930,6 +932,7 @@ registerAddons(app);
 registerTemplates(app);
 registerDomains(app);
 registerDesign(app);
+registerSeasons(app);
 registerStudioProposals(app);
 registerStaffPermissions(app,{requireRole,body,audit});
 registerAiImport(app);
