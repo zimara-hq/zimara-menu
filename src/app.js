@@ -1,5 +1,6 @@
 import { registerSeasons, publicSeason } from './seasons.js';
 import { discoveryFields, discoverMenu, recommendations, registerMenuSchedules } from './menu-discovery.js';
+import { registerPrivacy, privacyCron } from './privacy.js';
 import { itemExtras, itemView } from './menu-extras.js';
 import { publicPriceLabels } from '../public/menu-discovery.js';
 import { menuPage } from './menu-page.js';
@@ -126,6 +127,7 @@ registerBilling(app);
 registerMail(app);
 registerRewaa(app);
 registerLegal(app);
+registerPrivacy(app);
 
 // ---------- Session ----------
 
@@ -915,6 +917,7 @@ export async function scheduled(env, fetcher) {
     env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(t),
   ]));
   const waitlist = await run('waitlist', () => waitlistCron(env, fetcher));
+  if (new Date(t).getUTCMinutes() === 41) await run('privacy', () => privacyCron(env, fetcher));
   if (new Date(t).getUTCMinutes() === 23 && new Date(t).getUTCHours() >= 3 && new Date(t).getUTCHours() <= 17) await run('winback', () => winbackCron(env, fetcher));
   await run('heartbeat', () => env.DB.prepare("INSERT INTO platform_settings(key,value,updated_at) VALUES('cron_health',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at")
     .bind(JSON.stringify({failed, status:failed.length?'degraded':'ok'}),t).run());
@@ -947,6 +950,26 @@ registerIntegrations(app, { onTicketReady: (env, ticketId) => alertTicket(env, t
 registerDemo(app);
 
 const PAGES = { '/p/': '/profile', '/m/': '/menu', '/t/': '/ticket', '/c/': '/card', '/j/': '/join', '/display/': '/display', '/w/': '/wait', '/q/': '/wait' };
+
+// Universal links, App Clip and passkey association for the iPhone apps. Served only when
+// Az's Apple Team ID and bundle IDs are configured, so nothing invented is published.
+export function appleAssociation(env) {
+  const team = String(env.APPLE_TEAM_ID || '').trim(), app = String(env.APPLE_BUNDLE_ID || '').trim();
+  if (!/^[A-Z0-9]{10}$/.test(team) || !/^[A-Za-z0-9.-]+$/.test(app)) return null;
+  const id = team + '.' + app, clip = String(env.APPLE_APP_CLIP_BUNDLE_ID || '').trim();
+  const out = {
+    applinks: { details: [{ appIDs: [id], components: ['/t/*', '/c/*', '/w/*', '/q/*', '/m/*', '/j/*'].map((p) => ({ '/': p })) }] },
+    webcredentials: { apps: [id] },
+  };
+  if (/^[A-Za-z0-9.-]+$/.test(clip)) out.appclips = { apps: [team + '.' + clip] };
+  return out;
+}
+app.get('/.well-known/apple-app-site-association', (c) => {
+  const body = appleAssociation(c.env);
+  if (!body) throw notFound();
+  c.header('cache-control', 'public, max-age=3600');
+  return c.json(body);
+});
 
 app.get('*', async (c) => {
   const path = new URL(c.req.url).pathname;

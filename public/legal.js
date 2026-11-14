@@ -1,5 +1,95 @@
 import {lang,makeT,topbar} from './common.js';
+// Privacy notice (PDPL), terms (E-Commerce Law), cancellation and the subscriber data
+// processing terms. Arabic is the governing text. Legal identity comes from /api/legal and
+// is never invented: a missing field is shown as "being issued".
 const a=(ar,en)=>lang==='ar'?ar:en;
-topbar(document.querySelector('#top'),makeT({ar:{title:'سياسات التجربة'},en:{title:'Trial policies'}}));
-document.querySelector('#main').innerHTML=`<article class="card"><span class="pill">${a('نسخة تجربة ومراجعة · ليست الشروط التجارية النهائية','Trial/review version · not final commercial terms')}</span><h1>${a('سياسات واضحة، قبل البداية.','Clear policies, before you begin.')}</h1><p>${a('هذه المنصة في مرحلة التجربة. لا تحصّل اشتراكات أو تصدر فواتير ضريبية في هذه النسخة. الاسم القانوني والسجل والرقم الضريبي وشروط البيع تحتاج اعتماد المالك قبل الإطلاق التجاري.','This platform is in trial. It does not collect subscriptions or issue tax invoices in this version. Legal identity, registration, VAT details and commercial terms require owner approval before launch.')}</p><h2 id="privacy">${a('الخصوصية وبيانات التجربة','Privacy and trial data')}</h2><p>${a('النداء لا يتطلب اسم العميل أو رقم جواله. تُستخدم ملفات ارتباط آمنة لجلسة الدخول، ويحفظ المتصفح اختيار اللغة والمظهر. غرف العرض تستخدم بيانات اصطناعية؛ لا تضف بيانات حقيقية أو بيانات صحية أو مالية. من يملك رابط الغرفة يستطيع مشاركة التحكم التجريبي فيها. تنتهي صلاحية الوصول للغرفة خلال ساعتين.','The pager does not require a customer name or phone. Secure cookies maintain sign-in; the browser stores language and theme preferences. Demonstration rooms use synthetic data: do not enter real, health or financial data. Room link holders share its demo controls. Room access expires within two hours.')}</p><p>${a('الحسابات التجريبية تحفظ البريد والاسم وبيانات المنشأة وكلمة مرور مشتقة تشفيريًا. مدة التجربة 14 يومًا. قبل التشغيل التجاري يلزم اعتماد سياسة الاحتفاظ والحذف والتصدير واتفاقية المعالجة ومكان الاستضافة؛ يمكن تصدير البيانات وطلب حذف المنشأة من اللوحة. إلغاء بطاقة العميل يبطل رابطها ورمزها فورًا مع الإبقاء على دفتر حركات منزوع المعرفات؛ حذف بيانات المنشأة نهائيًا يخضع للمراجعة.','Trial accounts store email, name, business details and a cryptographically derived password. The trial lasts 14 days. Retention, deletion/export, a processing agreement and hosting transfer assessment require approval before commercial use. Data export and organisation deletion requests are available in the dashboard. Revoking a loyalty card immediately disables its public link and cashier code while retaining a non-identifying ledger. Final organisation erasure remains subject to review.')}</p><h2 id="terms">${a('استخدام التجربة','Using the trial')}</h2><p>${a('استخدم التجربة فقط ببيانات مثال، ولا تعتمد عليها لتشغيل منشأة حقيقية قبل قبول الاختبارات ومتطلبات التشغيل. الأسعار المعروضة مقترحات قبل الضريبة. لا يمثل عرض ميزة أو مزود خدمة تفعيلًا أو شراكة أو موافقة تنظيمية.','Use sample data only. Do not rely on the trial for a real business before operational acceptance. Displayed prices are proposals excluding tax. A feature or provider listing is not activation, a partnership or regulatory approval.')}</p><h2 id="cancellation">${a('التجديد والإلغاء','Renewal and cancellation')}</h2><p>${a('لا يوجد خصم تلقائي في النسخة الحالية. يمكنك طلب إلغاء التجربة من «باقتي»؛ يتوقف التعديل عند نهاية المدة ويظل العرض متاحًا وفق حالة الحساب. الاشتراكات المدفوعة والاسترداد وإشعارات التجديد تحتاج شروطًا تجارية معتمدة وربط بوابة الدفع.','There are no automatic charges in this version. Request trial cancellation from My plan; editing stops at period end and viewing follows account status. Paid subscriptions, refunds and renewal notices require approved commercial terms and payment integration.')}</p><h2>${a('الإشعارات والمحافظ','Notifications and wallets')}</h2><p>${a('تنبيه الصفحة يحتاج تفعيل الصوت وإبقاء الصفحة متاحة. الإشعارات والمحافظ تحتاج ربطًا واختبارات أجهزة فعلية وصلاحية المستخدم، وتتأثر بالشبكة ووضع الصامت والتركيز. لا يوجد تنبيه لجهاز مطفأ كليًا.','In-page alerts require sound activation and an available page. Push and Wallet require provider setup, real-device tests and permission, and depend on the network, silent mode and Focus. A powered-off device cannot receive alerts.')}</p><div id="legal-id"></div><p><a href="mailto:hello@zimara.co">hello@zimara.co</a> · <a href="/">${a('العودة للرئيسية','Back to home')}</a></p></article>`;
-fetch('/api/legal').then(r=>r.json()).then(({legal:l})=>{const rows=[[a('الاسم القانوني','Legal name'),a(l.legal_name_ar,l.legal_name_en)||l.legal_name_ar],[a('السجل التجاري','CR number'),l.cr_number],[a('الرقم الضريبي','VAT number'),l.vat_number],[a('العنوان','Address'),a(l.address_ar,l.address_en)||l.address_ar],[a('الدعم','Support'),[l.support_email,l.support_phone].filter(Boolean).join(' · ')]].filter(r=>r[1]);if(!rows.length)return;const e=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);document.querySelector('#legal-id').innerHTML=`<h2>${a('بيانات المنشأة','Business details')}</h2><dl>${rows.map(([k,v])=>`<dt>${e(k)}</dt><dd>${e(v)}</dd>`).join('')}</dl>`;}).catch(()=>{});
+const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+const VERSION='2026-11-07';
+topbar(document.querySelector('#top'),makeT({ar:{title:'السياسات والشروط'},en:{title:'Policies and terms'}}));
+const list=items=>`<ul>${items.map(([ar,en])=>`<li>${a(ar,en)}</li>`).join('')}</ul>`;
+const p=(ar,en)=>`<p>${a(ar,en)}</p>`;
+const sections=[
+ ['identity',a('من نحن','Who we are'),p('«زيمارا منيو» خدمة رقمية تقدمها زيمارا للمنشآت (مطاعم، مقاهي، عيادات وغيرها): منيو إلكتروني، نداء العملاء، قائمة انتظار، وبطاقات ولاء. بيانات المنشأة النظامية تظهر أدناه.','ZIMARA Menu is a digital service provided by ZIMARA to businesses (restaurants, cafes, clinics and others): digital menus, customer calling, waitlists and loyalty cards. Our registered details are shown below.')+'<div id="legal-id"></div>'],
+ ['privacy',a('سياسة الخصوصية','Privacy notice'),
+  p('نلتزم بنظام حماية البيانات الشخصية في المملكة العربية السعودية ولوائحه. توضح هذه السياسة ما نجمعه، ولماذا، ومدة حفظه، وحقوقك.','We comply with the Saudi Personal Data Protection Law (PDPL) and its regulations. This notice explains what we collect, why, how long we keep it and your rights.')
+  +`<h3>${a('دورنا','Our role')}</h3>`+list([
+   ['لبيانات حسابات المشتركين وموظفيهم: زيمارا «جهة تحكم».','For subscriber and staff account data, ZIMARA is the controller.'],
+   ['لبيانات عملاء المنشأة (الطلب، النداء، الانتظار، الولاء): المنشأة هي «جهة التحكم» وزيمارا «جهة معالجة» تعمل بتعليماتها فقط.','For a business’s guests (orders, calls, waitlist, loyalty) the business is the controller and ZIMARA processes the data only on its instructions.'],
+  ])
+  +`<h3>${a('ما نجمعه ولماذا','What we collect and why')}</h3>`+list([
+   ['حساب المشترك: الاسم، البريد، كلمة مرور مشفّرة، بيانات المنشأة والفوترة. لتقديم الخدمة وإصدار الفواتير (تنفيذ العقد والالتزام النظامي).','Subscriber account: name, email, hashed password, business and billing details, to provide the service and issue invoices (contract and legal obligation).'],
+   ['النداء: رقم الطلب فقط. لا نطلب اسمًا ولا رقم جوال.','Pager: the order number only. No name or phone is required.'],
+   ['الطلبات وقائمة الانتظار: الاسم والجوال والعنوان عند التوصيل أو الحجز فقط، لتنفيذ طلبك.','Orders and waitlist: name, phone and address only for delivery or waitlist, to fulfil your request.'],
+   ['بطاقة الولاء: رمز البطاقة وسجل الأختام. لا نطلب اسمًا أو جوالًا.','Loyalty card: the card code and stamp history. No name or phone is required.'],
+   ['الإشعارات: عنوان اشتراك الإشعار في متصفحك، بعد موافقتك فقط.','Notifications: your browser’s push subscription address, only after you agree.'],
+   ['أدوات القياس الإعلانية للمنشأة: لا تعمل إلا بعد موافقتك الصريحة في صفحة المنيو.','A business’s ad measurement tools run only after your explicit consent on its menu page.'],
+   ['ملفات الارتباط: ملف جلسة آمن للدخول، وتخزين محلي للغة والمظهر. لا نستخدم ملفات تتبع إعلانية خاصة بنا.','Cookies: a secure session cookie for sign-in and local storage for language and theme. We use no advertising trackers of our own.'],
+  ])
+  +`<h3>${a('مدة الحفظ','Retention')}</h3>`+list([
+   ['تذكرة النداء تنتهي خلال 12 ساعة.','A pager ticket expires within 12 hours.'],
+   ['الاسم والجوال والعنوان في الطلبات وقائمة الانتظار، وتعليقات التقييم، تخضع لسياسة احتفاظ مدتها الافتراضية 90 يومًا؛ المعالجة الآلية تتطلب تفعيلًا من المشغّل.','Names, phones and addresses in orders and the waitlist, and rating comments, follow a default 90-day retention policy; automatic processing requires operator activation.'],
+   ['بيانات الحساب تبقى ما دام الاشتراك قائمًا، ثم تُحذف عند طلب حذف المنشأة.','Account data is kept while the subscription is active and erased when the business requests deletion.'],
+   ['الفواتير وسجلات الدفع وسجل الأمان تبقى المدة التي يلزم بها النظام (الدفاتر التجارية والزكاة والضريبة).','Invoices, payment records and the security log are kept for the period required by law (commercial books, zakat and tax).'],
+  ])
+  +`<h3>${a('من يعالج البيانات معنا','Who processes data with us')}</h3>`+p('نستعين بمزودين يلتزمون بحماية البيانات، ولا نبيع البيانات الشخصية لأي جهة:','We use providers bound to protect data, and we never sell personal data:')+list([
+   ['Cloudflare: الاستضافة وقاعدة البيانات، بخوادم قد تكون خارج المملكة.','Cloudflare: hosting and database, on servers that may be outside the Kingdom.'],
+   ['ميسر: بوابة دفع مرخّصة من البنك المركزي السعودي. لا نخزّن بيانات البطاقات.','Moyasar: a SAMA-licensed payment gateway. We never store card data.'],
+   ['Simple Fatoora: إصدار الفواتير الإلكترونية.','Simple Fatoora: electronic invoicing.'],
+   ['Resend: إرسال رسائل البريد للحساب والفواتير.','Resend: account and invoice emails.'],
+   ['Anthropic: قراءة صور المنيو التي يرفعها المشترك لاستخراج الأصناف، عند استخدام هذه الميزة فقط.','Anthropic: reading menu photos a subscriber uploads to extract items, only when that feature is used.'],
+   ['Apple وGoogle: الإشعارات وبطاقات المحفظة عند تفعيلها.','Apple and Google: push notifications and wallet passes when enabled.'],
+   ['Telegram ونقاط البيع (رواء وغيرها): فقط إذا ربطها المشترك بنفسه.','Telegram and point-of-sale systems (Rewaa and others): only if the subscriber connects them.'],
+  ])+p('قد تُنقل بعض البيانات خارج المملكة لهؤلاء المزودين وفق لائحة نقل البيانات الشخصية خارج المملكة، وبضمانات تعاقدية مناسبة.','Some data may be transferred outside the Kingdom to these providers under the Regulation on Personal Data Transfer, with appropriate contractual safeguards.')
+  +`<h3>${a('حقوقك','Your rights')}</h3>`+list([
+   ['أن تعرف كيف تُعالج بياناتك، وأن تطلع عليها وتحصل على نسخة منها.','To know how your data is processed, access it and obtain a copy.'],
+   ['أن تصححها أو تكملها.','To correct or complete it.'],
+   ['أن تطلب إتلافها عند انتهاء الحاجة إليها.','To request its destruction when it is no longer needed.'],
+   ['أن تسحب موافقتك في أي وقت، مثل إيقاف رسائل العروض من بطاقة الولاء.','To withdraw consent at any time, for example by stopping offer messages from your loyalty card.'],
+   ['أن تقدم شكوى إلى الهيئة السعودية للبيانات والذكاء الاصطناعي (سدايا).','To complain to the Saudi Data and AI Authority (SDAIA).'],
+  ])+p('عملاء المنشأة يوجّهون طلباتهم للمنشأة أولًا، ونساعدها على تنفيذها. المشترك يصدّر بياناته ويطلب حذف منشأته من «بيانات منشأتك» في اللوحة أو التطبيق. نرد على الطلبات خلال 30 يومًا.','A business’s guests contact the business first, and we help it respond. Subscribers export their data and request deletion from “Your business data” in the dashboard or app. We answer requests within 30 days.')
+  +`<h3>${a('الأمان والتسريب','Security and breaches')}</h3>`+p('نشفّر الاتصال، ونشتق كلمات المرور تشفيريًا، ونفعّل التحقق بخطوتين وتسجيل الدخول بمفتاح المرور. عند أي تسريب نقيّم أثره، ونبلّغ سدايا خلال 72 ساعة والمتأثرين متى انطبقت شروط الإبلاغ.','We encrypt connections, derive passwords cryptographically, and offer two-step verification and passkeys. If a breach occurs we assess its impact and notify SDAIA within 72 hours, and the people affected, whenever the reporting criteria apply.')
+  +`<h3>${a('الأطفال','Children')}</h3>`+p('الخدمة للمنشآت. لا نجمع عمدًا بيانات من هم دون 18 عامًا.','The service is for businesses. We do not knowingly collect data from anyone under 18.')],
+ ['terms',a('الشروط والأحكام','Terms of service'),
+  list([
+   ['التسجيل يعني قبول هذه الشروط وسياسة الخصوصية. النص العربي هو المعتمد.','Signing up means accepting these terms and the privacy notice. The Arabic text governs.'],
+   ['التجربة المجانية 14 يومًا، بدون بطاقة دفع، ولا تتحول لاشتراك مدفوع تلقائيًا.','The free trial lasts 14 days, needs no payment card and never turns into a paid plan automatically.'],
+   ['السعر المعروض في صفحة الباقات هو المبلغ النهائي بالريال السعودي بدون رسوم مخفية. زيمارا غير مسجلة حاليًا في ضريبة القيمة المضافة، فلا تُضاف ضريبة. عند التسجيل نعرض الأسعار شاملة الضريبة مع الرقم الضريبي.','The price on the plans page is the final amount in Saudi riyals with no hidden fees. ZIMARA is not currently VAT-registered, so no VAT is added. Once registered, prices will be shown VAT-inclusive with our VAT number.'],
+   ['الدفع عبر بوابة مرخّصة. يتفعّل الاشتراك بعد تأكيد الدفع من البوابة، وتصلك فاتورة بالبريد.','Payment is through a licensed gateway. The plan activates once the gateway confirms payment, and an invoice is emailed to you.'],
+   ['لا يوجد خصم تلقائي. نذكّرك بالبريد قبل نهاية المدة، ولا يتجدد الاشتراك إلا بدفعك.','There are no automatic charges. We remind you by email before the period ends, and the plan renews only when you pay.'],
+   ['المشترك مسؤول عن صحة منيوه: الأسعار شاملة الضريبة إن كان مسجلًا فيها، والسعرات الحرارية ومسببات الحساسية حسب اشتراطات هيئة الغذاء والدواء.','The subscriber is responsible for its menu: prices including VAT if it is VAT-registered, and calories and allergens as required by the SFDA.'],
+   ['المشترك مسؤول عن بيانات عملائه بصفته جهة تحكم، ولا يرسل رسائل تسويقية إلا لمن وافق عليها.','The subscriber is the controller of its guests’ data and sends marketing messages only to people who agreed to receive them.'],
+   ['رابط تقييم قوقل يظهر لكل العملاء. يُمنع ربط مكافأة أو ختم بالتقييم.','The Google review link is shown to every guest. Rewards or stamps for reviews are not allowed.'],
+   ['ألعاب الانتظار للتسلية فقط وبدون جوائز.','Waiting games are for fun only and offer no prizes.'],
+   ['يُمنع استخدام الخدمة لمحتوى مخالف للأنظمة أو مضلل، أو لمنتجات محظورة.','The service may not be used for unlawful or misleading content or prohibited products.'],
+   ['تخضع هذه الشروط لأنظمة المملكة العربية السعودية، وتختص المحاكم السعودية بأي نزاع.','These terms are governed by the laws of the Kingdom of Saudi Arabia, and Saudi courts have jurisdiction over any dispute.'],
+  ])],
+ ['cancellation',a('الإلغاء والاسترداد','Cancellation and refunds'),
+  list([
+   ['تلغي التجديد في أي وقت من «باقتي». يستمر الاشتراك حتى نهاية المدة المدفوعة، ثم تبقى بياناتك للعرض والتصدير.','Cancel renewal any time from My plan. The plan runs to the end of the paid period, then your data stays available to view and export.'],
+   ['إذا تعذّر تقديم الخدمة المدفوعة بسبب منّا، نرد المبلغ عن المدة المتبقية بنفس وسيلة الدفع.','If we cannot provide the paid service for reasons on our side, we refund the remaining period by the original payment method.'],
+   ['للشكاوى والاسترداد راسل الدعم المذكور في «من نحن». ويحق لك التواصل مع وزارة التجارة على 1900.','For complaints and refunds write to the support contact under “Who we are”. You may also contact the Ministry of Commerce on 1900.'],
+  ])],
+ ['delete-account',a('حذف الحساب','Deleting your account'),
+  list([
+   ['من «بيانات منشأتك» في اللوحة أو التطبيق: اكتب DELETE ORGANIZATION وكلمة المرور.','From “Your business data” in the dashboard or app: type DELETE ORGANIZATION and your password.'],
+   ['تُعرض حالة طلب الحذف في لوحة بياناتك. الطلبات غير المجدولة قيد المراجعة. عند جدولة الحذف تتاح مهلة تراجع 14 يومًا؛ التنفيذ الآلي يتطلب تفعيلًا من المشغّل.','Your data panel shows the request status. Unscheduled requests remain under review. Scheduled deletion has a 14-day cancellation period; automatic processing requires operator activation.'],
+   ['تخضع السجلات المالية والأمنية وإثبات طلب الحذف لسياسة الاحتفاظ والمتطلبات النظامية.','Financial, security and deletion-request evidence records follow the retention policy and legal requirements.'],
+   ['عميل المنشأة يلغي بطاقة الولاء من صفحتها مباشرة.','A guest revokes a loyalty card directly from its page.'],
+  ])],
+ ['dpa',a('شروط معالجة البيانات للمشتركين','Data processing terms for subscribers'),
+  list([
+   ['نعالج بيانات عملائك لتقديم الخدمة فقط، وبتعليماتك، ولا نستخدمها لأغراضنا.','We process your guests’ data only to provide the service, on your instructions, and never for our own purposes.'],
+   ['موظفونا ومزودونا ملتزمون بالسرية، والمزودون مذكورون في سياسة الخصوصية.','Our staff and providers are bound by confidentiality; providers are listed in the privacy notice.'],
+   ['نساعدك في طلبات أصحاب البيانات، ونبلّغك دون تأخير عند أي تسريب يخص بياناتك.','We help you answer data subject requests and tell you without delay about any breach affecting your data.'],
+   ['عند انتهاء الاشتراك أو طلب الحذف نحذف البيانات وفق قسم «حذف الحساب».','When the subscription ends or deletion is requested, we erase the data as described under “Deleting your account”.'],
+  ])],
+];
+const focus=new URLSearchParams(location.search).get('section')||({'/privacy':'privacy','/terms':'terms'})[location.pathname.replace(/\/$/,'')];
+document.querySelector('#main').innerHTML=`<article class="card legal-doc"><span class="pill">${a('آخر تحديث','Last updated')} ${VERSION}</span><h1>${a('السياسات والشروط','Policies and terms')}</h1><nav aria-label="${a('الأقسام','Sections')}"><ul>${sections.map(([id,title])=>`<li><a href="#${id}">${e(title)}</a></li>`).join('')}</ul></nav>${sections.map(([id,title,html])=>`<section id="${id}"><h2>${e(title)}</h2>${html}</section>`).join('')}<p><a href="/">${a('العودة للرئيسية','Back to home')}</a></p></article>`;
+if(focus&&!location.hash)document.getElementById(focus)?.scrollIntoView();
+const pending=a('لم تُضف بعد','Not provided');
+fetch('/api/legal').then(r=>r.json()).then(({legal:l})=>{
+ const support=[l.support_email||'hello@zimara.co',l.support_phone].filter(Boolean);
+ const rows=[[a('الاسم القانوني','Legal name'),a(l.legal_name_ar,l.legal_name_en)||l.legal_name_ar||l.legal_name_en||pending],[a('السجل التجاري','CR number'),l.cr_number||pending],[a('الرقم الضريبي','VAT number'),l.vat_number||a('غير مسجلة في ضريبة القيمة المضافة','Not VAT-registered')],[a('العنوان','Address'),a(l.address_ar,l.address_en)||l.address_ar||l.address_en||pending]];
+ document.querySelector('#legal-id').innerHTML=`<dl>${rows.map(([k,v])=>`<dt>${e(k)}</dt><dd>${e(v)}</dd>`).join('')}<dt>${a('الدعم','Support')}</dt><dd>${support.map(s=>s.includes('@')?`<a href="mailto:${e(s)}">${e(s)}</a>`:e(s)).join(' · ')}</dd></dl>`;
+}).catch(()=>{});

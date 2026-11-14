@@ -10,6 +10,27 @@ let revoked = false;
 const main = document.getElementById('main');
 main.className = 'wrap narrow';
 
+async function untrackCard(reg) {
+  if (!reg) return;
+  const worker = reg.active || reg.waiting || reg.installing;
+  if (!worker) throw new Error('worker_unavailable');
+  await new Promise((resolve, reject) => {
+    const channel = new MessageChannel();
+    const finish = (error) => {
+      clearTimeout(timeout);
+      channel.port1.close();
+      channel.port2.close();
+      if (error) reject(error); else resolve();
+    };
+    const timeout = setTimeout(() => finish(new Error('untrack_timeout')), 3000);
+    channel.port1.onmessage = ({ data }) => {
+      if (data?.type === 'untracked' && data.token === token && data.kind === 'c') finish();
+    };
+    try { worker.postMessage({ type: 'untrack', token, kind: 'c' }, [channel.port2]); }
+    catch (error) { finish(error); }
+  });
+}
+
 async function load() {
   if (revoked) return;
   try {
@@ -39,6 +60,7 @@ async function load() {
       </div>
       ${c.messages?.length ? `<div class="card stack" id="card-inbox"><h2>${A('رسائل لك', 'For you')}</h2>${c.messages.map((m) => `<article class="inbox-msg"><b>${esc(pick(m, 'title'))}</b><p>${esc(pick(m, 'body'))}</p><small class="muted">${new Date(m.created_at).toLocaleDateString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-GB')}</small></article>`).join('')}</div>` : ''}
       ${pushOk && !alertsOn ? `<p class="center"><button class="btn ghost" id="card-alerts" type="button">${icon("bell")} ${A('وصلني العروض على جوالي', 'Send offers to my phone')}</button></p>` : ''}
+      ${alertsOn ? `<p class="center"><button class="btn ghost sm" id="card-alerts-off" type="button">${A('إيقاف رسائل العروض', 'Stop offer messages')}</button></p>` : ''}
       ${c.history.length ? `<div class="card"><h2>${esc(t('history'))}</h2><table>${c.history
         .map((h) => `<tr><td>${esc(pts && h.kind === 'stamp' ? A('نقاط', 'Points') : t(h.kind))}</td><td>${h.delta > 0 ? '+' : ''}${h.delta}</td><td class="muted small">${new Date(h.created_at).toLocaleString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-GB')}</td></tr>`)
         .join('')}</table></div>` : ''}<p class="small" style="text-align:center"><button class="btn danger sm" id="delete-card" type="button">${lang === 'ar' ? 'إلغاء البطاقة' : 'Revoke card'}</button></p>`;
@@ -56,6 +78,21 @@ async function load() {
         announce(A('تمام! بتوصلك العروض على جوالك.', 'Done! Offers will reach your phone.'));
         e.target.remove();
       } catch { e.target.disabled = false; announce(A('ما قدرنا نفعّل الإشعارات. تأكد من إذن المتصفح.', 'Could not turn on notifications. Check the browser permission.'), true); }
+    });
+    // Marketing messages need a one-tap opt-out (PDPL and CST rules on promotional messages).
+    main.querySelector('#card-alerts-off')?.addEventListener('click', async (e) => {
+      e.target.disabled = true;
+      try {
+        const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+        const sub = await reg?.pushManager.getSubscription();
+        await api('/api/cards/' + token + '/unsubscribe', { method: 'POST', body: { endpoint: sub?.endpoint || null } });
+        // The browser subscription is shared with other cards and pager tickets.
+        // Remove this card from payload-less push lookup before reporting success.
+        await untrackCard(reg);
+        try { localStorage.removeItem('zm_card_push_' + token); } catch {}
+        announce(A('تم. لن تصلك رسائل العروض.', 'Done. You will not receive offer messages.'));
+        e.target.remove();
+      } catch { e.target.disabled = false; announce(A('تعذر الإيقاف. حاول مرة ثانية.', 'Could not stop messages. Try again.'), true); }
     });
     main.querySelector('#delete-card').onclick = async e => {
       const confirm = await requestValue({title: lang === 'ar' ? 'إلغاء بطاقة الولاء' : 'Revoke loyalty card',label: lang === 'ar' ? 'اكتب DELETE CARD لإلغاء الرمز نهائيًا' : 'Type DELETE CARD to permanently revoke this code',hint: lang === 'ar' ? 'لن يعود الرمز صالحًا. يبقى سجل الحركات غير التعريفي محفوظًا.' : 'The code will stop working. The nonidentifying ledger is retained.',confirmLabel: lang === 'ar' ? 'إلغاء البطاقة' : 'Revoke card'});

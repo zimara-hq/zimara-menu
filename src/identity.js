@@ -18,5 +18,8 @@ export function validateTheme(value, current = DEFAULT_THEME) {
     } else throw bad('invalid_theme');
     next[key] = v;
   }
+  // SFDA requires food businesses to show calories on their menus, so a tenant
+  // theme can never hide them. The flag stays for compatibility with old clients.
+  next.show_calories = true;
   return next;
 }

@@ -15,19 +15,21 @@ test('tenant identity round trips publicly, merges partial updates and stays iso
  const original=(await s.owner.get('/api/owner/profile')).json.profile;
  assert.deepEqual(original.theme,DEFAULT_THEME);
  const theme={layout:'cards',corners:'square',cover:'compact',font:'system',show_images:false,show_calories:false};
+ // Calories cannot be hidden (SFDA menu labelling); the request is stored as shown.
+ const savedTheme={...theme,show_calories:true};
  const banners=[{image_url:'https://example.org/one.webp',alt_ar:'الغلاف',alt_en:'Cover',href:null},{image_url:'https://example.org/two.webp',alt_ar:'الصورة الثانية',alt_en:'Second photo',href:'https://example.org/shop'}];
  const sections=['loyalty','social','hours','branches','menu'];
  assert.equal((await s.owner.patch('/api/owner/profile',{theme,banners,sections,social_links:[{label:'الموقع',url:'https://example.org'},{label:'الصور',url:'https://example.org/photos'}]})).status,200);
  assert.equal((await s.owner.patch('/api/owner/profile',{description_ar:'وصف محفوظ'})).status,200);
  let publicProfile=(await client(env).get('/api/public/profile/'+s.orgSlug)).json.profile;
- assert.deepEqual(publicProfile.theme,theme);assert.deepEqual(publicProfile.sections,sections);assert.deepEqual(publicProfile.banners,banners);assert.equal(publicProfile.social_links.length,2);
+ assert.deepEqual(publicProfile.theme,savedTheme);assert.deepEqual(publicProfile.sections,sections);assert.deepEqual(publicProfile.banners,banners);assert.equal(publicProfile.social_links.length,2);
  assert.deepEqual((await other.get('/api/owner/profile')).json.profile.theme,DEFAULT_THEME);
  assert.equal((await s.cashier.patch('/api/owner/profile',{theme:{layout:'list'}})).status,403);
  for(const bad of [{theme:{layout:'javascript:alert(1)'}},{theme:{show_calories:0}},{theme:{raw_css:'x'}},{sections:['menu','menu']},{banners:[{image_url:'javascript:alert(1)'}]}])assert.equal((await s.owner.patch('/api/owner/profile',bad)).status,400);
  publicProfile=(await client(env).get('/api/public/profile/'+s.orgSlug)).json.profile;
- assert.deepEqual(publicProfile.theme,theme);
+ assert.deepEqual(publicProfile.theme,savedTheme);
  const exportData=(await s.owner.get('/api/owner/data/export')).json;
- assert.deepEqual(exportData.profile.theme,theme);
+ assert.deepEqual(exportData.profile.theme,savedTheme);
 });
 
 test('branch hours preserve closed and overnight days and reject invalid input atomically',async()=>{

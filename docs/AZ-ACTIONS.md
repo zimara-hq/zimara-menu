@@ -55,3 +55,11 @@
 ### تحديث 13 نوفمبر 2026
 
 عاد وصول GitHub، وأحدثmain ما زال1e59d69. يُرفع فرع المواسم مستقلاً، مع ترحيل0028 بدلاً من0027 لتجنب تعارض طلب الامتثالPR39. لا إجراء مطلوب منAz للمواسم أثناء فحوصCI؛ النشر يبقى عبر المسار المحمي. سجل حالة التعليق أعلاه تاريخي.
+
+### PR #39: explicit privacy-processing activation
+
+`PRIVACY_ERASURE_ENABLED` defaults to disabled. Deploying this PR does not activate destructive processing. Existing unscheduled requests remain review-only, even after activation. Owner and admin completion both preserve the 14-day cancellation period. The data panel reports the actual mode.
+
+Before setting `PRIVACY_ERASURE_ENABLED=true` in the **menu Worker** Cloudflare dashboard, review retention/legal requirements, the pending request list, backups and the R2/domain bindings. First verify on a separate staging database with synthetic data. An owner with an old unscheduled request must cancel and submit a new request to start a fresh 14-day period; do not backdate requests. No activation or production erasure was performed as part of merging.
+
+When enabled, the cron also applies the configured PII retention policy. Failed R2/custom-hostname cleanup is recorded as `cleanup_pending` with references in `data.deletion.completed` audit metadata; an operator must finish that external cleanup. There is no automatic external-cleanup retry queue in this PR. Financial, security and request-evidence records remain subject to the retention policy. This implementation is not legal certification.

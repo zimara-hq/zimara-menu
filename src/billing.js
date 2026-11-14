@@ -1,6 +1,7 @@
 import { requireRole, body, audit, rateLimit, PLANS, subscriptionFor } from './context.js';
 import { HttpError, bad, id, notFound, now, hmac } from './util.js';
 import { simpleFatooraConfigured, validateSimpleFatooraKey } from './providers/simple-fatoora.js';
+import { legalInfo } from './legal.js';
 
 // Moyasar hosted invoices (SAMA-licensed gateway). Card data never touches this Worker.
 // Activation rule: a plan is activated only after GET /v1/invoices/:id, authenticated with the
@@ -24,7 +25,8 @@ async function assertBillableOrg(env, orgId) {
 
 const http = (env) => env.HTTP_FETCH || fetch;
 
-// VAT is added only once ZIMARA is VAT-registered (VAT_RATE_BPS=1500). Prices are listed before VAT.
+// VAT is charged only once ZIMARA is VAT-registered (VAT_RATE_BPS=1500 and a VAT number in
+// the legal settings). Until then the listed price is the final amount and no VAT is shown.
 export function priceFor(env, plan, cycle) {
   const p = PLANS[plan];
   if (!p || plan === 'chains') throw bad('invalid_plan');
@@ -113,6 +115,9 @@ export async function settleCheckout(env, checkout) {
 
 export function registerBilling(app) {
   app.post('/api/owner/billing/checkout', requireRole('owner'), async (c) => {
+    // App Store 3.1.1 / 3.1.3(c) and Google Play payments policy: the phone apps never
+    // start a purchase. Subscriptions are bought on the website only.
+    if (c.get('user').session_kind === 'app') throw new HttpError(403, 'billing_web_only');
     await assertBillableOrg(c.env, c.get('user').org_id);
     if (!billingConfigured(c.env)) throw new HttpError(503, 'billing_not_configured');
     if (!simpleFatooraConfigured(c.env)) throw new HttpError(503, 'invoicing_not_configured');
@@ -120,9 +125,13 @@ export function registerBilling(app) {
     const b = await body(c);
     const plan = String(b.plan || ''), cycle = String(b.cycle || '');
     const price = priceFor(c.env, plan, cycle);
+    // Charging VAT without a VAT registration is unlawful (ZATCA): refuse instead.
+    if (price.vat > 0 && !(await legalInfo(c.env)).vat_number) throw new HttpError(503, 'seller_vat_registration_missing');
     const u = c.get('user');
     const org = await c.env.DB.prepare('SELECT name_ar, billing_legal_name, billing_vat_number, billing_address FROM orgs WHERE id = ?').bind(u.org_id).first();
-    if (!org?.billing_legal_name || !org?.billing_address || (price.vat > 0 && !org.billing_vat_number)) {
+    // The subscriber's own VAT number is printed when they have one; an unregistered
+    // business can still subscribe and receives a simplified invoice.
+    if (!org?.billing_legal_name || !org?.billing_address) {
       throw new HttpError(400, 'billing_profile_incomplete');
     }
     try { await validateSimpleFatooraKey(c.env); } catch { throw new HttpError(503, 'invoicing_not_ready'); }

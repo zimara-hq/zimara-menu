@@ -83,7 +83,7 @@ export function applyDesign(r) {
   if (bg.type === 'image' && IMG.test(bg.image || '')) s.setProperty('--d-image', `url("${bg.image}")`);
   else s.removeProperty('--d-image');
   const show = r.show || {};
-  for (const k of ['images', 'calories', 'descriptions', 'allergens']) root.dataset['dHide' + k[0].toUpperCase() + k.slice(1)] = show[k] === false ? '1' : '0';
+  for (const k of ['images', 'calories', 'descriptions', 'allergens']) root.dataset['dHide' + k[0].toUpperCase() + k.slice(1)] = show[k] === false && k !== 'calories' && k !== 'allergens' ? '1' : '0';
 }
 
 // Live preview inside the design studio: the parent page (same origin only) sends recipes.

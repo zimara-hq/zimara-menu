@@ -14,7 +14,7 @@ export function normalizeHostname(v) {
   return h;
 }
 
-async function cf(env, method, path, payload, fetcher = fetch) {
+export async function cf(env, method, path, payload, fetcher = fetch) {
   const res = await fetcher(`https://api.cloudflare.com/client/v4/zones/${env.CF_ZONE_ID}/custom_hostnames${path}`, {
     method,
     headers: { authorization: `Bearer ${env.CF_API_TOKEN}`, 'content-type': 'application/json' },

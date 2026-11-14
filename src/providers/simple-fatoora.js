@@ -150,7 +150,7 @@ export async function processSimpleFatooraInvoices(env) {
       'WHERE i.id = ? LIMIT 1'
     ).bind(job.invoice_id).first();
 
-    if (!row?.billing_legal_name || !row?.billing_address || !row?.owner_email || (row.vat > 0 && !row.billing_vat_number)) {
+    if (!row?.billing_legal_name || !row?.billing_address || !row?.owner_email) {
       await env.DB.prepare("UPDATE subscription_invoice_jobs SET state = 'needs_details', locked_at = NULL, last_error = 'billing_profile_incomplete', updated_at = ? WHERE invoice_id = ?")
         .bind(now(), job.invoice_id).run();
       processed++;

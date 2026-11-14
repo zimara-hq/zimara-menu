@@ -142,6 +142,9 @@ export function validateRecipe(input) {
     if (!SHOW_KEYS.includes(k) || typeof v !== 'boolean') throw bad('invalid_design', 'show.' + k);
     r.show[k] = v;
   }
+  // Calories and allergens are regulatory disclosures (SFDA), not a styling choice.
+  r.show.calories = true;
+  r.show.allergens = true;
   if (r.background.type === 'image' && !r.background.image) r.background.type = 'solid';
   Object.assign(r,validateStructure(input,bad));
   if(r.typography.heading_font&&r.typography.heading_font!=='custom'&&!FONTS_AR.concat(FONTS_EN).some(f=>f[0]===r.typography.heading_font))throw bad('invalid_design','typography.heading_font');
