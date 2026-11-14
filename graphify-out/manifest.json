@@ -786,9 +786,9 @@
     "semantic_hash": ""
   },
   "test/e2e/workspace.mjs": {
-    "mtime": 1794617926.867627,
-    "seen": 1794617981.4801986,
-    "ast_hash": "317a20b9ad5d2dced13d960669eb01bb",
+    "mtime": 1794618141.5323582,
+    "seen": 1794618220.3562937,
+    "ast_hash": "1393f74cd3d5195fa1a043806ace399e",
     "semantic_hash": ""
   },
   "test/features-data.test.js": {
