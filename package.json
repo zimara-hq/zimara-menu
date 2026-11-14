@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "description": "ZIMARA Menu: e-menu, smart pager and loyalty cards",
   "scripts": {
-    "test": "node --test --no-warnings test/*.test.js",
+    "test": "npm run check:menu && node --test --no-warnings test/*.test.js",
+    "build:menu": "node scripts/build-menu.mjs",
+    "check:menu": "node scripts/build-menu.mjs --check",
+    "prebuild": "npm run build:menu",
+    "prebuild:preview": "npm run build:menu",
     "dev": "wrangler dev",
     "db:migrate:local": "wrangler d1 migrations apply zimara-menu-db --local",
     "admin:create": "node scripts/admin-create.mjs",
@@ -27,7 +31,20 @@
     "test:waitlist": "node test/e2e/waitlist.mjs",
     "test:loyalty": "node test/e2e/loyalty.mjs",
     "test:security": "node test/e2e/security.mjs",
-    "test:launch": "node test/e2e/launch.mjs"
+    "test:launch": "node test/e2e/launch.mjs",
+    "test:customer-menu": "node test/e2e/customer-menu.mjs",
+    "test:menu-merchandising": "node test/e2e/menu-owner-phase1.mjs",
+    "test:menu-performance": "node scripts/menu-performance.mjs",
+    "test:studio-entry": "node test/e2e/studio-entry.mjs",
+    "test:studio-inline": "node test/e2e/studio-inline.mjs",
+    "test:studio-canvas": "node test/e2e/studio-canvas.mjs",
+    "test:customer-worlds": "node test/e2e/customer-worlds.mjs",
+    "test:design-gallery": "node test/e2e/design-gallery.mjs",
+    "test:menu-first-load": "node test/e2e/menu-first-load.mjs",
+    "test:studio-proposals": "node test/e2e/studio-proposals.mjs",
+    "test:preview-privacy": "node test/e2e/preview-privacy.mjs",
+    "test:seasons": "node test/e2e/seasons.mjs",
+    "test:season-hq": "node test/e2e/season-hq.mjs"
   },
   "repository": {
     "type": "git",
@@ -43,10 +60,15 @@
     "hono": "^4.13.14"
   },
   "devDependencies": {
+    "esbuild": "0.28.2",
+    "lighthouse": "13.0.3",
     "playwright": "^1.64.1",
     "qrcode-generator": "^1.4.4",
     "wrangler": "^4.156.0"
   },
   "type": "module",
-  "private": true
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  }
 }

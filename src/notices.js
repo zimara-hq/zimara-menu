@@ -60,7 +60,7 @@ export async function sendBillingNotices(env) {
               : `ينتهي اشتراكك في باقة ${planName(s.plan)} في ${date}. جدّد الآن حتى لا يتوقف المنيو والتنبيه.`,
           ], `${base(env)}/app#subscription`, trial ? 'اختر باقتك' : 'جدّد الآن', 'وصلتك هذه الرسالة لأنك مالك حساب في زيمارا منيو.');
         }
-        await notifyTelegram(env, s.org_id, null, 'billing', trial ? `⏳ تجربتك في زيمارا منيو تنتهي في ${date}. ${base(env)}/app#subscription` : `🔁 موعد تجديد اشتراكك في ${date}. ${base(env)}/app#subscription`).catch(() => {});
+        await notifyTelegram(env, s.org_id, null, 'billing', trial ? `تجربتك في زيمارا منيو تنتهي في ${date}. ${base(env)}/app#subscription` : `موعد تجديد اشتراكك في ${date}. ${base(env)}/app#subscription`).catch(() => {});
       });
     } catch { /* retried next hour */ }
   }

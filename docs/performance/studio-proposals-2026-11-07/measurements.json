@@ -1,0 +1,92 @@
+{
+  "mainSha": "0f0cb5ac740a7184b980c028424fe53d99d70095",
+  "branch": "codex/next-studio-ai",
+  "fixture": "same canonical published cafe recipe, assets and isolated SQLite snapshot; no public real-customer data",
+  "conditions": "direct local Worker; Lighthouse13.0.3 Chromium154 Node24.19; default mobile simulation; cold reset; sequential three candidate then three main runs, no concurrent build/tests/graph/browser",
+  "measurements": [
+    {
+      "name": "candidate-1",
+      "timestamp": "2026-11-07T20:36:55.731Z",
+      "lcpMs": 2416.3062,
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 88875,
+      "rawLighthouse": "candidate-1.lighthouse.json",
+      "transfer": "candidate-1.transfer.json"
+    },
+    {
+      "name": "candidate-2",
+      "timestamp": "2026-11-07T20:37:10.979Z",
+      "lcpMs": 2408.3626,
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 88875,
+      "rawLighthouse": "candidate-2.lighthouse.json",
+      "transfer": "candidate-2.transfer.json"
+    },
+    {
+      "name": "candidate-3",
+      "timestamp": "2026-11-07T20:37:26.888Z",
+      "lcpMs": 2421.0738,
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 88866,
+      "rawLighthouse": "candidate-3.lighthouse.json",
+      "transfer": "candidate-3.transfer.json"
+    },
+    {
+      "name": "main-1",
+      "timestamp": "2026-11-07T20:37:56.298Z",
+      "lcpMs": 2434.4976,
+      "scores": {
+        "performance": 94,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 88878,
+      "rawLighthouse": "main-1.lighthouse.json",
+      "transfer": "main-1.transfer.json"
+    },
+    {
+      "name": "main-2",
+      "timestamp": "2026-11-07T20:38:12.465Z",
+      "lcpMs": 2428.0146,
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 88864,
+      "rawLighthouse": "main-2.lighthouse.json",
+      "transfer": "main-2.transfer.json"
+    },
+    {
+      "name": "main-3",
+      "timestamp": "2026-11-07T20:38:28.190Z",
+      "lcpMs": 2419.6351999999997,
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "seo": 91
+      },
+      "nonImageBytes": 88871,
+      "rawLighthouse": "main-3.lighthouse.json",
+      "transfer": "main-3.transfer.json"
+    }
+  ],
+  "sourceSha256": {
+    "public/menu-entry.js": "55c3048c50857d077ffc9918da294a4a8f5a9e72466ad2d402cede0f80e345b7",
+    "public/studio-proposals.js": "27cb0e282146c91c5063ecc1a136006acda9c95b74c9dde46a815422f288dd17",
+    "public/studio-proposals.css": "ec27f3cda7b11cdba11fcc5c900560b96828e78a9aad6b3441fa740f222c9d50",
+    "src/studio-proposals.js": "6aac97152d0746948b07ac92cc7e82d82d1cdf7cff0b0e792334264748035b8c"
+  }
+}

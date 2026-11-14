@@ -1,3 +1,5 @@
+import { publicSeason } from './seasons.js';
+import { discoverMenu, categoryAvailable } from './menu-discovery.js';
 import { activeDesign } from './design.js';
 import { publish } from './realtime.js';
 import { itemView, priceWithOptions } from './menu-extras.js';
@@ -199,6 +201,26 @@ function branchPublic(b) {
     google_review_url: b.google_review_url,
   };
 }
+
+// The caller has resolved an active public branch and its organization. Reuse
+// the profile endpoint's projections without another org lookup or design read.
+export async function publicMenuContext(env, b) {
+  const [profile, branch, loyalty] = await Promise.all([
+    env.DB.prepare('SELECT * FROM org_profiles WHERE org_id=?').bind(b.org_id).first(),
+    env.DB.prepare(
+      'SELECT b.id,b.slug,b.name_ar,b.name_en,b.google_review_url,s.orders_enabled,s.address,s.maps_url,s.hours_json,s.game FROM branches b LEFT JOIN branch_settings s ON s.branch_id=b.id WHERE b.id=? AND b.org_id=? AND b.active=1',
+    ).bind(b.id, b.org_id).first(),
+    env.DB.prepare('SELECT stamps_required,reward_ar,reward_en FROM loyalty_programs WHERE org_id=? AND active=1').bind(b.org_id).first(),
+  ]);
+  return {
+    org: { slug: b.org_slug, name_ar: b.org_name_ar, name_en: b.org_name_en, brand_color: b.brand_color, logo_url: b.logo_url },
+    profile: profileView(profile),
+    loyalty: loyalty || null,
+    branches: branch ? [{ ...branchPublic(branch), settings: branch.hours_json === null ? { ...DEFAULT_SETTINGS } : settingsView(branch) }] : [],
+    timezone: 'Asia/Riyadh',
+  };
+}
+
 async function menuFor(env, orgId, branchId) {
   const { results: categories } = await env.DB.prepare(
     'SELECT id,name_ar,name_en,sort FROM categories WHERE org_id=? AND active=1 ORDER BY sort,name_ar',
@@ -206,11 +228,11 @@ async function menuFor(env, orgId, branchId) {
     .bind(orgId)
     .all();
   const { results: items } = await env.DB.prepare(
-    `SELECT i.id,i.category_id,i.name_ar,i.name_en,i.desc_ar,i.desc_en,i.price,i.compare_price,i.calories,i.caffeine_mg,i.sodium_mg,i.allergens,i.options_json,i.badges,i.image_url,i.sort,CASE WHEN u.item_id IS NULL THEN 1 ELSE 0 END AS available FROM items i JOIN categories c ON c.id=i.category_id LEFT JOIN branch_unavailable u ON u.item_id=i.id AND u.branch_id=? WHERE i.org_id=? AND i.active=1 AND i.is_sample=0 AND c.active=1 ORDER BY i.sort,i.name_ar`,
+    `SELECT i.id,i.category_id,i.name_ar,i.name_en,i.desc_ar,i.desc_en,i.price,i.compare_price,i.calories,i.caffeine_mg,i.sodium_mg,i.allergens,i.options_json,i.badges,i.gallery_json,i.dietary_json,i.complementary_ids_json,i.image_url,i.sort,CASE WHEN u.item_id IS NULL THEN 1 ELSE 0 END AS available FROM items i JOIN categories c ON c.id=i.category_id LEFT JOIN branch_unavailable u ON u.item_id=i.id AND u.branch_id=? WHERE i.org_id=? AND i.active=1 AND i.is_sample=0 AND c.active=1 ORDER BY i.sort,i.name_ar`,
   )
     .bind(branchId, orgId)
     .all();
-  return { categories, items: items.map(itemView) };
+  return discoverMenu(env, orgId, branchId, { categories, items: items.map(itemView) });
 }
 
 // Bounded RFC-4180 parser: quoted fields, embedded line breaks, BOM; no code evaluation.
@@ -493,12 +515,14 @@ export function registerFeatures(app) {
     )
       .bind(orgId)
       .first();
+    const seasonSettings=await c.env.DB.prepare('SELECT config_json,revision,updated_at FROM org_seasons WHERE org_id=?').bind(orgId).first();
     const exportData = {
       schema_version: 1,
       exported_at: now(),
       organization,
       profile,
       branch_settings: settings,
+      season_settings: seasonSettings?{config:JSON.parse(seasonSettings.config_json),revision:seasonSettings.revision,updated_at:seasonSettings.updated_at}:null,
       subscription,
       loyalty_program: program,
       data,
@@ -708,6 +732,7 @@ export function registerFeatures(app) {
       loyalty: program || null,
       addons: await publicAddons(c.env, org.id),
       design: await activeDesign(c.env, org.id),
+      season: await publicSeason(c.env, org.id, branches[0]?.id||null),
       branches: branches.map((b) => ({
         ...branchPublic(b),
         settings:
@@ -1004,13 +1029,13 @@ export function registerFeatures(app) {
       ids.add(lineKey);
       const quantity = int(line.quantity, 'quantity', { min: 1, max: 20 });
       const item = await c.env.DB.prepare(
-        'SELECT i.id,i.name_ar,i.name_en,i.price,i.options_json FROM items i JOIN categories c ON c.id=i.category_id WHERE i.id=? AND i.org_id=? AND i.active=1 AND i.is_sample=0 AND c.active=1 AND NOT EXISTS(SELECT 1 FROM branch_unavailable u WHERE u.branch_id=? AND u.item_id=i.id)',
+        'SELECT i.id,i.category_id,i.name_ar,i.name_en,i.price,i.options_json FROM items i JOIN categories c ON c.id=i.category_id WHERE i.id=? AND i.org_id=? AND i.active=1 AND i.is_sample=0 AND c.active=1 AND NOT EXISTS(SELECT 1 FROM branch_unavailable u WHERE u.branch_id=? AND u.item_id=i.id)',
       )
         .bind(itemId, branch.org_id, branch.id)
         .first();
-      if (!item) throw bad('item_unavailable');
+      if (!item || !await categoryAvailable(c.env, branch.id, item.category_id)) throw bad('item_unavailable');
       const { unit, options } = priceWithOptions(item, picked);
-      const { options_json, ...base } = item;
+      const { options_json, category_id, ...base } = item;
       lines.push({ ...base, price: unit, options, quantity, total: unit * quantity });
     }
     const note = str(b.note, 'note', { optional: true, max: 300 });
@@ -1018,6 +1043,10 @@ export function registerFeatures(app) {
     if (subtotal > 100_000_000) throw bad('order_total_limit');
     const extra = await orderExtras(c.env, branch, b, subtotal);
     const total = extra.total;
+    if (b.expected_total !== undefined) {
+      if (!Number.isSafeInteger(b.expected_total) || b.expected_total < 0) throw bad('invalid_expected_total');
+      if (b.expected_total !== total) throw conflict('price_changed');
+    }
     const fingerprint = await hmac(
       c.env.AUTH_SECRET,
       JSON.stringify(

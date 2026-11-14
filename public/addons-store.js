@@ -1,20 +1,21 @@
+import { icon } from './icons.js';
 // Owner add-on store: install, configure and remove add-ons, and link Telegram.
 import { api, esc, lang, pick } from './common.js';
 const a = (ar, en) => (lang === 'ar' ? ar : en);
 
 const INFO = {
-  whatsapp_button: { ico: 'WA', ar: ['زر واتساب عائم', 'زر ثابت في المنيو وصفحتك يفتح محادثة معك برسالة جاهزة.'], en: ['Floating WhatsApp button', 'A fixed button on your menu and page that opens a chat with a ready message.'] },
-  announcement: { ico: '📣', ar: ['شريط الإعلانات', 'شريط أعلى المنيو لعرض أو تنبيه، بتاريخ بداية ونهاية.'], en: ['Announcement bar', 'A bar above your menu for an offer or notice, with start and end dates.'] },
-  faq: { ico: '؟', ar: ['الأسئلة الشائعة', 'جاوب أسئلة عملائك قبل ما يسألون: التوصيل، الحجز، المواقف.'], en: ['FAQ', 'Answer common questions before guests ask: delivery, booking, parking.'] },
-  telegram: { ico: 'TG', ar: ['إشعارات تيليجرام', 'يوصلك كل طلب جديد وتذكيرات الاشتراك على تيليجرام فورًا، لكل الفروع أو لفرع محدد.'], en: ['Telegram alerts', 'Get every new order and plan reminders on Telegram, for all branches or one.'] },
-  pixel_meta: { ico: 'f', ar: ['بكسل Meta (فيسبوك وإنستقرام)', 'قِس زيارات منيوك وطلباتك من إعلانات فيسبوك وإنستقرام.'], en: ['Meta Pixel', 'Measure menu visits and orders from Facebook and Instagram ads.'], hint: '123456789012345' },
-  pixel_snap: { ico: 'SC', ar: ['بكسل سناب شات', 'قِس نتائج إعلانات سناب شات، الأقوى في السعودية.'], en: ['Snap Pixel', 'Measure Snapchat ad results.'], hint: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' },
-  pixel_tiktok: { ico: 'TT', ar: ['بكسل تيك توك', 'اعرف كم طلب جاك من إعلانات تيك توك.'], en: ['TikTok Pixel', 'See how many orders came from TikTok ads.'], hint: 'C1ABCDEF2GHIJK3LMNOP' },
-  pixel_ga4: { ico: 'GA', ar: ['Google Analytics 4', 'تحليل شامل لزوار منيوك وصفحتك.'], en: ['Google Analytics 4', 'Full analytics for your menu and page visitors.'], hint: 'G-XXXXXXXXXX' },
-  pixel_gads: { ico: 'Ads', ar: ['Google Ads', 'تتبع تحويلات إعلانات قوقل.'], en: ['Google Ads', 'Track Google Ads conversions.'], hint: 'AW-123456789' },
-  pixel_x: { ico: 'X', ar: ['بكسل X (تويتر)', 'قِس نتائج إعلانات X.'], en: ['X Pixel', 'Measure X ad results.'], hint: 'o1abc' },
-  pixel_pinterest: { ico: 'P', ar: ['Pinterest Tag', 'تتبع زوار بنترست.'], en: ['Pinterest Tag', 'Track Pinterest visitors.'], hint: '2612345678901' },
-  pixel_linkedin: { ico: 'in', ar: ['LinkedIn Insight Tag', 'لحملات الشركات والطلبات الجماعية.'], en: ['LinkedIn Insight Tag', 'For B2B and catering campaigns.'], hint: '1234567' },
+  whatsapp_button: { ico: 'phone', ar: ['زر واتساب عائم', 'زر ثابت في المنيو وصفحتك يفتح محادثة معك برسالة جاهزة.'], en: ['Floating WhatsApp button', 'A fixed button on your menu and page that opens a chat with a ready message.'] },
+  announcement: { ico: 'megaphone', ar: ['شريط الإعلانات', 'شريط أعلى المنيو لعرض أو تنبيه، بتاريخ بداية ونهاية.'], en: ['Announcement bar', 'A bar above your menu for an offer or notice, with start and end dates.'] },
+  faq: { ico: 'help', ar: ['الأسئلة الشائعة', 'جاوب أسئلة عملائك قبل ما يسألون: التوصيل، الحجز، المواقف.'], en: ['FAQ', 'Answer common questions before guests ask: delivery, booking, parking.'] },
+  telegram: { ico: 'bell', ar: ['إشعارات تيليجرام', 'يوصلك كل طلب جديد وتذكيرات الاشتراك على تيليجرام فورًا، لكل الفروع أو لفرع محدد.'], en: ['Telegram alerts', 'Get every new order and plan reminders on Telegram, for all branches or one.'] },
+  pixel_meta: { ico: 'chart', ar: ['بكسل Meta (فيسبوك وإنستقرام)', 'قِس زيارات منيوك وطلباتك من إعلانات فيسبوك وإنستقرام.'], en: ['Meta Pixel', 'Measure menu visits and orders from Facebook and Instagram ads.'], hint: '123456789012345' },
+  pixel_snap: { ico: 'chart', ar: ['بكسل سناب شات', 'قِس نتائج إعلانات سناب شات، الأقوى في السعودية.'], en: ['Snap Pixel', 'Measure Snapchat ad results.'], hint: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' },
+  pixel_tiktok: { ico: 'chart', ar: ['بكسل تيك توك', 'اعرف كم طلب جاك من إعلانات تيك توك.'], en: ['TikTok Pixel', 'See how many orders came from TikTok ads.'], hint: 'C1ABCDEF2GHIJK3LMNOP' },
+  pixel_ga4: { ico: 'chart', ar: ['Google Analytics 4', 'تحليل شامل لزوار منيوك وصفحتك.'], en: ['Google Analytics 4', 'Full analytics for your menu and page visitors.'], hint: 'G-XXXXXXXXXX' },
+  pixel_gads: { ico: 'chart', ar: ['Google Ads', 'تتبع تحويلات إعلانات قوقل.'], en: ['Google Ads', 'Track Google Ads conversions.'], hint: 'AW-123456789' },
+  pixel_x: { ico: 'chart', ar: ['بكسل X (تويتر)', 'قِس نتائج إعلانات X.'], en: ['X Pixel', 'Measure X ad results.'], hint: 'o1abc' },
+  pixel_pinterest: { ico: 'chart', ar: ['Pinterest Tag', 'تتبع زوار بنترست.'], en: ['Pinterest Tag', 'Track Pinterest visitors.'], hint: '2612345678901' },
+  pixel_linkedin: { ico: 'chart', ar: ['LinkedIn Insight Tag', 'لحملات الشركات والطلبات الجماعية.'], en: ['LinkedIn Insight Tag', 'For B2B and catering campaigns.'], hint: '1234567' },
 };
 const GROUPS = { engage: a('التفاعل مع العملاء', 'Engage guests'), notify: a('الإشعارات', 'Notifications'), pixels: a('بكسلات الإعلانات', 'Ad pixels') };
 const ERR = {
@@ -67,10 +68,10 @@ export async function addonsView(el) {
 }
 
 function card(x, tg) {
-  const i = INFO[x.key] || { ico: '•', ar: [x.key, ''], en: [x.key, ''] };
+  const i = INFO[x.key] || { ico: 'circle', ar: [x.key, ''], en: [x.key, ''] };
   const [title, desc] = lang === 'ar' ? i.ar : i.en;
   const off = x.key === 'telegram' && !tg.configured;
-  return `<article class="card addon-card"><header><span class="addon-ico" aria-hidden="true">${esc(i.ico)}</span><div><h3>${esc(title)}</h3>${x.installed ? `<span class="pill ready">${a('مثبّت', 'Installed')}</span>` : ''}</div></header><p class="small muted">${esc(desc)}</p>${off ? `<p class="small muted">${a('تفعّل قريبًا بعد ربط بوت زيمارا.', 'Available once the ZIMARA bot is connected.')}</p>` : ''}<div class="actions"><button type="button" class="btn sm" data-open="${esc(x.key)}" ${off ? 'disabled' : ''}>${x.installed ? a('إعدادات', 'Settings') : a('تثبيت', 'Install')}</button>${x.installed ? `<button type="button" class="btn ghost sm" data-remove="${esc(x.key)}">${a('إلغاء التثبيت', 'Uninstall')}</button>` : ''}</div></article>`;
+  return `<article class="card addon-card"><header><span class="addon-ico" aria-hidden="true">${icon(i.ico)}</span><div><h3>${esc(title)}</h3>${x.installed ? `<span class="pill ready">${a('مثبّت', 'Installed')}</span>` : ''}</div></header><p class="small muted">${esc(desc)}</p>${off ? `<p class="small muted">${a('تفعّل قريبًا بعد ربط بوت زيمارا.', 'Available once the ZIMARA bot is connected.')}</p>` : ''}<div class="actions"><button type="button" class="btn sm" data-open="${esc(x.key)}" ${off ? 'disabled' : ''}>${x.installed ? a('إعدادات', 'Settings') : a('تثبيت', 'Install')}</button>${x.installed ? `<button type="button" class="btn ghost sm" data-remove="${esc(x.key)}">${a('إلغاء التثبيت', 'Uninstall')}</button>` : ''}</div></article>`;
 }
 
 async function openEditor(el, x, d) {
@@ -100,7 +101,7 @@ async function openEditor(el, x, d) {
 
 const FIELD_LABEL = { branch: a('اسم الفرع', 'Branch name'), items: a('الأصناف والكميات', 'Items and quantities'), options: a('الإضافات والأحجام', 'Sizes and extras'), prices: a('سعر كل صنف', 'Price per item'), note: a('ملاحظة العميل', 'Guest note'), total: a('الإجمالي', 'Total'), time: a('وقت الطلب', 'Order time'), link: a('رابط فتح الطلبات', 'Link to orders') };
 const DEFAULT_FIELDS = ['branch', 'items', 'options', 'note', 'total', 'link'];
-const formatEditor = (prefix, f = {}) => `<fieldset class="tg-format" data-format="${prefix}"><legend>${a('وش يوصلك في الرسالة؟', 'What should the message show?')}</legend><div><label for="${prefix}-title">${a('عنوان الرسالة', 'Message heading')}</label><input id="${prefix}-title" name="title" maxlength="60" value="${esc(f.title || '')}" placeholder="🛎️ طلب جديد"></div><div class="check-grid">${Object.entries(FIELD_LABEL).map(([k, l]) => `<label><input type="checkbox" name="field" value="${k}" ${(f.fields || DEFAULT_FIELDS).includes(k) ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div><p class="small muted">${a('معاينة الرسالة:', 'Message preview:')}</p><pre class="tg-preview" dir="rtl" aria-live="polite"></pre></fieldset>`;
+const formatEditor = (prefix, f = {}) => `<fieldset class="tg-format" data-format="${prefix}"><legend>${a('وش يوصلك في الرسالة؟', 'What should the message show?')}</legend><div><label for="${prefix}-title">${a('عنوان الرسالة', 'Message heading')}</label><input id="${prefix}-title" name="title" maxlength="60" value="${esc(f.title || '')}" placeholder="طلب جديد"></div><div class="check-grid">${Object.entries(FIELD_LABEL).map(([k, l]) => `<label><input type="checkbox" name="field" value="${k}" ${(f.fields || DEFAULT_FIELDS).includes(k) ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div><p class="small muted">${a('معاينة الرسالة:', 'Message preview:')}</p><pre class="tg-preview" dir="rtl" aria-live="polite"></pre></fieldset>`;
 const readFormat = (box) => ({ title: box.querySelector('[name=title]').value.trim() || null, fields: [...box.querySelectorAll('[name=field]:checked')].map((i) => i.value) });
 function wireFormat(box) {
   const pre = box.querySelector('.tg-preview');

@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 import {esc,lang} from './common.js';
 import {workspaceIcon} from './workspace.js';
 
@@ -36,7 +37,7 @@ export function installWorkspaceFinder({trigger,views,navigate}) {
       const matches=views.filter(([key,label])=>query.split(/\s+/).every(word=>normalize([label,...(terms[key]||[])].join(' ')).includes(word)));
       clear.hidden=!input.value;
       dialog.querySelector('#finder-count').textContent=a(`${matches.length} قسم متاح لصلاحيتك`,`${matches.length} sections available to your role`);
-      results.innerHTML=matches.length?matches.map(([key,label])=>`<button type="button" class="finder-result" data-destination="${esc(key)}">${workspaceIcon(key)}<span>${esc(label)}</span><span aria-hidden="true">↗</span></button>`).join(''):`<div class="finder-empty"><h3>${a('ما لقينا القسم.','No matching sections.')}</h3><p>${a('جرّب كلمة أقصر أو امسح البحث لعرض كل أدواتك.','Try a shorter word or clear the search to see all your tools.')}</p></div>`;
+      results.innerHTML=matches.length?matches.map(([key,label])=>`<button type="button" class="finder-result" data-destination="${esc(key)}">${workspaceIcon(key)}<span>${esc(label)}</span><span aria-hidden="true">${icon("arrowUpRight")}</span></button>`).join(''):`<div class="finder-empty"><h3>${a('ما لقينا القسم.','No matching sections.')}</h3><p>${a('جرّب كلمة أقصر أو امسح البحث لعرض كل أدواتك.','Try a shorter word or clear the search to see all your tools.')}</p></div>`;
     };
     input.addEventListener('input',event=>{if(!event.isComposing)render();});
     input.addEventListener('compositionend',render);

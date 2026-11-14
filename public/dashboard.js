@@ -1,3 +1,7 @@
+import{studioSeasons}from'./studio-seasons.js';
+import{hqSeasons}from'./hq-seasons.js';
+import { icon } from './icons.js';
+import {merchandisingFields,readMerchandising,wireMerchandising,mountMenuSchedules} from './menu-merchandising.js';
 import {branchesView} from './branches.js';
 import { startLive, onLive } from './realtime.js';
 import {canLeaveWorkspace} from './forms.js';
@@ -297,6 +301,7 @@ async function ownerMenu(el) {
     <div class="row">${field('name_ar', t('nameAr'), `required value="${esc(i.name_ar || '')}"`, p)}${field('name_en', t('nameEn'), `required value="${esc(i.name_en || '')}"`, p)}</div>
     <div class="row">${field('desc_ar', t('descAr'), `value="${esc(i.desc_ar || '')}"`, p)}${field('desc_en', t('descEn'), `value="${esc(i.desc_en || '')}"`, p)}</div>
     ${imageField('image_url', A('صورة الصنف', 'Item photo'), i.image_url || '', p)}
+    ${merchandisingFields(i,items,p)}
     <fieldset class="opt-group"><legend>${A('شارات تظهر على الصنف (حتى 3)', 'Badges on the dish (up to 3)')}</legend><div class="allergen-grid">${BADGES.map(([k, ar, en]) => `<label class="check"><input type="checkbox" data-badge value="${k}" ${i.badges?.includes(k) ? 'checked' : ''}> ${esc(A(ar, en))}</label>`).join('')}</div></fieldset>
     <details class="item-more"${i.compare_price || i.allergens?.length || i.options?.length || i.caffeine_mg != null || i.sodium_mg != null ? ' open' : ''}><summary>${A('عرض وأحجام ومعلومات غذائية', 'Offer, sizes and nutrition')}</summary><div class="stack">
       <div class="row">${field('compare_price', A('السعر قبل الخصم (اختياري)', 'Price before discount (optional)'), `type="number" min="0" step="0.01" inputmode="decimal" value="${i.compare_price != null ? i.compare_price / 100 : ''}"`, p)}${field('caffeine_mg', A('الكافيين (ملغ)', 'Caffeine (mg)'), `type="number" min="0" inputmode="numeric" value="${i.caffeine_mg ?? ''}"`, p)}${field('sodium_mg', A('الصوديوم (ملغ)', 'Sodium (mg)'), `type="number" min="0" inputmode="numeric" value="${i.sodium_mg ?? ''}"`, p)}</div>
@@ -307,6 +312,7 @@ async function ownerMenu(el) {
     </div></details>
     <div class="row form-foot">${field('sort', t('sort'), `type="number" min="0" value="${i.sort ?? 0}"`, p)}<label class="check"><input type="checkbox" name="hidden" ${i.active === 0 ? 'checked' : ''}> ${esc(A('إخفاء من المنيو', 'Hide from menu'))}</label></div>`;
   const toItem = (v, form) => ({
+    ...readMerchandising(form),
     category_id: v.category_id, name_ar: v.name_ar, name_en: v.name_en, desc_ar: v.desc_ar, desc_en: v.desc_en,
     price: Math.round(Number(v.price) * 100), calories: v.calories === '' ? null : Number(v.calories), image_url: v.image_url.trim() || null,
     compare_price: v.compare_price ? Math.round(Number(v.compare_price) * 100) : null,
@@ -317,7 +323,7 @@ async function ownerMenu(el) {
     options: readGroups(form),
     sort: Number(v.sort || 0), active: !v.hidden,
   });
-  const intro = `<div class="section-intro row-between"><div><h2>${esc(t('menu'))}</h2><p>${A('أقسامك وأصنافك كما يراها العميل. أي تعديل يظهر فورًا في كل الفروع.', 'Your sections and items as customers see them. Changes appear instantly in every branch.')}</p></div>${branch ? `<a class="btn ghost sm" href="/m/${esc(branch.slug)}" target="_blank" rel="noopener">${A('معاينة المنيو', 'Preview menu')} ↗</a>` : ''}</div>`;
+  const intro = `<div class="section-intro row-between"><div><h2>${esc(t('menu'))}</h2><p>${A('أقسامك وأصنافك كما يراها العميل. أي تعديل يظهر فورًا في كل الفروع.', 'Your sections and items as customers see them. Changes appear instantly in every branch.')}</p></div>${branch ? `<a class="btn ghost sm" href="/m/${esc(branch.slug)}" target="_blank" rel="noopener">${A('معاينة المنيو', 'Preview menu')} ${icon("arrowUpRight")}</a>` : ''}</div>`;
 
   if (!items.length && !categories.length) {
     el.innerHTML = `${intro}<div class="card empty-hero"><span class="empty-ico">${ICON.menu}</span><h3>${A('منيوك فاضي حاليًا', 'Your menu is empty')}</h3>
@@ -370,6 +376,8 @@ async function ownerMenu(el) {
     if (del) del.closest('.option-group-editor').remove();
   }));
   wireImageFields(el);
+  wireMerchandising(el);
+  mountMenuSchedules(el,branches,categories);
   const reload = () => ownerMenu(el);
   el.querySelector('#sample')?.addEventListener('click', async (e) => {
     e.currentTarget.disabled = true;
@@ -562,7 +570,7 @@ function branchDisplay(el) {
   clearTimeout(displayTimer);
   let knownReady = new Set();
   let armed = false;
-  el.innerHTML = `<div class="row" style="margin:12px 0"><button class="btn ghost sm" id="fs" type="button">${esc(t('fullscreen'))}</button><button class="btn ghost sm" id="snd" type="button">🔔 ${esc(t('soundOn'))}</button></div>
+  el.innerHTML = `<div class="row" style="margin:12px 0"><button class="btn ghost sm" id="fs" type="button">${esc(t('fullscreen'))}</button><button class="btn ghost sm" id="snd" type="button">${icon("bell")} ${esc(t('soundOn'))}</button></div>
     <div class="board" id="disp"><div class="card" style="text-align:center"><h2>${esc(t('latest'))}</h2><div id="lt"></div></div><div class="card"><h2>${esc(t('readyNow'))}</h2><div id="rd" class="grid" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))"></div></div></div>`;
   el.querySelector('#fs').onclick = () => el.querySelector('#disp').requestFullscreen?.();
   el.querySelector('#snd').onclick = (e) => { armed = unlockAudio(); e.target.disabled = armed; };
@@ -683,7 +691,7 @@ try { lastIssued = JSON.parse(sessionStorage.getItem('zm_last_ticket_' + me.user
 
 const heading = document.createElement('div');
 heading.className = 'workspace-heading';
-heading.innerHTML = `<div><h1>${esc(me.user.role === 'admin' ? t('admin') : me.user.role === 'owner' ? t('owner') : t('branch'))}</h1><p class="muted">${esc(subtitle)}</p></div>${me.user.role === 'owner' && me.org?.slug ? `<a class="btn ghost sm heading-link" href="/p/${esc(me.org.slug)}" target="_blank" rel="noopener">${lang === 'ar' ? 'عرض صفحتي العامة' : 'View public page'} ↗</a>` : me.branch?.slug ? `<a class="btn ghost sm heading-link" href="/m/${esc(me.branch.slug)}" target="_blank" rel="noopener">${lang === 'ar' ? 'عرض المنيو' : 'View menu'} ↗</a>` : ''}`;
+heading.innerHTML = `<div><h1>${esc(me.user.role === 'admin' ? t('admin') : me.user.role === 'owner' ? t('owner') : t('branch'))}</h1><p class="muted">${esc(subtitle)}</p></div>${me.user.role === 'owner' && me.org?.slug ? `<a class="btn ghost sm heading-link" href="/p/${esc(me.org.slug)}" target="_blank" rel="noopener">${lang === 'ar' ? 'عرض صفحتي العامة' : 'View public page'} ${icon("arrowUpRight")}</a>` : me.branch?.slug ? `<a class="btn ghost sm heading-link" href="/m/${esc(me.branch.slug)}" target="_blank" rel="noopener">${lang === 'ar' ? 'عرض المنيو' : 'View menu'} ${icon("arrowUpRight")}</a>` : ''}`;
 heading.querySelector('h1').insertAdjacentHTML('beforeend',' <span aria-hidden="true">/</span> <span id="workspace-section"></span>');
 heading.insertAdjacentHTML('beforeend',`<button type="button" class="btn ghost workspace-find" id="workspace-find" aria-haspopup="dialog">${workspaceIcon('menu')}<span>${lang==='ar'?'ابحث في أدواتك':'Find your tools'}</span><kbd>⌘ / Ctrl K</kbd></button>`);
 main.before(heading);
@@ -693,8 +701,8 @@ if (me.user.role === 'branch') startLive();
 
 const allowed=key=>me.user.role!=='branch'||me.permissions?.[key]!==false;
 const views = {
-  admin: [['orgs', t('orgs'), adminOrgs], ['launch', lang === 'ar' ? 'مركز التشغيل' : 'Launch centre', el => launchReadiness(el, me)], ['automation', lang === 'ar' ? 'الأتمتة' : 'Automation', automationSettings], ['admins', t('admins'), adminAdmins], ['legal', lang === 'ar' ? 'البيانات القانونية' : 'Legal details', adminLegalView], ['account', t('account'), accountView]],
-  owner: [['overview', lang === 'ar' ? 'نظرة عامة' : 'Overview', ownerOverview], ['launch', lang === 'ar' ? 'مركز التشغيل' : 'Launch centre', el => launchReadiness(el, me)], ['menu', t('menu'), ownerMenu], ['brand', lang === 'ar' ? 'استوديو الهوية' : 'Brand studio', ownerBrand], ['profile',lang === 'ar' ? 'صفحة المنشأة' : 'Business page',el=>profileEditor(el,me)], ['branches', t('branches'), ownerBranches], ['loyalty', t('loyalty'), (el) => loyaltyAdmin(el, me)], ['stats', t('stats'), ownerStats], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'إعدادات الفروع' : 'Branch settings', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['design', lang === 'ar' ? 'استوديو التصميم' : 'Design studio', el => designStudio(el, me)], ['coupons', lang === 'ar' ? 'الكوبونات' : 'Coupons', couponsView], ['templates', lang === 'ar' ? 'صفحات جاهزة' : 'Ready pages', templatesView], ['addons', lang === 'ar' ? 'الإضافات' : 'Add-ons', addonsView], ['domain', lang === 'ar' ? 'الدومين الخاص' : 'Own domain', domainView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
+  admin: [['orgs', t('orgs'), adminOrgs], ['seasons', lang==='ar'?'مواسم زيمارا':'ZIMARA seasons',hqSeasons], ['launch', lang === 'ar' ? 'مركز التشغيل' : 'Launch centre', el => launchReadiness(el, me)], ['automation', lang === 'ar' ? 'الأتمتة' : 'Automation', automationSettings], ['admins', t('admins'), adminAdmins], ['legal', lang === 'ar' ? 'البيانات القانونية' : 'Legal details', adminLegalView], ['account', t('account'), accountView]],
+  owner: [['overview', lang === 'ar' ? 'نظرة عامة' : 'Overview', ownerOverview], ['launch', lang === 'ar' ? 'مركز التشغيل' : 'Launch centre', el => launchReadiness(el, me)], ['menu', t('menu'), ownerMenu], ['brand', lang === 'ar' ? 'استوديو الهوية' : 'Brand studio', ownerBrand], ['profile',lang === 'ar' ? 'صفحة المنشأة' : 'Business page',el=>profileEditor(el,me)], ['branches', t('branches'), ownerBranches], ['loyalty', t('loyalty'), (el) => loyaltyAdmin(el, me)], ['stats', t('stats'), ownerStats], ['import', lang === 'ar' ? 'استيراد الأصناف' : 'Import items', importView], ['settings', lang === 'ar' ? 'إعدادات الفروع' : 'Branch settings', branchSettingsView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['subscription', lang === 'ar' ? 'باقتي وفواتيري' : 'Plan & invoices', subscriptionView], ['design', lang === 'ar' ? 'استوديو التصميم' : 'Design studio', el => designStudio(el, me)], ['seasons',lang==='ar'?'المواسم':'Seasons',el=>studioSeasons(el,me)], ['coupons', lang === 'ar' ? 'الكوبونات' : 'Coupons', couponsView], ['templates', lang === 'ar' ? 'صفحات جاهزة' : 'Ready pages', templatesView], ['addons', lang === 'ar' ? 'الإضافات' : 'Add-ons', addonsView], ['domain', lang === 'ar' ? 'الدومين الخاص' : 'Own domain', domainView], ['integrations', lang === 'ar' ? 'التكاملات' : 'Integrations', integrationsView], ['account', t('account'), accountView]],
   branch: [['orders', t('orders'), branchOrders], ['kitchen', lang === 'ar' ? 'شاشة المطبخ' : 'Kitchen display', el => operationsBoard(el)], ['tables', lang === 'ar' ? 'طلبات الطاولات' : 'Table orders', el => operationsBoard(el, 'tables')], ['waitlist', lang === 'ar' ? 'قائمة الانتظار' : 'Waitlist', waitlistBoard], ['display', t('display'), branchDisplay], ['loyalty', t('loyalty'), branchLoyalty], ['availability', t('availability'), branchAvailability], ['inbox', lang === 'ar' ? 'طلبات المنيو' : 'Menu orders', menuOrdersView], ['devices', lang === 'ar' ? 'أجهزة العرض' : 'Display devices', el => devicesView(el, me)], ['account', t('account'), accountView]],
 }[me.user.role].filter(([key])=>(key!=='kitchen'||allowed('tickets_view'))&&allowed(({kitchen:'orders_view',tables:'orders_view',orders:"tickets_view",display:"display",loyalty:"loyalty_view",availability:"availability",inbox:"orders_view",waitlist:"waitlist",devices:"display"})[key]));
 tabs(views.map(([k, l]) => [k, l]), (k, el) => {

@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 // Guest waitlist: /q/<branch> to join, /w/<token> to follow your place and get called.
 import { api, chime, esc, lang, makeT, setBrandColor, topbar, unlockAudio, announce } from './common.js';
 
@@ -31,7 +32,7 @@ async function joinPage() {
   }
   main.innerHTML = `<p class="muted center">${esc(org)} · ${esc(br)}</p>
     <div class="hero-status"><h1>${a('سجّل في قائمة الانتظار', 'Join the waitlist')}</h1>
-      <p id="wl-now">${info.waiting ? a(`قدامك ${info.waiting} · الانتظار ${mins(info.eta_minutes)}`, `${info.waiting} ahead · wait ${mins(info.eta_minutes)}`) : a('ما فيه أحد قدامك 🎉', 'Nobody ahead of you 🎉')}</p></div>
+      <p id="wl-now">${info.waiting ? a(`قدامك ${info.waiting} · الانتظار ${mins(info.eta_minutes)}`, `${info.waiting} ahead · wait ${mins(info.eta_minutes)}`) : a('ما فيه أحد قدامك ', 'Nobody ahead of you ')}</p></div>
     <form class="card stack" id="wl-form" novalidate>
       <label>${a('الاسم', 'Name')}<input name="name" id="wl-name" maxlength="60" autocomplete="given-name" required></label>
       <label>${a('عدد الأشخاص', 'Party size')}<div class="party-pick" role="radiogroup" aria-label="${a('عدد الأشخاص', 'Party size')}">${Array.from({ length: Math.min(info.max_party, 8) }, (_, i) => `<button type="button" role="radio" class="btn ghost" data-party="${i + 1}" aria-checked="${i === 1}">${i + 1}</button>`).join('')}${info.max_party > 8 ? `<input name="party_more" id="wl-more" type="number" min="9" max="${info.max_party}" inputmode="numeric" placeholder="${a('أكثر', 'More')}" aria-label="${a('عدد أكبر', 'Larger party')}">` : ''}</div></label>
@@ -130,9 +131,9 @@ function render(force = false) {
     ${failures > 1 ? `<p class="msg error">${a('نحاول نتصل…', 'Reconnecting…')}</p>` : ''}
     ${body}
     ${open ? `<div class="card stack">
-      ${soundOn ? `<p class="msg">🔊 ${a('الصوت يشتغل ما دامت الصفحة مفتوحة.', 'Sound works while this page stays open.')}</p>` : ''}
-      ${pushOn ? `<p class="msg">📳 ${a('بننبهك على شاشة القفل.', 'We will alert you on the lock screen.')}</p>` : ''}
-      ${!soundOn || (pushAvailable() && !pushOn) ? `<button class="btn big" id="wl-enable" type="button">🔔 ${pushAvailable() ? a('فعّل التنبيه لما يجي دورك', 'Alert me when it is my turn') : a('فعّل الصوت داخل الصفحة', 'Turn on sound in this page')}</button>` : ''}
+      ${soundOn ? `<p class="msg">${icon("volume")} ${a('الصوت يشتغل ما دامت الصفحة مفتوحة.', 'Sound works while this page stays open.')}</p>` : ''}
+      ${pushOn ? `<p class="msg">${icon("phone")} ${a('بننبهك على شاشة القفل.', 'We will alert you on the lock screen.')}</p>` : ''}
+      ${!soundOn || (pushAvailable() && !pushOn) ? `<button class="btn big" id="wl-enable" type="button">${icon("bell")} ${pushAvailable() ? a('فعّل التنبيه لما يجي دورك', 'Alert me when it is my turn') : a('فعّل الصوت داخل الصفحة', 'Turn on sound in this page')}</button>` : ''}
       <p class="small muted">${pushAvailable() ? a('بعد السماح بالإشعارات يجيك تنبيه والجوال مقفل. صوته يتبع إعدادات جوالك.', 'After you allow notifications, you get an alert while the phone is locked. Its sound follows your phone settings.') : a('أبقِ الصفحة مفتوحة ليشتغل الصوت.', 'Keep this page open for the sound to work.')}</p>
       ${isIOS && !standalone && state.vapidPublicKey ? `<p class="small">${a('للتنبيه والآيفون مقفل: زر المشاركة ثم «إضافة إلى الشاشة الرئيسية»، وافتحها من هناك.', 'For lock-screen alerts on iPhone: Share, then “Add to Home Screen”, and open it from there.')}</p>` : ''}
       ${notice ? `<p class="msg error small">${esc(notice)}</p>` : ''}

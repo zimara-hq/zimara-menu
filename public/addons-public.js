@@ -140,5 +140,7 @@ export function renderAddons(addons, { main, orgSlug }) {
     link.innerHTML = WA;
     document.body.append(link);
   }
-  consent(orgSlug, addons.pixels);
+  // Private studio previews receive draft content from their parent. Keep
+  // third-party tracking scripts out even when a visitor previously consented.
+  if(!['design_preview','season_preview'].some(key=>new URLSearchParams(location.search).has(key)))consent(orgSlug, addons.pixels);
 }

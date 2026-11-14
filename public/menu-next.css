@@ -1,0 +1,99 @@
+/* Compact customer shell; colors and type continue to come from the tenant recipe. */
+:root .menu-page .menu-wrap{max-width:1040px;min-width:0}
+:root .menu-page .menu-cover,:root .menu-page .menu-cover.has-photo{height:64px;min-height:0;width:auto;margin:0 calc(50% - 50vw);border-radius:0}
+:root .menu-page .menu-sheet{width:100%;max-width:none;min-height:0;margin:0;padding:14px 0 10px;border:0;border-radius:0;background:transparent;box-shadow:none}
+:root .menu-page .menu-id{gap:12px;align-items:center}
+:root .menu-page .menu-id>div{min-width:0;flex:1}
+:root .menu-page .menu-logo{width:48px;height:48px;margin:0;padding:4px;border-radius:14px;box-shadow:none}
+:root .menu-page #menu-title{font-size:clamp(1rem,3.8vw,1.65rem);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin:0}
+:root .menu-page .menu-branch{font-size:.85rem;margin:0}
+:root .menu-page .menu-info{margin-top:6px;gap:5px}
+:root .menu-page .info-chip{font-size:.78rem;padding:2px 8px;max-width:100%;overflow-wrap:anywhere}
+:root .menu-page .menu-description summary,:root .menu-page .menu-gallery-disclosure summary,:root .menu-page .discovery-filters summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700;font-size:.86rem;color:var(--ink);gap:8px}
+:root .menu-page summary::after{content:'+';margin-inline-start:auto}
+:root .menu-page details[open]>summary::after{content:'−'}
+:root .menu-page .menu-about{margin:0 0 8px;font-size:.9rem}
+:root .menu-page .menu-sticky{position:sticky;top:64px;padding-block:8px 0;min-width:0;margin-block:0;max-width:calc(100% + 32px)}
+:root .menu-page .search-field input{min-height:46px}
+:root .menu-page .menu-cats{padding-block:6px 0;max-width:100%}
+:root .menu-page .menu-cats a{min-height:44px;display:inline-flex;align-items:center;padding:6px 14px}
+:root .menu-page #result-count{margin:0;font-size:.75rem;min-height:18px}
+:root .menu-page .filter-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding-bottom:12px}
+:root .menu-page .filter-fields label{font-size:.8rem;min-width:0}
+:root .menu-page .filter-fields input,:root .menu-page .filter-fields select{min-width:0;width:100%;min-height:44px}
+:root .menu-page .menu-section h2{margin:14px 0 8px;font-size:1.1rem}
+:root .menu-page .dish{min-width:0;position:relative;align-items:center;gap:12px;padding:12px;min-height:132px}
+:root .menu-page .dish-detail{display:block;text-align:inherit;color:inherit;font:inherit;font-weight:inherit;border:0;background:none;padding:0;min-height:44px;width:100%;cursor:pointer;line-height:1.35}
+:root .menu-page .dish h3{font-size:1rem;margin:0}
+:root .menu-page .dish-desc{font-size:.84rem;line-height:1.4;margin:2px 0 0}
+:root .menu-page .dish-meta{margin-top:5px;gap:6px;font-size:.9rem}
+:root .menu-page .dish-allergens{display:none}
+:root .menu-page .dish-photo{width:96px;flex:0 0 96px;align-self:center;position:relative}
+:root .menu-page .dish-photo img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;border-radius:10px}
+:root .menu-page .dish-photo.no-photo{width:44px;flex-basis:44px}
+:root .menu-page .dish-add{width:44px;height:44px;min-height:44px;bottom:-8px;inset-inline-end:-4px;z-index:3}
+:root .menu-page .dish-badges{margin:0;font-size:.7rem}
+:root .menu-page .dish-detail:focus-visible,:root .menu-page summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+:root[data-d-layout=grid] .menu-page .dish-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;background:transparent;border:0;border-radius:0;align-items:stretch}
+:root[data-d-layout=grid] .menu-page .dish{display:flex;flex-direction:column-reverse;align-items:stretch;padding:0;border:1px solid var(--line);border-radius:var(--d-radius,16px);overflow:hidden;background:var(--surface);gap:0;min-height:0;justify-content:flex-end}
+:root[data-d-layout=grid] .menu-page .dish-text{padding:10px;flex:1;display:flex;flex-direction:column}
+:root[data-d-layout=grid] .menu-page .dish-meta{margin-top:auto;padding-top:6px;min-height:30px}
+:root[data-d-layout=grid] .menu-page .dish-photo{width:100%;flex:0 0 auto;align-self:stretch;aspect-ratio:4/3}
+:root[data-d-layout=grid] .menu-page .dish-photo img{width:100%;height:100%;aspect-ratio:4/3;border-radius:0}
+:root[data-d-layout=grid] .menu-page .dish-add{bottom:6px;inset-inline-end:6px}
+:root[data-d-layout=grid] .menu-page .dish-desc{display:none}
+:root[data-d-layout=grid] .menu-page .dish-photo.no-photo{aspect-ratio:auto;min-height:50px}
+:root[data-d-layout=text] .menu-page .dish-photo{width:44px;flex:0 0 44px;aspect-ratio:auto}
+:root[data-d-layout=text] .menu-page .dish-photo img{display:none}
+:root[data-d-layout=text] .menu-page .dish{display:flex;flex-direction:row;min-height:112px}
+.options-sheet{width:min(620px,calc(100% - 24px));max-height:90dvh;padding:20px;overscroll-behavior:contain;overflow:auto;border:1px solid var(--line);border-radius:22px;color:var(--ink);background:var(--surface)}
+.options-sheet::backdrop{background:rgb(0 0 0 / .55)}
+.options-sheet header{align-items:start;flex-wrap:nowrap}
+.options-sheet h2{font-size:1.3rem;overflow-wrap:anywhere;margin:0}
+.options-sheet button,.options-sheet .opt-choice{min-height:44px}
+.detail-gallery{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;max-width:100%}
+.detail-gallery img{flex:0 0 100%;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;border-radius:14px;scroll-snap-align:center}
+.detail-complements{display:grid;gap:8px}
+.detail-complements h3,.detail-complements p{margin:0}
+@media(min-width:900px){:root .menu-page .menu-sticky{top:76px}:root .menu-page .menu-cover,:root .menu-page .menu-cover.has-photo{height:88px}:root .menu-page .menu-sheet{padding-block:18px}:root .menu-page .menu-id{max-width:100%}:root[data-d-layout=grid] .menu-page .dish-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){:root .menu-page *,.options-sheet *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+:root .menu-page .menu-cover,:root .menu-page .menu-cover.has-photo{height:36px}
+:root .menu-page .menu-description{margin-top:4px}
+:root .menu-page .menu-description summary{min-height:28px}
+:root .menu-page .menu-layout #list .menu-section{margin:0;padding:0}
+:root .menu-page .menu-layout #list .menu-section h2{font-size:1.1rem;margin:10px 0 8px;line-height:1.4}
+:root .menu-page #result-count{position:absolute;inset-inline-end:16px;bottom:12px;pointer-events:none}
+:root .menu-page .discovery-filters summary{padding-inline-end:70px}
+/* Reuse one local face for the default menu family; merchant-selected families remain intact. */
+@font-face{font-family:MenuTajawal;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/menu-tajawal.woff2') format('woff2')}
+@font-face{font-family:MenuJakarta;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/menu-jakarta.woff2') format('woff2');unicode-range:U+0100-0148,U+014A-017E,U+018F,U+0192,U+01A0-01A1,U+01AF-01B0,U+01C4-01CC,U+01E6-01E7,U+01EA-01EB,U+01FA-021B,U+022A-022D,U+0230-0233,U+0237,U+0259,U+02C6-02C7,U+02D8-02DD,U+0300-0304,U+0306-030C,U+030F,U+0311-0312,U+031B,U+0323-0324,U+0326-0328,U+032E,U+0331,U+0394,U+03A9,U+03C0,U+0E3F,U+1E08-1E09,U+1E0C-1E0F,U+1E14-1E17,U+1E1C-1E1D,U+1E20-1E21,U+1E24-1E25,U+1E2A-1E2B,U+1E2E-1E2F,U+1E36-1E37,U+1E3A-1E3B,U+1E42-1E49,U+1E4C-1E53,U+1E5A-1E5B,U+1E5E-1E69,U+1E6C-1E6F,U+1E78-1E7B,U+1E80-1E85,U+1E8E-1E8F,U+1E92-1E93,U+1E97,U+1E9E,U+1EA0-1EF9,U+2070,U+2074-207E,U+2080-208E,U+2113,U+2116,U+2122,U+2126,U+212E,U+2153-2154,U+215B-215E,U+2190-2199,U+21A9-21AA,U+21B0-21B3,U+2202,U+2205-2206,U+220F,U+2211-2212,U+2215,U+2219-221A,U+221E,U+222B,U+2248,U+2260,U+2264-2265,U+25A0-25A1,U+25B2-25B3,U+25B6-25B7,U+25BC-25BD,U+25C0-25C1,U+25C6-25C7,U+25CA-25CB,U+25CF,U+2605-2606,U+2B0E,U+2B10,U+FB01-FB02}
+@font-face{font-family:MenuJakarta;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/menu-jakarta-core.woff2') format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+20A0-20CF}
+:root .menu-page .dish-price{font-family:inherit}
+:root .menu-page footer.site a.tenant-powered{color:var(--ink)}
+:root .menu-page .menu-cover,:root .menu-page .menu-cover.has-photo{height:24px}
+:root .menu-page .menu-sheet{padding-block:10px;position:relative}
+:root .menu-page .menu-id{padding-inline-end:48px}
+:root .menu-page .menu-description{position:static;margin:0}
+:root .menu-page .menu-description summary{position:absolute;inset-inline-end:0;top:12px;width:44px;height:44px;font-size:0;justify-content:center;border:1px solid var(--line);border-radius:50%}
+:root .menu-page details.menu-description>summary::after{content:none}
+:root .menu-page .menu-description[open] .menu-about{padding-top:12px}
+:root .menu-page .menu-sticky{padding-block:6px}
+:root .menu-page .menu-sticky .search-field{padding-inline-end:50px}
+:root .menu-page .menu-sticky .search-field input{padding-inline-end:65px}
+:root .menu-page .discovery-filters summary{position:absolute;top:6px;inset-inline-end:16px;width:44px;height:46px;padding:0;justify-content:center;font-size:0;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+:root .menu-page details.discovery-filters>summary::after{content:none}
+:root .menu-page .discovery-filters[open] .filter-fields{padding-top:10px}
+:root .menu-page #result-count{position:static;min-height:0;height:0;overflow:hidden;margin:0}
+:root .menu-page .search-ico{inset-inline-start:14px}
+:root[data-d-layout=grid] .menu-page .dish-photo{min-height:0;height:auto;overflow:hidden}
+:root[data-d-layout=grid] .menu-page .dish-photo img{height:auto;min-height:0;aspect-ratio:4/3}
+:root .menu-page .search-field #clear-q{inset-inline-end:54px;min-height:44px;top:1px}
+
+:root .menu-page .menu-full-name{white-space:normal;overflow-wrap:anywhere;font-weight:700}
+
+/* Reserve the first screen before tenant data arrives; the loading status stays accessible. */
+:root .menu-page #main{min-height:calc(100vh - 76px)}
+/* Keep every category in the DOM and accessibility tree; defer offscreen layout
+   until the browser approaches it or follows its native category anchor. */
+.menu-page .menu-section{content-visibility:auto;contain-intrinsic-block-size:auto 600px}
+.menu-page .dish{content-visibility:auto;contain-intrinsic-block-size:auto 160px}

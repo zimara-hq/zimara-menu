@@ -28,6 +28,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - run: npm run check:menu
       - name: Configure isolated local test environment
         run: node -e "require('fs').writeFileSync('.dev.vars','AUTH_SECRET='+require('crypto').randomBytes(32).toString('hex')+'\nREQUIRE_ADMIN_MFA=true\n')"
       - run: npm run db:migrate:local
@@ -55,6 +56,18 @@ jobs:
           npm run test:design -- http://127.0.0.1:8787 output/playwright/design
           npm run test:magic -- http://127.0.0.1:8787 output/playwright/magic
           npm run test:ordering -- http://127.0.0.1:8787 output/playwright/ordering
+          npm run test:menu-first-load -- http://127.0.0.1:8787 output/playwright/menu-first-load
+          npm run test:customer-menu -- http://127.0.0.1:8787 output/playwright/next-menu
+          npm run test:menu-merchandising -- http://127.0.0.1:8787 output/playwright/menu-owner-phase1
+          npm run test:preview-privacy -- output/playwright/preview-privacy
+          npm run test:seasons -- http://127.0.0.1:8787 output/playwright/seasons
+          npm run test:season-hq -- http://127.0.0.1:8787 output/playwright/season-hq
+          npm run test:studio-proposals -- http://127.0.0.1:8787 output/playwright/studio-proposals
+          npm run test:studio-entry -- http://127.0.0.1:8787 output/playwright/studio-entry
+          npm run test:studio-inline -- http://127.0.0.1:8787 output/playwright/studio-inline
+          npm run test:studio-canvas -- http://127.0.0.1:8787 output/playwright/studio-canvas
+          npm run test:design-gallery -- http://127.0.0.1:8787 output/playwright/design-gallery
+          npm run test:customer-worlds -- http://127.0.0.1:8787 output/playwright/customer-worlds
           npm run test:waitlist -- http://127.0.0.1:8787 output/playwright/waitlist
           npm run test:loyalty -- http://127.0.0.1:8787 output/playwright/loyalty
           npm run test:security -- http://localhost:8787 output/playwright/security

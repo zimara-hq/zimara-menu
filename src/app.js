@@ -1,4 +1,8 @@
+import { registerSeasons, publicSeason } from './seasons.js';
+import { discoveryFields, discoverMenu, recommendations, registerMenuSchedules } from './menu-discovery.js';
 import { itemExtras, itemView } from './menu-extras.js';
+import { publicPriceLabels } from '../public/menu-discovery.js';
+import { menuPage } from './menu-page.js';
 import { registerDemo, expireDemo } from './demo.js';
 import { sampleMenuStatements, sampleItemCount } from './sample-menu.js';
 import { Hono } from 'hono';
@@ -6,11 +10,12 @@ import { bodyLimit } from 'hono/body-limit';
 import { body, requireRole, audit, newUser, isSecure, assertPlanQuota, subscriptionFor, planFor, rateLimit } from './context.js';
 import { registerAccounts, expireSubscriptions } from './accounts.js';
 import { consumeMfa } from './mfa.js';
-import { registerFeatures } from './features.js';
+import { registerFeatures, publicMenuContext } from './features.js';
 import { registerAddons, publicAddons } from './addons.js';
 import { registerTemplates } from './templates.js';
 import { registerDomains, customHostRedirect } from './domains.js';
 import { registerDesign, activeDesign } from './design.js';
+import { registerStudioProposals } from './studio-proposals.js';
 import {registerStaffPermissions,staffPermissions} from './staff-permissions.js';
 import { registerAiImport, aiConfigured } from './ai-import.js';
 import { registerSetup } from './setup.js';
@@ -115,6 +120,7 @@ app.use('/api/*', async (c, next) => {
   await next();
 });
 
+registerMenuSchedules(app);
 registerAccounts(app);
 registerBilling(app);
 registerMail(app);
@@ -400,7 +406,7 @@ function itemFields(b) {
     str(b.desc_en, 'desc_en', { optional: true, max: 400 }) ?? '',
     int(b.price, 'price', { max: 10_000_000 }),
     int(b.calories, 'calories', { optional: true, max: 10000 }),
-    url(b.image_url, 'image_url'),
+    typeof b.image_url === 'string' && /^\/menu-art\/[a-z0-9-]+\.webp$/i.test(b.image_url) ? b.image_url : url(b.image_url, 'image_url'),
     int(b.sort ?? 0, 'sort', { max: 10000 }),
     ...itemExtras(b, int(b.price, 'price', { max: 10_000_000 })),
   ];
@@ -414,22 +420,24 @@ owner.post('/items', async (c) => {
   if (!cat) throw bad('invalid_category_id');
   const iid = id();
   await c.env.DB.prepare(
-    'INSERT INTO items (id, org_id, category_id, name_ar, name_en, desc_ar, desc_en, price, calories, image_url, sort, compare_price, allergens, caffeine_mg, sodium_mg, options_json, badges, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO items (id, org_id, category_id, name_ar, name_en, desc_ar, desc_en, price, calories, image_url, sort, compare_price, allergens, caffeine_mg, sodium_mg, options_json, badges, gallery_json, dietary_json, complementary_ids_json, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
   )
-    .bind(iid, u.org_id, cat.id, ...itemFields(b), b.active === false ? 0 : 1)
+    .bind(iid, u.org_id, cat.id, ...itemFields(b), ...await discoveryFields(c.env, u.org_id, b, iid), b.active === false ? 0 : 1)
     .run();
   return c.json({ id: iid }, 201);
 });
 
 owner.patch('/items/:id', async (c) => {
   const u = c.get('user');
-  const b = await body(c);
+  const current = await c.env.DB.prepare('SELECT * FROM items WHERE id=? AND org_id=?').bind(c.req.param('id'), u.org_id).first();
+  if (!current) throw notFound();
+  const b = { ...itemView(current), active: !!current.active, ...await body(c) };
   const cat = await c.env.DB.prepare('SELECT id FROM categories WHERE id = ? AND org_id = ?').bind(b.category_id, u.org_id).first();
   if (!cat) throw bad('invalid_category_id');
   const res = await c.env.DB.prepare(
-    'UPDATE items SET category_id = ?, name_ar = ?, name_en = ?, desc_ar = ?, desc_en = ?, price = ?, calories = ?, image_url = ?, sort = ?, compare_price = ?, allergens = ?, caffeine_mg = ?, sodium_mg = ?, options_json = ?, badges = ?, active = ?, is_sample = 0 WHERE id = ? AND org_id = ?',
+    'UPDATE items SET category_id = ?, name_ar = ?, name_en = ?, desc_ar = ?, desc_en = ?, price = ?, calories = ?, image_url = ?, sort = ?, compare_price = ?, allergens = ?, caffeine_mg = ?, sodium_mg = ?, options_json = ?, badges = ?, gallery_json = ?, dietary_json = ?, complementary_ids_json = ?, active = ?, is_sample = 0 WHERE id = ? AND org_id = ?',
   )
-    .bind(cat.id, ...itemFields(b), b.active === false ? 0 : 1, c.req.param('id'), u.org_id)
+    .bind(cat.id, ...itemFields(b), ...await discoveryFields(c.env, u.org_id, b, current.id), b.active === false ? 0 : 1, c.req.param('id'), u.org_id)
     .run();
   if (!res.meta.changes) throw notFound();
   return c.json({ ok: true });
@@ -443,6 +451,12 @@ owner.delete('/items/:id', async (c) => {
     await c.env.DB.batch([
       c.env.DB.prepare('DELETE FROM branch_unavailable WHERE item_id = ?').bind(item.id),
       c.env.DB.prepare('DELETE FROM items WHERE id = ? AND org_id = ?').bind(item.id, u.org_id),
+      // Keep merchant complements valid in the same transaction as hard deletion.
+      c.env.DB.prepare(`UPDATE items SET complementary_ids_json = (
+        SELECT json_group_array(value) FROM json_each(items.complementary_ids_json) WHERE value != ?
+      ) WHERE org_id = ? AND EXISTS (
+        SELECT 1 FROM json_each(items.complementary_ids_json) WHERE value = ?
+      )`).bind(item.id, u.org_id, item.id),
     ]);
     return c.json({ ok: true, deleted: true });
   } catch (e) {
@@ -706,29 +720,46 @@ async function orgMenu(env, orgId, { branchId = null, includeHidden = false } = 
   const active = includeHidden ? '' : 'AND active = 1';
   const { results: categories } = await env.DB.prepare(`SELECT id, name_ar, name_en, sort, active FROM categories WHERE org_id = ? ${active} ORDER BY sort, rowid`).bind(orgId).all();
   const { results: items } = await env.DB.prepare(
-    `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.compare_price, i.calories, i.caffeine_mg, i.sodium_mg, i.allergens, i.options_json, i.badges, i.image_url, i.sort, i.active, i.is_sample,
+    `SELECT i.id, i.category_id, i.name_ar, i.name_en, i.desc_ar, i.desc_en, i.price, i.compare_price, i.calories, i.caffeine_mg, i.sodium_mg, i.allergens, i.options_json, i.badges, i.gallery_json, i.dietary_json, i.complementary_ids_json, i.image_url, i.sort, i.active, i.is_sample,
             CASE WHEN bu.item_id IS NULL THEN 1 ELSE 0 END AS available
        FROM items i JOIN categories category ON category.id = i.category_id AND category.org_id = i.org_id LEFT JOIN branch_unavailable bu ON bu.item_id = i.id AND bu.branch_id = ?
       WHERE i.org_id = ? ${includeHidden ? '' : 'AND i.active = 1 AND i.is_sample = 0 AND category.active = 1'} ORDER BY i.sort, i.rowid`,
   )
     .bind(branchId, orgId)
     .all();
-  return { categories, items: items.map(itemView) };
+  const menu = { categories, items: items.map(itemView) };
+  return branchId ? discoverMenu(env, orgId, branchId, menu) : menu;
 }
 
-app.get('/api/public/menu/:branchSlug', async (c) => {
-  const b = await c.env.DB.prepare(
+app.get('/api/public/menu/:branchSlug/recommendations/:itemId', async (c) => {
+  const b = await c.env.DB.prepare('SELECT b.id,b.org_id FROM branches b JOIN orgs o ON o.id=b.org_id WHERE b.slug=? AND b.active=1 AND o.active=1').bind(c.req.param('branchSlug')).first();
+  if (!b) throw notFound();
+  return c.json(await recommendations(c.env,b.org_id,b.id,await orgMenu(c.env,b.org_id,{branchId:b.id}),c.req.param('itemId')));
+});
+
+async function publicMenu(env, branchSlug) {
+  const b = await env.DB.prepare(
     `SELECT b.id, b.slug, b.name_ar, b.name_en, o.id AS org_id, o.slug AS org_slug, o.name_ar AS org_name_ar, o.name_en AS org_name_en, o.brand_color, o.logo_url
        FROM branches b JOIN orgs o ON o.id = b.org_id WHERE b.slug = ? AND b.active = 1 AND o.active = 1`,
   )
-    .bind(c.req.param('branchSlug'))
+    .bind(branchSlug)
     .first();
   if (!b) throw notFound();
-  const menu = await orgMenu(c.env, b.org_id, { branchId: b.id });
+  const [menu, { results: siblings }, addons, design, ordering, waitlist, profile_data, season] = await Promise.all([
+    orgMenu(env, b.org_id, { branchId: b.id }),
+    env.DB.prepare('SELECT slug, name_ar, name_en FROM branches WHERE org_id = ? AND active = 1 ORDER BY created_at').bind(b.org_id).all(),
+    publicAddons(env, b.org_id),
+    activeDesign(env, b.org_id),
+    getOrdering(env, b.id).then(publicOrdering),
+    waitSettings(env, b.id).then(settings => settings.active),
+    publicMenuContext(env, b),
+    publicSeason(env, b.org_id, b.id),
+  ]);
   const { org_id, ...branchInfo } = b;
-  const { results: siblings } = await c.env.DB.prepare('SELECT slug, name_ar, name_en FROM branches WHERE org_id = ? AND active = 1 ORDER BY created_at').bind(org_id).all();
-  return c.json({ branch: branchInfo, ...menu, addons: await publicAddons(c.env, org_id), design: await activeDesign(c.env, org_id), ordering: publicOrdering(await getOrdering(c.env, b.id)), waitlist: (await waitSettings(c.env, b.id)).active, branches: siblings });
-});
+  return { branch: branchInfo, ...menu, addons, design, ordering, waitlist, branches: siblings, profile_data, season, price_labels: publicPriceLabels(menu.items) };
+}
+
+app.get('/api/public/menu/:branchSlug', async (c) => c.json(await publicMenu(c.env, c.req.param('branchSlug'))));
 
 async function ticketByToken(env, token) {
   const t = await env.DB.prepare(
@@ -898,6 +929,8 @@ registerAddons(app);
 registerTemplates(app);
 registerDomains(app);
 registerDesign(app);
+registerSeasons(app);
+registerStudioProposals(app);
 registerStaffPermissions(app,{requireRole,body,audit});
 registerAiImport(app);
 registerSetup(app);
@@ -920,6 +953,10 @@ app.get('*', async (c) => {
   if (path.startsWith('/api/')) throw notFound();
   const own = await customHostRedirect(c);
   if (own) return own;
+  const menuMatch = /^\/m\/([^/]+)\/?$/.exec(path);
+  if (menuMatch) {
+    return menuPage(c.env, c.req.raw, decodeURIComponent(menuMatch[1]), publicMenu);
+  }
   for (const [prefix, page] of Object.entries(PAGES)) {
     if (path.startsWith(prefix) && path.length > prefix.length) {
       return c.env.ASSETS.fetch(new Request(new URL(page, c.req.url), c.req.raw));

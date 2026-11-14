@@ -1,0 +1,128 @@
+/* Merchant compositions: the recipe changes the page's structure, not only its palette. */
+:root[data-design] .menu-page{--menu-media-ratio:4/3}
+:root[data-design] .menu-page .menu-section h2{border-inline-start:0;padding-inline-start:0}
+:root[data-design] .menu-page .dish-price{font-variant-numeric:tabular-nums;letter-spacing:0}
+:root[data-design] .menu-page .dish{transition:background-color .18s ease,box-shadow .18s ease}
+:root[data-design] .menu-page .dish:hover{box-shadow:0 8px 24px color-mix(in srgb,var(--ink) 8%,transparent)}
+:root[data-design] .menu-page .dish-add:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+/* Editorial: a food journal, with a leading image and airy horizontal entries. */
+:root[data-site-frame=editorial] .menu-page .menu-cover{height:40px}
+:root[data-site-frame=editorial] .menu-page .menu-section{background:transparent;border-radius:0;padding:0;margin-block:24px}
+:root[data-site-frame=editorial] .menu-page .menu-section h2{font-family:var(--tenant-heading-font);font-size:clamp(1.4rem,3vw,2rem);padding-block:12px;border-block-end:1px solid var(--ink)}
+:root[data-site-frame=editorial] .menu-page .dish-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;border:0;background:transparent}
+:root[data-site-frame=editorial] .menu-page .dish{display:flex;flex-direction:column-reverse;gap:0;padding:0;border:0;border-radius:0;background:transparent;overflow:visible;box-shadow:none}
+:root[data-site-frame=editorial] .menu-page .dish-photo{width:100%;flex-basis:auto;aspect-ratio:3/2;align-self:stretch}
+:root[data-site-frame=editorial] .menu-page .dish-photo img{width:100%;height:100%;aspect-ratio:3/2;border-radius:0}
+:root[data-site-frame=editorial] .menu-page .dish-text{padding:12px 0;border-block-end:1px solid var(--line)}
+:root[data-site-frame=editorial] .menu-page .dish h3{font-size:1.2rem}
+:root[data-site-frame=editorial] .menu-page .dish-desc{display:block;max-width:45ch}
+/* Gallery: image-first tiles, real controls remain keyboard reachable over the media. */
+:root[data-site-frame=gallery] .menu-page .menu-section{padding:0;background:transparent;margin-block:16px;border-radius:0}
+:root[data-site-frame=gallery] .menu-page .dish-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;background:none;border:0}
+:root[data-site-frame=gallery] .menu-page .dish.has-photo{display:block;padding:0;min-height:0;aspect-ratio:4/5;position:relative;isolation:isolate;overflow:hidden;border:0;border-radius:var(--d-r,12px)}
+:root[data-site-frame=gallery] .menu-page .dish.has-photo .dish-photo{position:absolute;inset:0;width:100%;height:100%;margin:0;aspect-ratio:auto}
+:root[data-site-frame=gallery] .menu-page .dish.has-photo img{height:100%;width:100%;aspect-ratio:auto;object-fit:cover;border-radius:0}
+:root[data-site-frame=gallery] .menu-page .dish.has-photo .dish-text{position:absolute;inset-inline:0;bottom:0;z-index:1;padding:56px 14px 12px;background:linear-gradient(transparent,rgba(0,0,0,.92));color:#fff;pointer-events:none}
+:root[data-site-frame=gallery] .menu-page .dish.has-photo .dish-detail{color:#fff;pointer-events:auto;font-size:1rem}
+:root[data-site-frame=gallery] .menu-page .dish.has-photo .dish-price,:root[data-site-frame=gallery] .menu-page .dish.has-photo .dish-kcal{color:#fff}
+:root[data-site-frame=gallery] .menu-page .dish.has-photo .dish-desc,:root[data-site-frame=gallery] .menu-page .dish.has-photo .dish-badges{display:none}
+:root[data-site-frame=gallery] .menu-page .dish.has-photo .dish-meta{margin:0;padding:0;font-size:.85rem}
+:root[data-site-frame=gallery] .menu-page .dish.has-photo .dish-add{top:10px;bottom:auto;inset-inline-end:10px;background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+/* Ledger: a typographic bill of fare, with legible prices and restrained rules. */
+:root[data-site-frame=ledger] .menu-page .menu-cover{height:12px;background:var(--brand)}
+:root[data-site-frame=ledger] .menu-page .menu-sheet{padding-block:20px}
+:root[data-site-frame=ledger] .menu-page .menu-section{padding:0;background:transparent;margin-block:24px}
+:root[data-site-frame=ledger] .menu-page .menu-section h2{font-size:1.35rem;text-align:center;border-block:1px solid var(--ink);padding-block:12px}
+:root[data-site-frame=ledger] .menu-page .dish-list{display:block;background:transparent;border:0;border-radius:0}
+:root[data-site-frame=ledger] .menu-page .dish{display:flex;flex-direction:row;min-height:104px;padding:14px 0;gap:16px;background:transparent;border:0;border-block-end:1px solid var(--line);border-radius:0;box-shadow:none}
+:root[data-site-frame=ledger] .menu-page .dish-text{flex:1;min-width:0;padding:0}
+:root[data-site-frame=ledger] .menu-page .dish h3{font-size:1.1rem}
+:root[data-site-frame=ledger] .menu-page .dish-meta{margin-top:0}
+/* Boutique: portrait product plates; poster: bold, square graphic rhythm. */
+:root[data-site-frame=boutique] .menu-page .menu-section{background:transparent;padding:0;margin-block:22px}
+:root[data-site-frame=boutique] .menu-page .dish-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;background:transparent;border:0}
+:root[data-site-frame=boutique] .menu-page .dish{display:flex;flex-direction:column-reverse;align-items:stretch;padding:0;border:0;border-radius:0;gap:0;background:transparent;box-shadow:none}
+:root[data-site-frame=boutique] .menu-page .dish-photo{width:100%;flex-basis:auto;aspect-ratio:4/5;align-self:stretch}
+:root[data-site-frame=boutique] .menu-page .dish-photo img{width:100%;height:100%;aspect-ratio:4/5;border-radius:80px 80px 8px 8px}
+:root[data-site-frame=boutique] .menu-page .dish-text{padding:12px 0;text-align:center}
+:root[data-site-frame=boutique] .menu-page .dish-meta{justify-content:center}
+:root[data-site-frame=poster] .menu-page .menu-cover{height:24px;background:var(--brand)}
+:root[data-site-frame=poster] .menu-page .menu-section{padding:0;margin-block:18px}
+:root[data-site-frame=poster] .menu-page .menu-section h2{font-size:clamp(1.3rem,3vw,2rem);border-block-end:2px solid var(--ink);padding-block:8px}
+:root[data-site-frame=poster] .menu-page .dish{box-shadow:none;border-radius:0;border:1px solid var(--ink);background:var(--surface)}
+:root[data-site-frame=poster] .menu-page .dish-photo img{border-radius:0}
+:root[data-site-frame=poster] .menu-page .dish-add{border-radius:0}
+/* Service and market have different density without hiding information. */
+:root[data-site-frame=service] .menu-page .dish{border-radius:8px;box-shadow:none;padding:14px;min-height:96px;border:1px solid var(--line)}
+:root[data-site-frame=service] .menu-page .dish-photo img{width:72px;aspect-ratio:1;border-radius:50%}
+:root[data-site-frame=market] .menu-page .menu-section{padding:0;background:transparent;margin-block:18px}
+:root[data-site-frame=market] .menu-page .dish-list{gap:10px}
+:root[data-site-frame=market] .menu-page .dish{border-radius:10px;box-shadow:none}
+:root[data-site-frame=market] .menu-page .dish-price{font-weight:800}
+/* The customer homepage is a sequence of authored sections, not a stack of cards. */
+:root[data-design] .profile-body .site-home{padding-inline:clamp(20px,4vw,64px)}
+:root[data-design] .profile-body .site-block{border-radius:0;margin-block:0;border:0;box-shadow:none;padding-inline:0}
+:root[data-design] .profile-body .site-block:not(.site-hero){padding-block:clamp(36px,6vw,88px)}
+:root[data-design] .profile-body .site-block[data-tone=surface]{background:transparent}
+:root[data-design] .profile-body .site-block[data-tone=brand],:root[data-design] .profile-body .site-block[data-tone=quiet]{padding-inline:clamp(20px,4vw,56px)}
+:root[data-design] .profile-body .site-hero{margin-block:20px 0;gap:0;min-height:520px}
+:root[data-design] .profile-body .site-hero-copy{padding:clamp(28px,5vw,72px)}
+:root[data-design] .profile-body .site-hero-media{min-height:420px}
+:root[data-design] .profile-body .site-featured>a{border:0;border-radius:0;background:transparent}
+:root[data-design] .profile-body .site-featured>a>div:last-child{padding:18px 0}
+:root[data-design] .profile-body .site-featured h3{font-size:1.15rem;margin-block:0 6px}
+:root[data-design] .profile-body .site-featured p{margin-block:0 10px}
+:root[data-design] .profile-body .site-product-media{border-radius:var(--d-r,12px)}
+:root[data-site-frame=editorial] .profile-body .site-featured{grid-template-columns:1.5fr 1fr 1fr}
+:root[data-site-frame=boutique] .profile-body .site-featured .site-product-media{border-radius:50% 50% 6px 6px;aspect-ratio:4/5}
+:root[data-site-frame=ledger] .profile-body .site-featured{display:block;border-block-start:1px solid var(--ink)}
+:root[data-site-frame=ledger] .profile-body .site-featured>a{display:grid;grid-template-columns:90px 1fr;align-items:center;gap:24px;padding-block:16px;border-block-end:1px solid var(--line)}
+:root[data-site-frame=ledger] .profile-body .site-featured .site-product-media{aspect-ratio:1}
+:root[data-site-frame=gallery] .profile-body .site-featured{gap:10px}
+:root[data-site-frame=gallery] .profile-body .site-featured .site-product-media{aspect-ratio:3/4}
+:root[data-design] .profile-body .site-menu-links{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+:root[data-design] .profile-body .site-menu-links>a{border-radius:0;background:transparent;border-block:1px solid var(--ink);border-inline:0;padding:24px 0;min-height:120px}
+:root[data-design] .profile-body .site-places{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+:root[data-design] .profile-body .site-places>article{border-radius:0;padding:24px 0;border-inline:0;border-block-start:1px solid var(--line);border-block-end:0}
+:root[data-design] .profile-body .site-gallery img{border-radius:0}
+:root[data-design] .profile-body .site-text{max-width:72ch}
+:root[data-design] .profile-body .site-social>a{border-radius:0;border-inline:0;border-block-start:0;padding-inline:0;margin-inline-end:24px}
+:root[data-design] .profile-body .site-home a:focus-visible{outline:3px solid var(--brand);outline-offset:5px}
+:root[data-design] ::selection{background:var(--brand);color:var(--on-accent)}
+@media(min-width:900px){
+ :root[data-site-frame=editorial] .menu-page .dish-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+ :root[data-site-frame=editorial] .menu-page .dish:first-child{grid-column:span 2;grid-row:span 2}
+ :root[data-site-frame=editorial] .menu-page .dish:first-child .dish-photo{aspect-ratio:4/3}
+ :root[data-site-frame=gallery] .menu-page .dish-list,:root[data-site-frame=boutique] .menu-page .dish-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:600px){
+ :root[data-design] .profile-body .site-home{padding-inline:20px}
+ :root[data-design] .profile-body .site-hero{min-height:0;margin-block:0}
+ :root[data-design] .profile-body .site-hero-copy{padding:28px 20px}
+ :root[data-design] .profile-body .site-hero-media{min-height:230px}
+ :root[data-design] .profile-body .site-hero h1{font-size:clamp(2rem,9vw,3rem);line-height:1.3}
+ :root[data-design] .profile-body .site-featured{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 12px}
+ :root[data-site-frame=editorial] .profile-body .site-featured>a:first-child{grid-column:span 2}
+ :root[data-site-frame=ledger] .profile-body .site-featured{display:block}
+ :root[data-site-frame=editorial] .menu-page .dish-desc{display:none}
+ :root[data-site-frame=editorial] .menu-page .dish-list{gap:12px}
+ :root[data-site-frame=boutique] .menu-page .dish-list{gap:12px}
+}
+@media(prefers-reduced-motion:reduce){:root[data-design] .menu-page .dish{transition:none}}
+:root[data-design] .profile-body .site-eyebrow{display:none}
+.visitor-actions{display:none}
+@media(max-width:760px){
+ .has-visitor-actions{padding-bottom:88px}
+ .visitor-actions{display:flex;position:fixed;inset-inline:16px;bottom:max(12px,env(safe-area-inset-bottom));z-index:20;gap:8px;padding:8px;background:var(--surface);border-radius:16px;box-shadow:0 8px 32px rgb(0 0 0/.16)}
+ .visitor-actions a{min-height:48px;display:flex;align-items:center;justify-content:center;gap:16px;padding:10px 20px;text-decoration:none;border-radius:10px;font-weight:700;font-size:.95rem}
+ .visitor-actions .visitor-primary{flex:1;background:var(--brand);color:var(--on-accent)}
+ .visitor-actions .visitor-secondary{color:var(--ink);background:var(--bg)}
+ [dir=rtl] .visitor-primary svg{transform:rotate(180deg)}
+}
+/* Clear legacy first-item spans/overlay ink before applying the new families. */
+:root[data-site-frame=gallery] .menu-page .dish:first-child{grid-column:auto;grid-row:auto}
+:root[data-site-frame=editorial] .menu-page .dish:first-child .dish-text{position:static;color:var(--ink);background:transparent;padding:12px 0}
+:root[data-site-frame=editorial] .menu-page .dish:first-child h3,:root[data-site-frame=editorial] .menu-page .dish:first-child .dish-detail{color:var(--ink)}
+:root[data-site-frame=editorial] .menu-page .dish:first-child .dish-photo img{padding:0}
+:root[data-design] .profile-body .site-stamps{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+:root[data-design] .profile-body .site-block[data-align=center] .site-stamps{justify-content:center}

@@ -1,15 +1,19 @@
+import{seasonLayer}from'./seasonal-client.js';
+import { icon } from './icons.js';
+import { discoverItems, responsiveMedia, firstMenuImage } from './menu-discovery.js';
 import {applyMenuContent} from './tenant-pages.js';
 import {applyTenantTheme,bannerGallery,coverImage} from './tenant-theme.js';
 import { applyDesign, listenForPreview } from './design-engine.js';
-import { api, esc, lang, makeT, money, pick, setBrandColor, topbar, announce } from './common.js';
+import { api, esc, lang, makeT, money as formatMoney, pick, setBrandColor, topbar, announce } from './common.js';
 import { renderAddons, trackPurchase } from './addons-public.js';
 
+const money=amount=>data?.price_labels?.[lang]?.[amount] ?? formatMoney(amount);
 const a = (ar, en) => (lang === 'ar' ? ar : en);
 const t = makeT({
   ar: { search: 'ابحث عن صنف', soldout: 'نفد', kcal: '{n} سعرة', notFound: 'هذا المنيو غير متاح حاليًا. تأكد من الرابط وحاول مجددًا.', empty: 'لا توجد أصناف تطابق بحثك.', loyalty: 'بطاقة الولاء', clear: 'مسح' },
   en: { search: 'Search items', soldout: 'Sold out', kcal: '{n} kcal', notFound: 'This menu is currently unavailable. Check the link and try again.', empty: 'No matching items.', loyalty: 'Loyalty card', clear: 'Clear' },
 });
-const svg = (d, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const svg = (d, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const ICON = {
   pin: svg('<path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>', 16),
   phone: svg('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>', 16),
@@ -22,7 +26,8 @@ const ICON = {
 
 const slug = decodeURIComponent(location.pathname.split('/')[2] || '');
 const main = document.getElementById('main');
-let loyalty = null, data, profile = null, q = '', settings = { orders_enabled: false }, cart = new Map(), orderToken = null, orderTimer = null, orderKey = crypto.randomUUID(), orderNote = '';
+const seasons=seasonLayer(main,'menu');
+let loyalty = null, data, profile = null, q = '', settings = { orders_enabled: false }, cart = new Map(), orderToken = null, orderTimer = null, orderKey = crypto.randomUUID(), orderNote = '', quoteNeedsReview = false;
 // Checkout choices survive re-renders; a table number comes from the table's QR (?table=7).
 const checkout = { type: null, table: '', name: '', phone: '', address: '', car: '', coupon: '', discount: 0, couponFor: 0 };
 let ordering = { types: ['pickup'], tables: 0, whatsapp: null, delivery_fee: 0, delivery_min: 0 };
@@ -34,8 +39,10 @@ try {
   checkout.table = sessionStorage.getItem('zm_table_' + slug) || '';
   Object.assign(checkout, JSON.parse(sessionStorage.getItem('zm_checkout') || '{}'), { coupon: '', discount: 0 });
 } catch {}
+const filters = { dietary: '', maxPrice: null, maxCalories: null, sort: '' };
+let availabilityTimer, sectionObserver;
 const canCart = () => settings.orders_enabled || Boolean(ordering.whatsapp);
-const TYPE = { dine_in: ['🍽 محلي', '🍽 Dine-in'], pickup: ['🛍 استلام', '🛍 Pickup'], delivery: ['🛵 توصيل', '🛵 Delivery'], car: ['🚗 سيارة', '🚗 Curbside'] };
+const TYPE = { dine_in: ['محلي', 'Dine-in'], pickup: ['استلام', 'Pickup'], delivery: ['توصيل', 'Delivery'], car: ['سيارة', 'Curbside'] };
 const saveCheckout = () => { try { const { name, phone, address, car } = checkout; sessionStorage.setItem('zm_checkout', JSON.stringify({ name, phone, address, car })); } catch {} };
 
 function openNow(hours) {
@@ -51,23 +58,23 @@ function openNow(hours) {
   return today.open < today.close ? time >= today.open && time < today.close : time >= today.open;
 }
 
-function itemCard(i) {
+function itemCard(i, index = 0) {
   const inCart = countFor(i.id);
   const canAdd = canCart() && i.available;
-  const photo=profile?.theme?.show_images!==false&&i.image_url;
+  const photo=profile?.theme?.show_images!==false&&document.documentElement.dataset.dHideImages!=='1'&&document.documentElement.dataset.dLayout!=='text'&&i.image_url;
   return `<article class="dish ${i.available ? '' : 'soldout'} ${photo ? 'has-photo' : ''}">
     <div class="dish-text">
-      ${i.badges?.length ? `<p class="dish-badges">${i.badges.map((k) => BADGE[k] ? `<span class="badge-${k}">${esc(a(...BADGE[k]))}</span>` : '').join('')}</p>` : ''}
-      <h3>${esc(pick(i, 'name'))}</h3>
+      ${i.badges?.length ? `<p class="dish-badges">${i.badges.filter(k => k !== 'popular' || i.orders_today > 0).map((k) => BADGE[k] ? `<span class="badge-${k}">${k === "spicy" ? icon("pepper", 16) : ""}${esc(a(...BADGE[k]))}</span>` : '').join('')}</p>` : ''}
+      <h3><button type="button" class="dish-detail" data-detail="${esc(i.id)}">${esc(pick(i, 'name'))}</button></h3>
       ${pick(i, 'desc') ? `<p class="dish-desc">${esc(pick(i, 'desc'))}</p>` : ''}
       <p class="dish-meta"><span class="dish-price">${i.options?.length && i.options[0].required ? a('من ', 'From ') : ''}${esc(money(i.price))}</span>${i.compare_price > i.price ? `<s class="dish-was">${esc(money(i.compare_price))}</s><span class="dish-off">${a('خصم', 'Save')} ${Math.round((1 - i.price / i.compare_price) * 100)}٪</span>` : ''}${profile?.theme?.show_calories!==false && i.calories != null ? `<span class="dish-kcal">${esc(t('kcal', { n: i.calories }))}</span>` : ''}${i.caffeine_mg != null ? `<span class="dish-kcal">${a('كافيين', 'Caffeine')} ${i.caffeine_mg} ${a('ملغ', 'mg')}</span>` : ''}${i.sodium_mg != null ? `<span class="dish-kcal">${a('صوديوم', 'Sodium')} ${i.sodium_mg} ${a('ملغ', 'mg')}</span>` : ''}${i.available ? '' : `<span class="dish-out">${esc(t('soldout'))}</span>`}</p>
       ${i.allergens?.length ? `<p class="dish-allergens"><span class="visually-hidden">${a('مسببات الحساسية:', 'Allergens:')}</span>${i.allergens.map((k) => `<span class="allergen">${esc(allergenName(k))}</span>`).join('')}</p>` : ''}
     </div>
-    ${photo ? `<div class="dish-photo"><img src="${esc(i.image_url)}" alt="" loading="lazy" width="112" height="112">${canAdd ? addBtn(i, inCart) : ''}</div>` : canAdd ? `<div class="dish-photo no-photo">${addBtn(i, inCart)}</div>` : ''}
+    ${photo ? `<div class="dish-photo"><img src="${esc(i.image_url)}" alt="" loading="${index < 4 ? 'eager' : 'lazy'}" ${index === 0 ? 'fetchpriority="high"' : ''} ${mediaAttrs(i.gallery?.[0])} width="320" height="240">${canAdd ? addBtn(i, inCart) : ''}</div>` : canAdd ? `<div class="dish-photo no-photo">${addBtn(i, inCart)}</div>` : ''}
   </article>`;
 }
 const BADGE = {
-  new: ['جديد', 'New'], popular: ['الأكثر طلبًا', 'Popular'], chef: ['اختيار الشيف', "Chef's pick"], spicy: ['حار 🌶', 'Spicy 🌶'],
+  new: ['جديد', 'New'], popular: ['الأكثر طلبًا', 'Popular'], chef: ['اختيار الشيف', "Chef's pick"], spicy: ['حار', 'Spicy'],
   vegan: ['نباتي صرف', 'Vegan'], vegetarian: ['نباتي', 'Vegetarian'], healthy: ['صحي', 'Healthy'], limited: ['لفترة محدودة', 'Limited time'],
 };
 const ALLERGEN = {
@@ -77,6 +84,10 @@ const ALLERGEN = {
   lupin: ['ترمس', 'Lupin'], molluscs: ['رخويات', 'Molluscs'],
 };
 const allergenName = (k) => a(...(ALLERGEN[k] || [k, k]));
+function mediaAttrs(media) {
+  const {srcset,sizes}=responsiveMedia(media);
+  return srcset?`srcset="${esc(srcset)}" sizes="${sizes}"`:'';
+}
 // A cart line is "itemId" or "itemId|choiceA,choiceB" so the same dish with different options stays separate.
 const lineKey = (id, opts = []) => (opts.length ? id + '|' + [...opts].sort().join(',') : id);
 const splitKey = (k) => { const [id, o = ''] = k.split('|'); return { id, opts: o ? o.split(',') : [] }; };
@@ -93,19 +104,29 @@ function lineOf(k) {
 const countFor = (id) => [...cart].reduce((n, [k, q]) => (splitKey(k).id === id ? n + q : n), 0);
 const addBtn = (i, n) => `<button class="dish-add" type="button" data-add="${esc(i.id)}" aria-label="${esc(a('إضافة', 'Add') + ' ' + pick(i, 'name'))}">${n ? `<span>${n}</span>` : ICON.plus}</button>`;
 
-function render() {
-  const items = data.items.filter((i) => !q || (i.name_ar + ' ' + i.name_en + ' ' + i.desc_ar + ' ' + i.desc_en).toLowerCase().includes(q));
+function render(preserveInputs = false) {
+  const active = document.activeElement;
+  const restoreKey = active?.dataset?.add ? 'add' : active?.dataset?.detail ? 'detail' : null;
+  const restoreId = restoreKey && active.dataset[restoreKey];
+  const items = discoverItems(data.items, data.categories, { ...filters, query: q });
   const cats = data.categories.filter((c) => items.some((i) => i.category_id === c.id));
+  let rendered=0;
   main.querySelector('#list').innerHTML = cats.length
-    ? cats.map((c) => `<section class="menu-section" id="c-${esc(c.id)}" aria-labelledby="h-${esc(c.id)}"><h2 id="h-${esc(c.id)}">${esc(pick(c, 'name'))}</h2><div class="dish-list">${items.filter((i) => i.category_id === c.id).map(itemCard).join('')}</div></section>`).join('')
+    ? cats.map((c) => `<section class="menu-section" id="c-${esc(c.id)}" aria-labelledby="h-${esc(c.id)}"><h2 id="h-${esc(c.id)}">${esc(pick(c, 'name'))}</h2><div class="dish-list">${items.filter((i) => i.category_id === c.id).map(i=>itemCard(i,rendered++)).join('')}</div></section>`).join('')
     : `<p class="empty">${esc(t('empty'))}</p>`;
+  main.querySelectorAll('[data-detail]').forEach(b => b.onclick = () => openOptions(data.items.find(i => i.id === b.dataset.detail), b));
+  main.querySelector('#result-count') && (main.querySelector('#result-count').textContent = a(`${items.length} صنف`, `${items.length} items`));
+  main.querySelectorAll('.menu-cats a').forEach(b => b.hidden = !cats.some(c => '#c-' + c.id === b.getAttribute('href')));
+  watchSections();
+  if (restoreKey) (main.querySelector(`[data-${restoreKey}="${CSS.escape(restoreId)}"]`) || main.querySelector('#q'))?.focus({preventScroll:true});
   main.querySelectorAll('[data-add]').forEach((b) => (b.onclick = () => {
     const item = data.items.find((i) => i.id === b.dataset.add);
     if (item?.options?.length) return openOptions(item, b);
     addLine(lineKey(b.dataset.add));
   }));
   main.querySelector('#clear-q').hidden = !q;
-  renderCart();
+  renderCart(preserveInputs);
+  if(data)seasons.set(data.season);
 }
 
 function addLine(key) {
@@ -121,14 +142,21 @@ function addLine(key) {
 function openOptions(item, opener) {
   const dlg = document.createElement('dialog');
   dlg.className = 'options-sheet';
+  dlg.dataset.itemId = item.id;
   dlg.setAttribute('aria-labelledby', 'opt-title');
-  const groups = item.options;
+  const groups = item.options || [];
+  const allowed = canCart() && item.available;
+  const gallery = item.gallery?.length ? item.gallery : item.image_url ? [{url:item.image_url}] : [];
   dlg.innerHTML = `<form method="dialog" class="stack">
     <header class="row-between"><h2 id="opt-title">${esc(pick(item, 'name'))}</h2><button class="btn ghost sm" value="cancel" type="submit" aria-label="${a('إغلاق', 'Close')}">✕</button></header>
+    ${gallery.length ? `<div class="detail-gallery" tabindex="0" aria-label="${a('صور الصنف','Item photos')}">${gallery.map(m => `<img src="${esc(m.url)}" ${mediaAttrs(m)} alt="${esc(pick(item,'name'))}" width="640" height="480" loading="lazy">`).join('')}</div>` : ''}
+    <p>${esc(pick(item,'desc') || '')}</p><p><strong>${esc(money(item.price))}</strong>${item.calories != null ? ' · '+esc(t('kcal',{n:item.calories})) : ''}</p>
+    <p class="detail-allergens"><strong>${a('مسببات الحساسية','Allergens')}: </strong>${item.allergens?.length ? item.allergens.map(k=>esc(allergenName(k))).join('، ') : a('غير محددة — اسأل الموظف','Not specified — ask the staff')}</p>
+    <div class="detail-complements" aria-live="polite"></div>
     ${groups.map((g, gi) => `<fieldset class="opt-group"><legend>${esc(pick(g, 'name'))} <small class="muted">${g.required ? a('مطلوب', 'Required') : a('اختياري', 'Optional')}${g.multi ? ' · ' + a(`حتى ${g.max}`, `up to ${g.max}`) : ''}</small></legend>
-      ${g.choices.map((ch, ci) => `<label class="opt-choice"><input type="${g.multi ? 'checkbox' : 'radio'}" name="g${gi}" value="${esc(ch.id)}" ${!g.multi && g.required && ci === 0 ? 'checked' : ''}><span>${esc(pick(ch, 'name'))}</span><b>${ch.price ? '+' + esc(money(ch.price)) : ''}</b></label>`).join('')}</fieldset>`).join('')}
+      ${g.choices.map((ch, ci) => `<label class="opt-choice"><input type="${g.multi ? 'checkbox' : 'radio'}" ${!allowed ? 'disabled' : ''} name="g${gi}" value="${esc(ch.id)}" ${!g.multi && g.required && ci === 0 ? 'checked' : ''}><span>${esc(pick(ch, 'name'))}</span><b>${ch.price ? '+' + esc(money(ch.price)) : ''}</b></label>`).join('')}</fieldset>`).join('')}
     <p class="msg error" id="opt-error" hidden></p>
-    <button class="btn" type="submit" value="add" id="opt-add"></button>
+    ${allowed ? '<button class="btn" type="submit" value="add" id="opt-add"></button>' : ''}
   </form>`;
   document.body.append(dlg);
   const form = dlg.querySelector('form');
@@ -138,15 +166,15 @@ function openOptions(item, opener) {
       if (!g.multi) return;
       const boxes = [...form.querySelectorAll(`[name=g${gi}]`)];
       const n = boxes.filter((x) => x.checked).length;
-      boxes.forEach((x) => (x.disabled = !x.checked && n >= g.max));
+      boxes.forEach((x) => (x.disabled = !allowed || (!x.checked && n >= g.max)));
     });
     const line = lineOf(lineKey(item.id, chosen()));
-    dlg.querySelector('#opt-add').textContent = `${a('أضف للطلب', 'Add to order')} · ${money(line ? line.unit : item.price)}`;
+    if (allowed) dlg.querySelector('#opt-add').textContent = `${a('أضف للطلب', 'Add to order')} · ${money(line ? line.unit : item.price)}`;
   };
   form.addEventListener('change', update);
   update();
   dlg.addEventListener('close', () => {
-    if (dlg.returnValue === 'add') {
+    if (dlg.returnValue === 'add' && allowed && data.items.find(i => i.id === item.id)?.available) {
       const missing = groups.find((g, gi) => g.required && !form.querySelector(`[name=g${gi}]:checked`));
       if (missing) {
         const err = dlg.querySelector('#opt-error');
@@ -158,9 +186,16 @@ function openOptions(item, opener) {
       addLine(lineKey(item.id, chosen()));
     }
     dlg.remove();
-    opener?.focus();
+    if(opener?.isConnected)opener.focus();
+    else if(opener?.dataset?.add || opener?.dataset?.detail){const key=opener.dataset.add?'add':'detail';main.querySelector(`[data-${key}="${CSS.escape(opener.dataset[key])}"]`)?.focus({preventScroll:true});}
   });
   dlg.showModal();
+  api('/api/public/menu/' + slug + '/recommendations/' + encodeURIComponent(item.id)).then(r => {
+    if (!dlg.isConnected || !r.items?.length || !['orders','merchant'].includes(r.source)) return;
+    const box=dlg.querySelector('.detail-complements');
+    box.innerHTML=`<h3>${r.source==='orders' ? a('يُطلب معه عادةً','Often ordered together') : a('اقتراح المنشأة','Selected by the business')}</h3><p class="small muted">${r.source==='orders' ? a(`بناءً على ${r.sample_size} طلبات`, `Based on ${r.sample_size} orders`) : a('اختيارات المنشأة لتكملة الصنف','Merchant selections to complement this item')}</p>${r.items.filter(i=>i.available).map(i=>`<button type="button" class="btn ghost" data-complement="${esc(i.id)}">${esc(pick(i,'name'))} · ${esc(money(i.price))}</button>`).join('')}`;
+    box.querySelectorAll('[data-complement]').forEach(b=>b.onclick=()=>{const next=data.items.find(i=>i.id===b.dataset.complement);if(next){dlg.close();openOptions(next,opener);}});
+  }).catch(()=>{});
 }
 
 function saveCart() {
@@ -172,16 +207,24 @@ function saveCart() {
 function suggestions(selected) {
   const inCart = new Set(selected.map((x) => x.line.item.id));
   const cats = new Set(selected.map((x) => x.line.item.category_id));
-  const score = (i) => (i.badges?.includes('popular') ? 2 : 0) + (i.badges?.includes('chef') ? 1 : 0) + (cats.has(i.category_id) ? -5 : 0);
+  const score = (i) => (i.orders_today > 0 ? 2 : 0) + (i.badges?.includes('chef') ? 1 : 0) + (cats.has(i.category_id) ? -5 : 0);
   return data.items.filter((i) => i.available && !inCart.has(i.id) && !i.options?.some((g) => g.required)).sort((x, y) => score(y) - score(x)).slice(0, 3);
 }
 
-function renderCart() {
+function cartQuote() {
+  return JSON.stringify([[...cart].map(([key, quantity]) => { const line = lineOf(key); return [key, quantity, line?.unit, Boolean(line?.item.available)]; }), checkout.type === 'delivery' ? ordering.delivery_fee : 0]);
+}
+
+function renderCart(preserveInputs = false) {
   const box = main.querySelector('#cart');
+  const focused = box.contains(document.activeElement) ? document.activeElement : null;
+  const inputNodes = preserveInputs ? [...box.querySelectorAll('input[id],textarea[id],select[id]')] : [];
+  const caret = focused && typeof focused.selectionStart === 'number' ? [focused.selectionStart, focused.selectionEnd] : null;
   if (!canCart()) { box.hidden = true; return; }
   const selected = [...cart].map(([key, quantity]) => ({ key, line: lineOf(key), quantity })).filter((x) => x.line && x.line.item.available);
-  box.hidden = !selected.length;
-  if (!selected.length) return;
+  const unavailable = [...cart].filter(([key]) => !lineOf(key)?.item.available);
+  box.hidden = !selected.length && !unavailable.length;
+  if (!selected.length) {box.innerHTML = `<p role="status">${a('أصناف طلبك لم تعد متاحة حاليًا. احتفظنا باختياراتك حتى تتوفر.','Your selected items are currently unavailable. Your choices are saved until they return.')}</p>`;return;}
   const types = settings.orders_enabled ? ordering.types : [];
   if (!types.includes(checkout.type)) checkout.type = types.includes('dine_in') && checkout.table ? 'dine_in' : types[0] || null;
   const subtotal = selected.reduce((sum, x) => sum + x.line.unit * x.quantity, 0);
@@ -198,19 +241,27 @@ function renderCart() {
       : checkout.type === 'car'
         ? field('car', a('السيارة (النوع واللون)', 'Car (model and colour)'), 'maxlength="60" placeholder="' + a('مثال: كامري بيضاء', 'e.g. white Camry') + '" required') + field('phone', a('الجوال (اختياري)', 'Mobile (optional)'), 'dir="ltr" inputmode="tel" autocomplete="tel"')
         : checkout.type === 'pickup' ? field('name', a('اسمك (اختياري)', 'Your name (optional)'), 'maxlength="60" autocomplete="given-name"') : '';
-  box.innerHTML = `<h2>${a('طلبك', 'Your order')}</h2>${selected.map(({ key, line: { item: i, picked, unit }, quantity: n }) => `<div class="cart-row"><div><strong>${esc(pick(i, 'name'))}</strong>${picked.length ? `<p class="small muted">${picked.map((p) => esc(pick(p.ch, 'name'))).join('، ')}</p>` : ''}<p class="small muted">${esc(money(unit * n))}</p></div><div class="quantity-controls"><button class="btn ghost sm" type="button" data-minus="${esc(key)}" aria-label="${esc(a('تقليل', 'Decrease') + ' ' + pick(i, 'name'))}">−</button><span>${n}</span><button class="btn ghost sm" type="button" data-plus="${esc(key)}" aria-label="${esc(a('زيادة', 'Increase') + ' ' + pick(i, 'name'))}">+</button></div></div>`).join('')}
+  box.innerHTML = `${unavailable.length ? `<p class="msg" role="status">${a('بعض الأصناف لم تعد متاحة واستُبعدت من الإجمالي. احتفظنا باختياراتك المتاحة.','Some items are unavailable and excluded from the total. Your available choices are retained.')}</p>` : ''}<h2>${a('طلبك', 'Your order')}</h2>${selected.map(({ key, line: { item: i, picked, unit }, quantity: n }) => `<div class="cart-row"><div><strong>${esc(pick(i, 'name'))}</strong>${picked.length ? `<p class="small muted">${picked.map((p) => esc(pick(p.ch, 'name'))).join('، ')}</p>` : ''}<p class="small muted">${esc(money(unit * n))}</p></div><div class="quantity-controls"><button class="btn ghost sm" type="button" data-minus="${esc(key)}" aria-label="${esc(a('تقليل', 'Decrease') + ' ' + pick(i, 'name'))}">−</button><span>${n}</span><button class="btn ghost sm" type="button" data-plus="${esc(key)}" aria-label="${esc(a('زيادة', 'Increase') + ' ' + pick(i, 'name'))}">+</button></div></div>`).join('')}
     ${ups.length ? `<div class="upsell"><p class="small"><strong>${a('يكمّل طلبك', 'Goes well with it')}</strong></p><div class="upsell-row">${ups.map((i) => `<button type="button" class="upsell-item" data-upsell="${esc(i.id)}">${i.image_url ? `<img src="${esc(i.image_url)}" alt="" width="44" height="44" loading="lazy">` : ''}<span>${esc(pick(i, 'name'))}<small>+ ${esc(money(i.price))}</small></span></button>`).join('')}</div></div>` : ''}
-    ${types.length > 1 ? `<div class="seg order-types" role="radiogroup" aria-label="${a('طريقة الطلب', 'How to order')}">${types.map((k) => `<button type="button" role="radio" aria-checked="${k === checkout.type}" data-type="${k}">${a(...TYPE[k])}</button>`).join('')}</div>` : ''}
+    ${types.length > 1 ? `<div class="seg order-types" role="radiogroup" aria-label="${a('طريقة الطلب', 'How to order')}">${types.map((k) => `<button type="button" role="radio" aria-checked="${k === checkout.type}" data-type="${k}">${icon(({dine_in:"dish",pickup:"bag",delivery:"delivery",car:"car"})[k])} ${a(...TYPE[k])}</button>`).join('')}</div>` : ''}
     ${details ? `<div class="stack checkout-fields">${details}</div>` : ''}
     ${settings.orders_enabled ? `<div class="coupon-row"><label class="visually-hidden" for="co-coupon">${a('كود الخصم', 'Discount code')}</label><input id="co-coupon" placeholder="${a('عندك كود خصم؟', 'Have a code?')}" dir="ltr" maxlength="20" value="${esc(checkout.coupon)}"><button type="button" class="btn ghost sm" id="apply-coupon">${a('طبّق', 'Apply')}</button></div><p class="small" id="coupon-msg" role="status">${checkout.discount ? a(`تم تطبيق الخصم ✓`, 'Discount applied ✓') : ''}</p>` : ''}
     <div class="cart-sum">${checkout.discount || fee ? `<div class="cart-row"><span>${a('المجموع', 'Subtotal')}</span><span>${esc(money(subtotal))}</span></div>` : ''}${checkout.discount ? `<div class="cart-row"><span>${a('الخصم', 'Discount')}</span><span>−${esc(money(checkout.discount))}</span></div>` : ''}${fee ? `<div class="cart-row"><span>${a('التوصيل', 'Delivery')}</span><span>${esc(money(fee))}</span></div>` : ''}
     <div class="cart-row"><strong>${a('الإجمالي', 'Total')}</strong><strong>${esc(money(total))}</strong></div></div>
     ${short ? `<p class="msg error">${a(`أقل طلب للتوصيل ${money(ordering.delivery_min)}.`, `Minimum for delivery is ${money(ordering.delivery_min)}.`)}</p>` : ''}
+    ${quoteNeedsReview ? `<p class="msg" role="status">${a('تغيّر سعر أو توفر بعض الأصناف. راجع الإجمالي الجديد قبل إرسال الطلب.','Some prices or availability changed. Review the new total before sending your order.')}</p><button type="button" class="btn ghost" id="review-prices">${a('راجعت الطلب والإجمالي الجديد','I reviewed the order and new total')}</button>` : ''}
     <label for="order-note">${a('ملاحظة (اختياري)', 'Note (optional)')}</label>
     <textarea id="order-note" rows="2" maxlength="300" placeholder="${a('مثال: بدون سكر', 'e.g. no sugar')}">${esc(orderNote)}</textarea>
-    ${settings.orders_enabled ? `<p class="small muted">${checkout.type === 'delivery' ? a('الدفع عند الاستلام.', 'Pay on delivery.') : a('الدفع عند الكاشير.', 'Pay at the counter.')}</p><button type="button" class="btn" id="send-order" ${short ? 'disabled' : ''}>${a('أرسل الطلب', 'Send order')}</button>` : ''}
+    ${settings.orders_enabled ? `<p class="small muted">${checkout.type === 'delivery' ? a('الدفع عند الاستلام.', 'Pay on delivery.') : a('الدفع عند الكاشير.', 'Pay at the counter.')}</p><button type="button" class="btn" id="send-order" ${short || quoteNeedsReview ? 'disabled' : ''}>${a('أرسل الطلب', 'Send order')}</button>` : ''}
     ${ordering.whatsapp ? `<a class="btn ${settings.orders_enabled ? 'ghost' : ''} wa-order" id="wa-order" target="_blank" rel="noopener">${a('اطلب عبر واتساب', 'Order on WhatsApp')}</a>` : ''}
     <div id="order-message" role="status"></div>`;
+  for (const old of inputNodes) {
+    const fresh = old.id && box.querySelector('#' + CSS.escape(old.id));
+    if (!fresh || fresh.tagName !== old.tagName) continue;
+    if (old.tagName === 'SELECT') { const value = old.value; old.innerHTML = fresh.innerHTML; old.value = value; }
+    fresh.replaceWith(old);
+  }
+  box.querySelector('#review-prices')?.addEventListener('click', () => { quoteNeedsReview = false; renderCart(true); box.querySelector('#send-order')?.focus({preventScroll:true}); });
   const wa = box.querySelector('#wa-order');
   const waLink = () => {
     const lines = selected.map(({ line: { item, picked, unit }, quantity: n }) => `• ${n}× ${pick(item, 'name')}${picked.length ? ' (' + picked.map((p) => pick(p.ch, 'name')).join('، ') + ')' : ''} · ${money(unit * n)}`);
@@ -218,9 +269,9 @@ function renderCart() {
     const text = `${a('طلب جديد من المنيو', 'New order from the menu')} · ${pick(data.branch, 'name')}\n${lines.join('\n')}\n${a('الإجمالي', 'Total')}: ${money(total)}${extra.length ? '\n' + extra.join('\n') : ''}`;
     return `https://wa.me/${ordering.whatsapp}?text=${encodeURIComponent(text)}`;
   };
-  if (wa) { wa.href = waLink(); wa.addEventListener('focus', () => (wa.href = waLink())); wa.addEventListener('pointerdown', () => (wa.href = waLink())); }
+  if (wa) { wa.setAttribute('aria-disabled', String(quoteNeedsReview)); wa.addEventListener('click', e => { if (quoteNeedsReview) e.preventDefault(); }); wa.href = waLink(); wa.addEventListener('focus', () => (wa.href = waLink())); wa.addEventListener('pointerdown', () => (wa.href = waLink())); }
   box.querySelector('#order-note').oninput = (e) => { orderNote = e.target.value; orderKey = crypto.randomUUID(); };
-  box.querySelectorAll('[data-co]').forEach((inp) => inp.addEventListener(inp.tagName === 'SELECT' ? 'change' : 'input', () => { checkout[inp.dataset.co] = inp.value.trim(); orderKey = crypto.randomUUID(); saveCheckout(); }));
+  box.querySelectorAll('[data-co]').forEach((inp) => { inp[inp.tagName === 'SELECT' ? 'onchange' : 'oninput'] = () => { checkout[inp.dataset.co] = inp.value.trim(); orderKey = crypto.randomUUID(); saveCheckout(); }; });
   box.querySelectorAll('[data-type]').forEach((b) => (b.onclick = () => { checkout.type = b.dataset.type; orderKey = crypto.randomUUID(); renderCart(); box.querySelector(`[data-type="${checkout.type}"]`)?.focus(); }));
   box.querySelectorAll('[data-upsell]').forEach((b) => (b.onclick = () => addLine(lineKey(b.dataset.upsell))));
   box.querySelector('#apply-coupon')?.addEventListener('click', async (e) => {
@@ -243,6 +294,7 @@ function renderCart() {
   box.querySelectorAll('[data-minus]').forEach((b) => (b.onclick = () => { const n = cart.get(b.dataset.minus) || 0; if (n <= 1) cart.delete(b.dataset.minus); else cart.set(b.dataset.minus, n - 1); saveCart(); render(); }));
   box.querySelectorAll('[data-plus]').forEach((b) => (b.onclick = () => { cart.set(b.dataset.plus, Math.min(20, (cart.get(b.dataset.plus) || 0) + 1)); saveCart(); render(); }));
   box.querySelector('#send-order')?.addEventListener('click', async (e) => {
+    if (quoteNeedsReview) return;
     const missing = [...box.querySelectorAll('.checkout-fields [required]')].find((x) => !x.value.trim()) || (checkout.type === 'dine_in' && ordering.tables && !checkout.table ? box.querySelector('#co-table') : null);
     if (missing) { box.querySelector('#order-message').innerHTML = `<p class="msg error">${a('كمّل البيانات المطلوبة.', 'Please complete the required details.')}</p>`; missing.focus(); return; }
     e.target.disabled = true;
@@ -255,12 +307,14 @@ function renderCart() {
         phone: ['delivery', 'car'].includes(c.type) && c.phone ? c.phone : undefined,
         address: c.type === 'delivery' ? c.address : undefined, car: c.type === 'car' ? c.car : undefined,
         coupon: c.discount ? c.coupon : undefined,
+        expected_total: total,
         items: selected.map((x) => ({ item_id: x.line.item.id, quantity: x.quantity, options: x.line.opts })),
       } });
       orderToken = d.order.token;
       trackPurchase(d.order.total);
       try { sessionStorage.setItem('zm_order_' + slug, orderToken); } catch {}
       cart.clear();
+      quoteNeedsReview = false;
       orderNote = '';
       Object.assign(checkout, { coupon: '', discount: 0 });
       saveCart();
@@ -268,12 +322,18 @@ function renderCart() {
       pollOrder();
     } catch (err) {
       const k = err?.data?.error;
+      if (k === 'price_changed') { quoteNeedsReview = true; await refreshAvailability(); renderCart(true); announce(a('تغيّر الإجمالي. راجع الطلب والسعر الجديد.','The total changed. Review your order and its new price.')); return; }
       const why = k === 'invalid_phone' ? a('رقم الجوال لازم يبدأ بـ 05.', 'The mobile number must start with 05.') : k === 'delivery_min_total' ? a('السلة أقل من حد التوصيل.', 'Below the delivery minimum.') : k?.startsWith?.('coupon_') ? a('كود الخصم ما عاد صالح. احذفه وأرسل مرة ثانية.', 'The discount code is no longer valid. Remove it and resend.') : a('تعذر إرسال الطلب. قد تغيّر السعر أو التوفر؛ حدّث المنيو ثم حاول مجددًا.', 'Could not send the order. Prices or availability may have changed; refresh the menu and retry.');
       if (k?.startsWith?.('coupon_')) Object.assign(checkout, { coupon: '', discount: 0 });
       box.querySelector('#order-message').innerHTML = `<p class="msg error">${why}</p>`;
       e.target.disabled = false;
     }
   });
+  if (focused) {
+    const target = focused.id ? box.querySelector('#' + CSS.escape(focused.id)) : null;
+    if (target && !target.disabled) { target.focus({preventScroll:true}); if (caret && typeof target.setSelectionRange === 'function') target.setSelectionRange(...caret); }
+    else box.querySelector('#review-prices')?.focus({preventScroll:true});
+  }
 }
 
 async function pollOrder() {
@@ -300,14 +360,15 @@ async function pollOrder() {
 function watchSections() {
   const chips = new Map([...main.querySelectorAll('.menu-cats a')].map((x) => [x.getAttribute('href').slice(1), x]));
   if (!chips.size || !('IntersectionObserver' in window)) return;
-  const io = new IntersectionObserver((entries) => {
+  sectionObserver?.disconnect();
+  const io = sectionObserver = new IntersectionObserver((entries) => {
     for (const e of entries) {
       if (!e.isIntersecting) continue;
       chips.forEach((c) => c.removeAttribute('aria-current'));
       const chip = chips.get(e.target.id);
       if (chip) {
         chip.setAttribute('aria-current', 'true');
-        chip.scrollIntoView({ block: 'nearest', inline: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+        // Do not move the page while browsing or typing; native category scrolling stays under user control.
       }
     }
   }, { rootMargin: '-140px 0px -65% 0px' });
@@ -316,23 +377,43 @@ function watchSections() {
 
 let merchantOrg;
 try {
-  data = await api('/api/public/menu/' + slug);
+  let initial;
+  try {
+    const embedded=document.getElementById('menu-bootstrap')?.textContent;
+    if(embedded && embedded.length<=1024*1024){
+      const parsed=JSON.parse(embedded);
+      if(parsed?.branch?.slug===slug && Array.isArray(parsed.items) && Array.isArray(parsed.categories) && parsed.profile_data?.profile && Array.isArray(parsed.profile_data.branches))initial=parsed;
+    }
+  } catch {} // Old, malformed or mismatched HTML recovers through the public API.
+  data = initial || await api('/api/public/menu/' + slug);
   if (data.ordering) ordering = data.ordering;
   setBrandColor(data.branch.brand_color);
   const name = lang === 'ar' ? data.branch.org_name_ar : data.branch.org_name_en;
   try {
-    const p = await api('/api/public/profile/' + data.branch.org_slug);
+    const p = data.profile_data || await api('/api/public/profile/' + data.branch.org_slug);
     profile = p.profile;
     merchantOrg=p.org;
     applyTenantTheme(profile);
     applyDesign(data.design);
     settings = p.branches.find((b) => b.slug === slug)?.settings || settings;
     loyalty = p.loyalty;
+    // Share the rendered category order and media descriptor; do not prioritize
+    // a hidden photo or a different item's responsive image.
+    const first=firstMenuImage({...data,profile_data:p});
+    if(first && !document.querySelector('link[data-menu-first-image]')){
+      const preload=document.createElement('link');preload.dataset.menuFirstImage='';preload.rel='preload';preload.as='image';preload.href=first.src;preload.fetchPriority='high';
+      if(first.srcset){preload.imageSrcset=first.srcset;preload.imageSizes=first.sizes;}
+      document.head.append(preload);
+    }
+    if(!data.design||data.design.font_ar==='tajawal')document.fonts.load('16px MenuTajawal').catch(()=>{});
+    if(!data.design||data.design.font_en==='jakarta')document.fonts.load('16px MenuJakarta').catch(()=>{});
+    money(0);
   } catch {}
   topbar(document.getElementById('top'), t, { subtitle: name });
   document.title = `${name} · ${t('brand')}`;
   main.className = 'wrap menu-wrap';
   document.body.classList.add('menu-page');
+  optimizeMenuFonts();
 
   const cover = profile?.banners?.[0];
   const status = openNow(settings.hours);
@@ -351,15 +432,21 @@ try {
         ${data.branch.logo_url ? `<img class="menu-logo" src="${esc(data.branch.logo_url)}" alt="" width="84" height="84">` : `<span class="menu-logo menu-monogram" aria-hidden="true">${esc([...name][0] || 'Z')}</span>`}
         <div><h1 id="menu-title">${esc(name)}</h1>${data.branches?.length > 1 ? `<label class="visually-hidden" for="branch-pick">${a('الفرع', 'Branch')}</label><select id="branch-pick" class="branch-pick">${data.branches.map((b) => `<option value="${esc(b.slug)}" ${b.slug === slug ? 'selected' : ''}>${esc(pick(b, 'name'))}</option>`).join('')}</select>` : `<p class="menu-branch">${esc(pick(data.branch, 'name'))}</p>`}</div>
       </div>
-      ${profile && pick(profile, 'description') ? `<p class="menu-about">${esc(pick(profile, 'description'))}</p>` : ''}
+      <details class="menu-description" id="menu-business-details"><summary aria-label="${a('معلومات المنشأة والاسم الكامل','Business information and full name')}">${icon('info')} ${a('عن المنشأة','About us')}</summary><p class="menu-about menu-full-name" id="menu-full-name">${esc(name)}</p>${profile && pick(profile, 'description') ? `<p class="menu-about">${esc(pick(profile,'description'))}</p>` : ''}</details>
       ${info ? `<div class="menu-info">${info}</div>` : ''}
-      ${data.waitlist ? `<a class="btn ghost sm wl-join-link" id="wl-join-link" href="/q/${esc(slug)}">⏳ ${a('سجّل في قائمة الانتظار', 'Join the waitlist')}</a>` : ''}
+      ${data.waitlist ? `<a class="btn ghost sm wl-join-link" id="wl-join-link" href="/q/${esc(slug)}">${icon("clock")} ${a('سجّل في قائمة الانتظار', 'Join the waitlist')}</a>` : ''}
     </section>
-    ${bannerGallery(profile?.banners)}
+    ${profile?.banners?.length > 1 ? `<details class="menu-gallery-disclosure"><summary>${a('صور المنشأة','Business photos')}</summary>${bannerGallery(profile.banners)}</details>` : ''}
     ${hasItems ? `
     <div class="menu-sticky">
       <div class="search-field"><span class="search-ico">${ICON.search}</span><label class="visually-hidden" for="q">${esc(t('search'))}</label><input id="q" type="search" placeholder="${esc(t('search'))}" autocomplete="off"><button id="clear-q" type="button" class="btn ghost sm" hidden>${esc(t('clear'))}</button></div>
       ${data.categories.length > 1 ? `<nav class="menu-cats" aria-label="${a('أقسام المنيو', 'Menu sections')}">${data.categories.filter((c) => data.items.some((i) => i.category_id === c.id)).map((c) => `<a href="#c-${esc(c.id)}">${esc(pick(c, 'name'))}</a>`).join('')}</nav>` : ''}
+      <details class="discovery-filters"><summary>${icon('list')} ${a('تصفية وترتيب','Filter & sort')}</summary><div class="filter-fields">
+      <label>${a('التفضيل الغذائي','Dietary')}<select id="filter-dietary"><option value="">${a('الكل','All')}</option><option value="vegan">${a('نباتي صرف','Vegan')}</option><option value="vegetarian">${a('نباتي','Vegetarian')}</option><option value="gluten_free">${a('خالٍ من الغلوتين','Gluten free')}</option></select></label>
+      <label>${a('أعلى سعر (ر.س)','Max price (SAR)')}<input id="filter-price" type="number" min="0" step="1" inputmode="decimal"></label>
+      <label>${a('أعلى سعرات','Max kcal')}<input id="filter-calories" type="number" min="0" step="1" inputmode="numeric"></label>
+      <label>${a('ترتيب','Sort')}<select id="filter-sort"><option value="">${a('ترتيب المنيو','Menu order')}</option><option value="popular">${a('الأكثر طلبًا اليوم','Most ordered today')}</option><option value="price">${a('السعر الأقل','Lowest price')}</option></select></label></div></details>
+      <p id="result-count" class="small muted" role="status" aria-live="polite"></p>
     </div>
     <div id="order-status" class="card" hidden></div>
     <div class="menu-layout"><div id="list"></div><aside class="card cart-panel" id="cart" hidden aria-label="${a('طلبك', 'Your order')}"></aside></div>`
@@ -374,17 +461,71 @@ try {
   if (hasItems) {
     main.querySelector('#q').oninput = (e) => { q = e.target.value.trim().toLowerCase(); render(); };
     main.querySelector('#clear-q').onclick = () => { q = ''; main.querySelector('#q').value = ''; render(); main.querySelector('#q').focus(); };
+    for(const [id,key,mult] of [['dietary','dietary',0],['price','maxPrice',100],['calories','maxCalories',1],['sort','sort',0]]) main.querySelector('#filter-'+id).addEventListener('input',e=>{filters[key]=mult ? (e.target.value==='' ? null : Number(e.target.value)*mult) : e.target.value;render();});
     applyMenuContent(main,data.design,merchantOrg);
   render();
     watchSections();
   }
+  main.setAttribute('aria-busy','false');
+  installMenuNameFitting();
   try { renderAddons(data.addons, { main, orgSlug: data.branch.org_slug }); } catch {}
   if (orderToken) pollOrder();
+  availabilityTimer = setInterval(refreshAvailability, 30000);
+  document.addEventListener('visibilitychange', () => {if(!document.hidden) refreshAvailability();});
+  window.addEventListener('online', refreshAvailability);
 } catch {
   topbar(document.getElementById('top'), t);
+  main.setAttribute('aria-busy','false');
   main.className = 'wrap narrow';
   main.innerHTML = `<div class="card"><h1>${a('المنيو غير متاح', 'Menu unavailable')}</h1><p class="muted">${esc(t('notFound'))}</p><button class="btn" id="retry-menu" type="button">${a('إعادة المحاولة', 'Try again')}</button></div>`;
   main.querySelector('#retry-menu').onclick = () => location.reload();
 }
 
-listenForPreview(recipe=>applyMenuContent(main,recipe,merchantOrg));
+listenForPreview(recipe=>{applyMenuContent(main,recipe,merchantOrg);optimizeMenuFonts();render();});
+
+function installMenuNameFitting() {
+ const heading=main.querySelector('#menu-title');
+ if(!heading)return;
+ let scheduled,lastWidth;
+ const fit=()=>{
+  const style=getComputedStyle(heading),maximum=parseFloat(style.fontSize),available=heading.clientWidth;
+  if(!available)return;
+  const measured=heading.scrollWidth;
+  const size=Math.max(Math.min(14,maximum),Math.min(maximum,maximum*available/Math.max(1,measured)));
+  if(size<maximum)heading.style.fontSize=(Math.floor(size*100)/100)+'px';
+  heading.title=heading.textContent;
+  heading.dataset.nameClipped=String(measured*size/maximum>available+1);
+  const full=main.querySelector('#menu-full-name');if(full&&full.textContent!==heading.textContent)full.textContent=heading.textContent;
+ };
+ // Let the browser lay out the maximum CSS size before measuring native text overflow.
+ // Canvas font initialization and reset/read in one task blocked the first paint.
+ const queue=()=>{cancelAnimationFrame(scheduled);scheduled=requestAnimationFrame(()=>{heading.style.removeProperty('font-size');scheduled=requestAnimationFrame(fit);});};
+ new ResizeObserver(entries=>{const width=entries[0].contentRect.width;if(width!==lastWidth){lastWidth=width;queue();}}).observe(heading.parentElement);
+ new MutationObserver(queue).observe(heading,{childList:true,characterData:true,subtree:true});
+ document.fonts.ready.then(queue);queue();
+}
+
+function optimizeMenuFonts(){
+ const root=document.documentElement;
+ for(const prop of ['--font','--tenant-heading-font']){
+ // Recipes write both families inline. Read those without forcing a style/layout flush.
+ const family=root.style.getPropertyValue(prop)||getComputedStyle(root).getPropertyValue(prop);
+ if(family)root.style.setProperty(prop,family.replace(/Plus Jakarta Sans/g,'MenuJakarta').replace(/\bTajawal\b/g,'MenuTajawal'));
+ }
+}
+
+async function refreshAvailability(){
+ if(document.hidden || !navigator.onLine || !data) return;
+ try {const fresh=await api('/api/public/menu/'+slug);
+ const changed=JSON.stringify([fresh.items,fresh.categories,fresh.ordering,fresh.season])!==JSON.stringify([data.items,data.categories,data.ordering,data.season]);
+ if(!changed)return;
+ const previousQuote = cartQuote();
+ data.season=fresh.season;data.items=fresh.items;data.categories=fresh.categories;data.discovery=fresh.discovery;data.ordering=fresh.ordering;
+ if(fresh.ordering) ordering=fresh.ordering;
+ if(cart.size && previousQuote !== cartQuote()) quoteNeedsReview = true;
+ const unavailable=[...cart.keys()].some(k=>!data.items.find(i=>i.id===splitKey(k).id)?.available);
+ const dialog=document.querySelector('.options-sheet[open]');
+ if(dialog&&!data.items.find(i=>i.id===dialog.dataset.itemId)?.available){dialog.querySelector('#opt-add')?.setAttribute('disabled','');announce(a('هذا الصنف لم يعد متاحًا','This item is no longer available'));}
+ render(true); if(unavailable)announce(a('بعض أصناف طلبك لم تعد متاحة؛ احتفظنا باختياراتك المتاحة','Some order items are unavailable; your available choices are retained'));
+ }catch{}
+}
