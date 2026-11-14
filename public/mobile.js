@@ -23,7 +23,15 @@ install.className = 'btn ghost';
 install.textContent = text('إضافة إلى الجهاز', 'Install on this device');
 install.hidden = true;
 panel.append(summary, status, guide, notifications, install, offline);
-document.querySelector('footer')?.before(panel);
+// In the owner workspace the panel belongs to the content column; placed after
+// <main> it ends the sticky sidebar's containing block early and pushes the
+// navigation up under the header while the page still scrolls.
+const workspace = document.body.classList.contains('dashboard-page') ? document.getElementById('main') : null;
+if (workspace) {
+  const place = () => { if (panel.parentElement !== workspace) workspace.append(panel); };
+  place();
+  new MutationObserver(place).observe(workspace, { childList: true });
+} else document.querySelector('footer')?.before(panel);
 let prompt = null;
 let registrationFailed = false;
 
